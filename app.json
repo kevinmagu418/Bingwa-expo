@@ -2,6 +2,7 @@
   "expo": {
     "name": "bingwa-shambani",
     "slug": "bingwa-shambani",
+    "scheme": "bingwa-shambani",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/bingwalogo.png",
@@ -13,21 +14,52 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bingwa.shambani",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Bingwa needs access to your camera to scan crops for diseases.",
+        "NSPhotoLibraryUsageDescription": "Bingwa needs access to your photos to allow you to upload crop images for analysis."
+      }
     },
     "android": {
+      "package": "com.bingwa.shambani",
       "adaptiveIcon": {
         "foregroundImage": "./assets/bingwalogo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/bingwalogo.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-camera",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Bingwa needs access to your photos to allow you to upload crop images for analysis.",
+          "savePhotosPermission": "Bingwa needs access to your photos to allow you to upload crop images for analysis.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bingwa needs access to your photos to allow you to upload crop images for analysis."
+        }
+      ],
+      "expo-notifications",
+      "expo-font"
     ]
   }
 }
