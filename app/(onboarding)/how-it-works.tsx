@@ -145,7 +145,7 @@ const SlideItem = memo(({ item, width, height }: { item: Slide, width: number, h
 
         {/* Content Section */}
         <View className="px-10 pb-8 pt-4">
-          <MotiView from={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <MotiView from={{ opacity: 0, translateX: -20 }} animate={{ opacity: 1, translateX: 0 }}>
             <Text className="text-accent font-poppins-bold tracking-[3px] text-xs mb-2 uppercase">
               {item.subtitle}
             </Text>

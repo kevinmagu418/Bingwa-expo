@@ -42,25 +42,37 @@ export const useProfile = () => {
   };
 
   useEffect(() => {
-    fetchProfile();
+    let profileSubscription: any;
 
-    // Subscribe to changes
-    const profileSubscription = supabase
-      .channel('profile-changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
-        setProfile(payload.new as Profile);
-      })
-      .subscribe();
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      profileSubscription = supabase
+        .channel(`profile-${user.id}`)
+        .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        }, (payload) => {
+          setProfile(payload.new as Profile);
+        })
+        .subscribe();
+    };
+
+    fetchProfile();
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(profileSubscription);
+      if (profileSubscription) supabase.removeChannel(profileSubscription);
     };
   }, []);
 
   const updateProfile = async (updates: Partial<Profile>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return { success: false, error: 'User not found' };
 
       const { error } = await supabase
         .from('profiles')
@@ -74,5 +86,37 @@ export const useProfile = () => {
     }
   };
 
-  return { profile, loading, error, refreshProfile: fetchProfile, updateProfile };
+  const uploadAvatar = async (uri: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
+
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const filePath = fileName;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, blob, {
+          contentType: `image/${fileExt}`,
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('profiles').getPublicUrl(filePath);
+      
+      if (data) {
+          await updateProfile({ avatar_url: data.publicUrl });
+      }
+      
+      return { success: true, publicUrl: data.publicUrl };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  return { profile, loading, error, refreshProfile: fetchProfile, updateProfile, uploadAvatar };
 };

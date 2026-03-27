@@ -24,8 +24,8 @@ export const CategoryChip = ({ label, active, onPress }: { label: string, active
 // --- Featured Guide Card ---
 export const FeaturedGuideCard = ({ item }: { item: any }) => (
   <MotiView
-    from={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
+    from={{ opacity: 0, translateX: 20 }}
+    animate={{ opacity: 1, translateX: 0 }}
     className="mr-5 w-72 h-44 rounded-[32px] overflow-hidden shadow-xl shadow-black/10"
   >
     <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="cover" />
@@ -42,37 +42,39 @@ export const FeaturedGuideCard = ({ item }: { item: any }) => (
 );
 
 // --- Disease Library Card ---
-export const DiseaseCard = ({ item }: { item: any }) => {
+export const DiseaseCard = ({ item, onPress }: { item: any, onPress?: () => void }) => {
   const severityColor = item.severity === 'high' ? '#D64545' : item.severity === 'medium' ? '#F4A261' : '#2A9D8F';
   
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 10 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      className="bg-white dark:bg-darkSurface p-4 rounded-[28px] mb-4 flex-row items-center border border-black/5 dark:border-white/5 shadow-sm"
-    >
-      <Image source={{ uri: item.image }} className="w-20 h-20 rounded-2xl mr-4" />
-      <View className="flex-1">
-        <View className="flex-row justify-between items-start mb-1">
-          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm flex-1 mr-2" numberOfLines={1}>
-            {item.name}
-          </Text>
-          <View 
-            className="px-2 py-0.5 rounded-full" 
-            style={{ backgroundColor: `${severityColor}15` }}
-          >
-            <Text style={{ color: severityColor }} className="text-[8px] font-poppins-black uppercase">
-              {item.severity}
+    <Pressable onPress={onPress}>
+      <MotiView
+        from={{ opacity: 0, translateY: 10 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        className="bg-white dark:bg-darkSurface p-4 rounded-[28px] mb-4 flex-row items-center border border-black/5 dark:border-white/5 shadow-sm active:scale-[0.98]"
+      >
+        <Image source={{ uri: item.image }} className="w-20 h-20 rounded-2xl mr-4" />
+        <View className="flex-1">
+          <View className="flex-row justify-between items-start mb-1">
+            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm flex-1 mr-2" numberOfLines={1}>
+              {item.name}
             </Text>
+            <View 
+              className="px-2 py-0.5 rounded-full" 
+              style={{ backgroundColor: `${severityColor}15` }}
+            >
+              <Text style={{ color: severityColor }} className="text-[8px] font-poppins-black uppercase">
+                {item.severity}
+              </Text>
+            </View>
           </View>
+          <Text className="text-accent font-poppins-bold text-[10px] uppercase mb-1">{item.crop}</Text>
+          <Text className="text-textSecondary dark:text-darkTextSecondary text-[11px] font-poppins-regular opacity-60" numberOfLines={2}>
+            {item.summary}
+          </Text>
         </View>
-        <Text className="text-accent font-poppins-bold text-[10px] uppercase mb-1">{item.crop}</Text>
-        <Text className="text-textSecondary dark:text-darkTextSecondary text-[11px] font-poppins-regular opacity-60" numberOfLines={2}>
-          {item.summary}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={16} color="#8696A0" className="ml-2" />
-    </MotiView>
+        <Ionicons name="chevron-forward" size={16} color="#8696A0" className="ml-2" />
+      </MotiView>
+    </Pressable>
   );
 };
 

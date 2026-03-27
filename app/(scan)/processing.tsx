@@ -17,17 +17,16 @@ import { Alert } from 'react-native';
 
 export default function ProcessingScreen() {
   const router = useRouter();
-  const { imageUri } = useLocalSearchParams();
+  const { imageUri, cropType } = useLocalSearchParams();
   const [stepIndex, setStepIndex] = useState(0);
 
   const startAnalysis = async () => {
     try {
       if (!imageUri) throw new Error("No image data found");
-      
-      const result = await processImageScan(imageUri as string);
-      
-      if (result.success) {
-        router.replace({
+
+      const result = await processImageScan(imageUri as string, cropType as string);
+
+      if (result.success) {        router.replace({
           pathname: '/(scan)/result',
           params: { scanId: result.scanId, imageUri }
         });

@@ -5,6 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
+import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
 
@@ -15,33 +18,65 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  async function signInWithOAuth(provider: 'google' | 'github') {
+    try {
+      setLoading(true);
+      const redirectTo = Linking.createURL('/(tabs)/scan');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        
+        if (result.type === 'success' && result.url) {
+          const { queryParams } = Linking.parse(result.url);
+          if (queryParams?.access_token) {
+            await supabase.auth.setSession({
+              access_token: queryParams.access_token as string,
+              refresh_token: queryParams.refresh_token as string,
+            });
+          }
+        }
+      }
+    } catch (error: any) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function signInWithEmail() {
     if (!email || !password) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-    if (error) {
+      if (error) throw error;
+      
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error: any) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Login Failed', error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
-
-  async function signInWithOAuth(provider: 'google' | 'github') {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: 'bingwa-shambani://(tabs)/scan',
-      },
-    });
-
-    if (error) Alert.alert('Error', error.message);
   }
 
   return (

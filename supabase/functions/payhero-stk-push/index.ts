@@ -7,103 +7,168 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // 1. Validate Environment Variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Critical Error: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+      throw new Error('Server Configuration Error: Missing Supabase secrets.');
+    }
 
-    // Get user from session
-    const authHeader = req.headers.get('Authorization')!
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    // 2. Validate Auth Header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: 'Unauthorized: Missing Authorization header' 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
-      })
+      });
     }
 
-    const { phoneNumber, amount } = await req.json()
+    // 3. Initialize Supabase Admin
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (!phoneNumber || !amount) {
-      return new Response(JSON.stringify({ error: 'Phone number and amount are required' }), {
+    // 4. Verify User Token
+    const token = authHeader.replace(/bearer /i, '').trim();
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Auth Verification Failed:', authError);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: 'Unauthorized: Invalid or expired token', 
+        details: authError?.message 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    // 5. Parse Request Body
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, message: 'Invalid JSON body' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
-      })
+      });
     }
 
-    const externalReference = `PAY-${Date.now()}-${user.id.substring(0, 8)}`
+    const { phoneNumber, amount } = body;
+    if (!phoneNumber || !amount) {
+      return new Response(JSON.stringify({ success: false, message: 'Missing phoneNumber or amount' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
 
-    // Log the payment in pending state
-    const { error: dbError } = await supabaseClient
+    const numAmount = parseFloat(amount.toString());
+    const externalReference = `PAY-${Date.now()}-${user.id.substring(0, 8)}`;
+
+    // 6. Log Payment Request (Database)
+    const { error: dbError } = await supabaseAdmin
       .from('payments')
       .insert({
         user_id: user.id,
-        amount: amount,
-        phone_number: phoneNumber,
+        amount: numAmount,
+        phone_number: phoneNumber.toString(),
         reference: externalReference,
         status: 'pending'
-      })
+      });
 
-    if (dbError) throw dbError
+    if (dbError) {
+      console.error('Database Insert Error:', dbError);
+      throw new Error(`Database Error: ${dbError.message}`);
+    }
 
-    // Call Payhero STK Push
-    const payheroToken = Deno.env.get('PAYHERO_API_TOKEN') 
-    const channelId = Deno.env.get('PAYHERO_CHANNEL_ID')
-    const callbackUrl = Deno.env.get('PAYHERO_CALLBACK_URL')
+    // 7. Payhero Credentials - Fallback to provided hardcoded values if secrets are missing
+    const username = Deno.env.get('PAYHERO_API_USERNAME') || 'sp436JzMIOIg2HXYiq6N';
+    const password = Deno.env.get('PAYHERO_API_PASSWORD') || 'tQT9yv3Zqb6TW8juKybDQtXUO3vyH7DNjavu4pX3';
+    const channelId = Deno.env.get('PAYHERO_CHANNEL_ID') || '6045';
+    
+    // Dynamically construct callback URL if not provided
+    let callbackUrl = Deno.env.get('PAYHERO_CALLBACK_URL');
+    if (!callbackUrl && supabaseUrl) {
+       // Format: https://[ref].supabase.co/functions/v1/payhero-callback
+       callbackUrl = `${supabaseUrl}/functions/v1/payhero-callback`;
+    }
 
-    // Use the provided token directly
-    const auth = payheroToken || `Basic ${btoa(`${Deno.env.get('PAYHERO_API_USERNAME')}:${Deno.env.get('PAYHERO_API_PASSWORD')}`)}`
+    const basicAuth = `Basic ${btoa(`${username}:${password}`)}`;
+    const payheroPayload = {
+      amount: numAmount,
+      phone_number: phoneNumber.toString(),
+      channel_id: parseInt(channelId),
+      provider: 'm-pesa',
+      external_reference: externalReference,
+      callback_url: callbackUrl
+    };
 
-    const payheroResponse = await fetch('https://backend.payhero.co.ke/api/v2/payments/stk-push', {
+    console.log(`Initiating Payhero STK Push to ${phoneNumber} via Channel ${channelId}`);
+    console.log(`Callback URL: ${callbackUrl}`);
+
+    // 8. Execute Payhero Request
+    const payheroResponse = await fetch('https://backend.payhero.co.ke/api/v2/payments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': auth
+        'Authorization': basicAuth
       },
-      body: JSON.stringify({
-        amount: amount,
-        phone_number: phoneNumber,
-        channel_id: parseInt(channelId || '6045'), // Default to your channel ID
-        provider: 'm-pesa',
-        external_reference: externalReference,
-        callback_url: callbackUrl
-      })
-    })
+      body: JSON.stringify(payheroPayload)
+    });
 
-    const payheroData = await payheroResponse.json()
+    const payheroData = await payheroResponse.json();
+    console.log('Payhero Response:', payheroData);
 
     if (payheroResponse.ok && payheroData.success) {
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'STK push initiated',
-        reference: externalReference 
+        message: 'STK Push Initiated Successfully',
+        reference: externalReference,
+        payhero_response: payheroData
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      })
+      });
     } else {
-      console.error('Payhero error:', payheroData)
+      console.error('Payhero API Error:', payheroData);
+      
+      // Update DB to failed
+      await supabaseAdmin
+        .from('payments')
+        .update({ status: 'failed' })
+        .eq('reference', externalReference);
+
       return new Response(JSON.stringify({ 
         success: false, 
-        message: payheroData.message || 'Payhero STK push failed',
-        error: payheroData
+        message: payheroData.message || 'Payhero declined the STK push request',
+        error: payheroData 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
-      })
+      });
     }
 
-  } catch (error) {
-    console.error('Error:', error.message)
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    console.error('Edge Function Exception:', error.message);
+    const status = error.message.includes('Unauthorized') || error.message.includes('JWT') ? 401 : 500;
+    
+    return new Response(JSON.stringify({ 
+      success: false, 
+      message: error.message || 'Internal Server Error'
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+      status: status,
+    });
   }
-})
+});

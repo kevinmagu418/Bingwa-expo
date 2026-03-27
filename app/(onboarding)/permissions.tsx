@@ -126,17 +126,17 @@ export default function PermissionsScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
-    const result = await item.request();
-    if (!result?.granted && result?.canAskAgain === false) {
-      Linking.openSettings();
-    }
+    
     if (item.id === 'notifications') {
-      const { status } = await Notifications.getPermissionsAsync();
-      setNotificationStatus(status);
+      const res = await Notifications.requestPermissionsAsync();
+      setNotificationStatus(res.status);
+    } else {
+      await item.request();
     }
   }, []);
 
   const handleContinue = useCallback(async () => {
+    // If not all granted, try requesting camera as the primary one
     if (!cameraPermission?.granted) {
       const result = await requestCameraPermission();
       if (!result.granted) {
@@ -146,6 +146,7 @@ export default function PermissionsScreen() {
         return;
       }
     }
+    
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     }

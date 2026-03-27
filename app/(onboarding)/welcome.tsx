@@ -140,8 +140,8 @@ export default function WelcomeScreen() {
               </MotiView>
               
               <MotiView
-                from={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
+                from={{ opacity: 0, translateX: -30 }}
+                animate={{ opacity: 1, translateX: 0 }}
                 transition={{ type: "spring", damping: 20, delay: 400 }}
               >
                 <MotiText className="text-white font-poppins-black leading-tight" style={{ fontSize: width > 400 ? 56 : 48 }}>

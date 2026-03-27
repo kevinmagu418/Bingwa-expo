@@ -14,7 +14,7 @@ import { BingwaLoader } from '../../components/Loader';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, loading: profileLoading, updateProfile, refreshProfile } = useProfile();
+  const { profile, loading: profileLoading, updateProfile, refreshProfile, uploadAvatar } = useProfile();
   
   const [fullName, setFullName] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -45,49 +45,32 @@ export default function ProfileScreen() {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
 
-    if (!result.canceled) {
-      uploadAvatar(result.assets[0].uri);
+      if (!result.canceled) {
+        handleUploadAvatar(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image');
     }
   };
 
-  const uploadAvatar = async (uri: string) => {
+  const handleUploadAvatar = async (uri: string) => {
     try {
       setUploading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const fileExt = uri.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', {
-        uri,
-        name: fileName,
-        type: `image/${fileExt}`,
-      } as any);
-
-      const { error: uploadError } = await supabase.storage
-        .from('scans') // Using the 'scans' bucket for now as per previous setup, or create an 'avatars' one
-        .upload(filePath, formData);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('scans')
-        .getPublicUrl(filePath);
-
-      await updateProfile({ avatar_url: publicUrl });
-      await refreshProfile();
-      Alert.alert("Success", "Avatar updated successfully");
+      const result = await uploadAvatar(uri);
+      if (result.success) {
+        await refreshProfile();
+        Alert.alert("Success", "Avatar updated successfully");
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {

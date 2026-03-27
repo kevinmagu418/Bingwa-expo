@@ -1,5 +1,6 @@
 import "react-native-url-polyfill/auto";
 import "../global.css";
+import * as WebBrowser from 'expo-web-browser';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect, useState } from "react";
@@ -18,6 +19,8 @@ import { Session } from "@supabase/supabase-js";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+WebBrowser.maybeCompleteAuthSession();
 
 function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -62,7 +65,7 @@ function RootLayout() {
     const inTabsGroup = segments[0] === "(tabs)";
     const inOnboardingGroup = segments[0] === "(onboarding)";
 
-    if (session && (inAuthGroup || inOnboardingGroup || segments.length === 0 || segments[0] === "index")) {
+    if (session && (inAuthGroup || inOnboardingGroup || segments.length < 1 || segments[0] === "index")) {
       // Redirect to tabs if logged in and trying to access auth/onboarding/index
       router.replace("/(tabs)/scan");
     } else if (!session && inTabsGroup) {

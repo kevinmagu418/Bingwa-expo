@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, Platform, useWindowDimensions, RefreshControl } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -17,6 +18,7 @@ const QUICK_TIPS = [
 ];
 
 export default function LearnTab() {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const { width } = useWindowDimensions();
@@ -127,10 +129,17 @@ export default function LearnTab() {
               <View>
                 {filteredDiseases.length > 0 ? (
                   filteredDiseases.map((item) => (
-                    <DiseaseCard key={item.id} item={{
-                      ...item,
-                      image: item.image_url
-                    }} />
+                    <DiseaseCard 
+                      key={item.id} 
+                      item={{
+                        ...item,
+                        image: item.image_url
+                      }} 
+                      onPress={() => router.push({
+                        pathname: '/(learn)/disease',
+                        params: { id: item.id }
+                      })}
+                    />
                   ))
                 ) : (
                   <View className="py-10 items-center justify-center bg-white dark:bg-darkSurface rounded-[28px] border border-black/5">

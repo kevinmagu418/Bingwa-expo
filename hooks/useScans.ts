@@ -54,18 +54,30 @@ export const useScans = (limit?: number) => {
   };
 
   useEffect(() => {
-    fetchScans();
+    let scansSubscription: any;
 
-    // Subscribe to new scans
-    const scansSubscription = supabase
-      .channel('scans-changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scans' }, () => {
-        fetchScans();
-      })
-      .subscribe();
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      scansSubscription = supabase
+        .channel(`scans-${user.id}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'scans',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          fetchScans();
+        })
+        .subscribe();
+    };
+
+    fetchScans();
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(scansSubscription);
+      if (scansSubscription) supabase.removeChannel(scansSubscription);
     };
   }, []);
 

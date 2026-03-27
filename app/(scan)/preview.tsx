@@ -11,7 +11,7 @@ import { Alert } from 'react-native';
 
 export default function PreviewScreen() {
   const router = useRouter();
-  const { imageUri } = useLocalSearchParams();
+  const { imageUri, cropType } = useLocalSearchParams();
   const [isValidating, setIsValidating] = useState(false);
 
   const { profile, loading: profileLoading } = useProfile();
@@ -38,7 +38,7 @@ export default function PreviewScreen() {
         setTimeout(() => {
             router.push({
                 pathname: '/(scan)/processing',
-                params: { imageUri: imageUri }
+                params: { imageUri: imageUri, cropType: cropType }
             });
             setIsValidating(false);
         }, 800);
@@ -82,6 +82,11 @@ export default function PreviewScreen() {
                     resizeMode="cover" 
                 />
                 
+                {/* Crop Badge */}
+                <View className="absolute top-4 left-4 bg-accent px-4 py-1.5 rounded-full shadow-lg">
+                    <Text className="text-white font-poppins-bold text-[10px] uppercase tracking-widest">{cropType}</Text>
+                </View>
+
                 {isValidating && (
                    <View className="absolute inset-0 bg-black/40 items-center justify-center">
                       <BingwaLoader label="Preparing Image..." />

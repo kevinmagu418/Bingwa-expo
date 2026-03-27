@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Switch, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Switch, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,22 +21,30 @@ export default function ProfileTab() {
   }
 
   const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: "destructive", 
-          onPress: async () => {
-            const { error } = await supabase.auth.signOut();
-            if (error) Alert.alert("Error", error.message);
-            else router.replace('/(auth)/login');
-          } 
-        }
-      ]
-    );
+    const performLogout = async () => {
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        router.replace('/(auth)/login');
+      } catch (error: any) {
+        Alert.alert("Error", error.message);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to log out?")) {
+        performLogout();
+      }
+    } else {
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to log out?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Logout", style: "destructive", onPress: performLogout }
+        ]
+      );
+    }
   };
 
   const menuItems = [
@@ -56,10 +64,10 @@ export default function ProfileTab() {
     },
     { 
       id: 3, 
-      label: 'My Farm Settings', 
-      icon: 'leaf-outline', 
+      label: 'Help & Support', 
+      icon: 'help-buoy-outline', 
       color: '#FFBE0B', 
-      onPress: () => {} 
+      onPress: () => router.push('/(profile)/about') 
     },
   ];
 
@@ -96,27 +104,23 @@ export default function ProfileTab() {
             {profile?.email || 'farmer@bingwa.com'}
           </Text>
 
-          {profile?.is_premium ? (
-             <View className="mt-4 bg-yellow-500/10 px-4 py-1.5 rounded-full border border-yellow-500/20 flex-row items-center">
-                <Ionicons name="star" size={14} color="#EAB308" />
-                <Text className="text-yellow-600 font-poppins-bold text-[10px] uppercase tracking-widest ml-2">Premium Member</Text>
-             </View>
-          ) : (
-            <TouchableOpacity 
-              className="mt-6 px-8 h-12 rounded-2xl overflow-hidden shadow-xl shadow-accent/20"
-              onPress={() => router.push('/(profile)/payment')}
+          <TouchableOpacity 
+            className="mt-6 px-10 h-14 rounded-[24px] overflow-hidden shadow-2xl shadow-accent/30"
+            onPress={() => router.push('/(modals)/payment-required')}
+          >
+            <LinearGradient
+              colors={['#25D366', '#128C7E']}
+              start={{ x: 0, y: 0 }} 
+              end={{ x: 1, y: 0 }}
+              className="flex-1 items-center justify-center flex-row px-8"
             >
-              <LinearGradient
-                colors={['#25D366', '#128C7E']}
-                start={{ x: 0, y: 0 }} 
-                end={{ x: 1, y: 0 }}
-                className="flex-1 items-center justify-center flex-row"
-              >
-                <Ionicons name="rocket" size={16} color="white" className="mr-2" />
-                <Text className="text-white font-poppins-black text-xs uppercase tracking-widest">Upgrade to Pro</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
+              <Ionicons name="flash" size={18} color="white" className="mr-3" />
+              <View>
+                <Text className="text-white font-poppins-black text-xs uppercase tracking-widest">Top Up Credits</Text>
+                <Text className="text-white/70 font-poppins-bold text-[8px] uppercase tracking-tighter">Current: {profile?.scan_credits || 0} Scans</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* Content Body */}

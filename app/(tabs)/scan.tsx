@@ -6,6 +6,7 @@ import { CreditsCard, ScanCard, RecentScanItem } from '../../components/ScanDash
 import { useCameraPermissions } from 'expo-camera';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
 
@@ -18,17 +19,22 @@ export default function ScanDashboard() {
   const { scans, loading: scansLoading, refreshScans } = useScans(5); // Last 5 scans
   const [refreshing, setRefreshing] = useState(false);
 
-  if (profileLoading || scansLoading) {
-    return <BingwaLoader label="Gathering Scan Records..." />;
-  }
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refreshProfile(), refreshScans()]);
     setRefreshing(false);
   }, []);
 
+  if (profileLoading || scansLoading) {
+    return <BingwaLoader label="Gathering Scan Records..." />;
+  }
+
   const handleScanPress = async () => {
+    if (profile && profile.scan_credits <= 0) {
+      router.push('/(modals)/payment-required');
+      return;
+    }
+    
     if (!permission?.granted) {
       const { granted } = await requestPermission();
       if (!granted) {
@@ -59,21 +65,37 @@ export default function ScanDashboard() {
         {/* Header */}
         <View className="flex-row justify-between items-center py-6">
           <View>
-            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs uppercase tracking-widest">
+            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[10px] uppercase tracking-[3px] opacity-60 mb-1">
               Welcome back,
             </Text>
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">
-              {profile?.full_name?.split(' ')[0] || 'Bingwa Farmer'}
-            </Text>
+            <View className="flex-row items-baseline">
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">
+                Bingwa Farmer 
+              </Text>
+              <Text className="text-[#128C7E] font-poppins-black text-2xl ml-2">
+                {profile?.full_name?.split(' ')[0] || '...'}
+              </Text>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
-            <View className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 items-center justify-center overflow-hidden">
+          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} activeOpacity={0.7}>
+            <MotiView 
+              from={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-14 h-14 rounded-[22px] bg-accent/10 border-2 border-white dark:border-darkSurface shadow-xl overflow-hidden items-center justify-center"
+            >
                {profile?.avatar_url ? (
                  <Image source={{ uri: profile.avatar_url }} className="w-full h-full" />
                ) : (
-                 <Ionicons name="person" size={24} color="#25D366" />
+                 <LinearGradient
+                   colors={['#25D366', '#128C7E']}
+                   className="w-full h-full items-center justify-center"
+                 >
+                   <Text className="text-white font-poppins-black text-xl">
+                     {profile?.full_name?.charAt(0) || 'B'}
+                   </Text>
+                 </LinearGradient>
                )}
-            </View>
+            </MotiView>
           </TouchableOpacity>
         </View>
 
@@ -96,19 +118,27 @@ export default function ScanDashboard() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible py-2">
             {scans.length > 0 ? (
               scans.map((item, index) => (
-                <RecentScanItem 
+                <TouchableOpacity 
                   key={item.id} 
-                  item={{
-                    ...item,
-                    disease: item.diseases?.name || 'Processing...',
-                    date: new Date(item.created_at).toLocaleDateString(),
-                    image: item.image_url ? { uri: item.image_url } : require('../../assets/freshproduce.png')
-                  }} 
-                  index={index} 
-                />
+                  onPress={() => router.push({
+                    pathname: '/(scan)/result',
+                    params: { scanId: item.id, imageUri: item.image_url }
+                  })}
+                >
+                  <RecentScanItem 
+                    item={{
+                      ...item,
+                      disease: item.diseases?.name || 'Processing...',
+                      date: new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                      image: item.image_url ? { uri: item.image_url } : require('../../assets/freshproduce.png'),
+                      confidence: Math.round(item.confidence_score * 100)
+                    }} 
+                    index={index} 
+                  />
+                </TouchableOpacity>
               ))
             ) : (
               <View className="bg-white dark:bg-darkSurface p-6 rounded-[24px] border border-black/5 dark:border-white/5 w-64 items-center justify-center">

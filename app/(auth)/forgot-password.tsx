@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
+import * as Linking from 'expo-linking';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
 
@@ -20,17 +21,23 @@ export default function ForgotPasswordScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'bingwa-shambani://reset-password',
-    });
+    try {
+      const redirectTo = Linking.createURL('/(auth)/reset-password');
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
 
-    if (error) {
-      Alert.alert('Error', error.message);
-    } else {
-      Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
-      router.back();
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
+        router.back();
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

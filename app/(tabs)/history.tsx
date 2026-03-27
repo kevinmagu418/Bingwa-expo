@@ -110,7 +110,10 @@ export default function HistoryTab() {
                       date: new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                       image: item.image_url
                     }} 
-                    onPress={() => router.push({ pathname: '/(history)/detail', params: { id: item.id } })} 
+                    onPress={() => router.push({ 
+                      pathname: '/(scan)/result', 
+                      params: { scanId: item.id, imageUri: item.image_url } 
+                    })} 
                   />
                 ))
               ) : (
