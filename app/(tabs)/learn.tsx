@@ -7,6 +7,7 @@ import { MotiView } from 'moti';
 import { CategoryChip, FeaturedGuideCard, DiseaseCard, QuickTipCard } from '../../components/LearnComponents';
 import { useDiseases } from '../../hooks/useDiseases';
 import { BingwaLoader } from '../../components/Loader';
+import { FloatingAssistant } from '../../components/FloatingAssistant';
 
 // --- Mock Data ---
 const CATEGORIES = ["All", "Maize", "Tomatoes", "Potatoes", "Beans", "Fruits"];
@@ -162,6 +163,7 @@ export default function LearnTab() {
         </View>
 
       </ScrollView>
+      <FloatingAssistant />
     </SafeAreaView>
   );
 }

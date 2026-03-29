@@ -7,6 +7,7 @@ import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { BingwaLoader } from '../../components/Loader';
+import { FloatingAssistant } from '../../components/FloatingAssistant';
 
 // Mock Result Data
 const MOCK_RESULT = {
@@ -286,6 +287,10 @@ export default function ResultScreen() {
 
         </View>
       </ScrollView>
+      <FloatingAssistant 
+        currentDiseaseId={scanResult.diseases?.id}
+        initialMessage={`I see we've detected ${disease}. I've analyzed the results—would you like me to explain the treatment steps or suggest some organic alternatives?`}
+      />
     </SafeAreaView>
   );
 }

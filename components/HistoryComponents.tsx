@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Pressable } from 'react-native';
-import { MotiView } from 'moti';
+import { View, Text, Image, Pressable, TouchableOpacity } from 'react-native';
+import { MotiView, AnimatePresence } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 
 // --- Stats Card ---
@@ -22,7 +22,19 @@ export const StatCard = ({ label, value, icon, color, delay }: { label: string, 
 );
 
 // --- History Card ---
-export const HistoryCard = ({ item, onPress }: { item: any, onPress: () => void }) => {
+export const HistoryCard = ({ 
+  item, 
+  onPress, 
+  onLongPress, 
+  isSelected, 
+  isSelectionMode 
+}: { 
+  item: any, 
+  onPress: () => void, 
+  onLongPress?: () => void,
+  isSelected?: boolean,
+  isSelectionMode?: boolean
+}) => {
   const isHealthy = item.status === 'Healthy';
   const severityColor = isHealthy ? '#25D366' : 
                    item.severity === 'High' ? '#D64545' : 
@@ -30,14 +42,35 @@ export const HistoryCard = ({ item, onPress }: { item: any, onPress: () => void 
 
   return (
     <MotiView
-      from={{ opacity: 0, translateX: -20 }}
-      animate={{ opacity: 1, translateX: 0 }}
+      from={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
       className="mb-4"
     >
       <Pressable 
         onPress={onPress}
-        className="bg-white dark:bg-darkSurface p-4 rounded-[32px] flex-row items-center border border-black/5 dark:border-white/5 shadow-sm active:scale-[0.98] transition-transform"
+        onLongPress={onLongPress}
+        className={`bg-white dark:bg-darkSurface p-4 rounded-[32px] flex-row items-center border shadow-sm active:scale-[0.98] transition-transform ${
+          isSelected ? 'border-accent bg-accent/5' : 'border-black/5 dark:border-white/5'
+        }`}
       >
+        {/* Selection Indicator */}
+        <AnimatePresence>
+          {isSelectionMode && (
+            <MotiView
+              from={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 32 }}
+              exit={{ opacity: 0, width: 0 }}
+              className="mr-2 items-center justify-center"
+            >
+              <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
+                isSelected ? 'bg-accent border-accent' : 'border-gray-300 dark:border-white/20'
+              }`}>
+                {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+              </View>
+            </MotiView>
+          )}
+        </AnimatePresence>
+
         <Image source={{ uri: item.image }} className="w-20 h-20 rounded-[22px] mr-4" resizeMode="cover" />
         
         <View className="flex-1">
@@ -67,7 +100,9 @@ export const HistoryCard = ({ item, onPress }: { item: any, onPress: () => void 
           </View>
         </View>
         
-        <Ionicons name="chevron-forward" size={20} color="#8696A0" className="ml-2 opacity-30" />
+        {!isSelectionMode && (
+          <Ionicons name="chevron-forward" size={20} color="#8696A0" className="ml-2 opacity-30" />
+        )}
       </Pressable>
     </MotiView>
   );

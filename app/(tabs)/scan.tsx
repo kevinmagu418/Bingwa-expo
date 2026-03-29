@@ -11,6 +11,7 @@ import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
 
 import { BingwaLoader } from '../../components/Loader';
+import { FloatingAssistant } from '../../components/FloatingAssistant';
 
 export default function ScanDashboard() {
   const router = useRouter();
@@ -170,6 +171,7 @@ export default function ScanDashboard() {
         </MotiView>
 
       </ScrollView>
+      <FloatingAssistant />
     </SafeAreaView>
   );
 }
