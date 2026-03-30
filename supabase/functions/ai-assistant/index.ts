@@ -11,23 +11,72 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders })
   }
 
+  console.log("AI-Assistant function invoked");
+
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    )
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY")
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("CRITICAL: Missing Supabase environment variables");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error", details: "Missing Supabase keys" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      )
+    }
+
+    if (!GROQ_API_KEY) {
+      console.error("CRITICAL: Missing GROQ_API_KEY environment variable");
+      return new Response(
+        JSON.stringify({ error: "AI Service Unavailable", details: "The AI assistant is not configured (Missing GROQ_API_KEY)" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 1. AUTHENTICATION
     const authHeader = req.headers.get("Authorization")
-    if (!authHeader) throw new Error("Missing Authorization")
-    const token = authHeader.replace("Bearer ", "")
+    if (!authHeader) {
+      console.error("Missing Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing Authorization header" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
+    }
+
+    const token = authHeader.replace(/Bearer /i, "").trim()
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) throw new Error("Unauthorized")
+    
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message || "User not found");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid or expired token", details: authError?.message }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      )
+    }
+
+    console.log(`Authenticated user: ${user.id}`);
 
     // 2. REQUEST BODY
-    const { messages, currentDiseaseId, imageContext } = await req.json()
-    if (!messages || !Array.isArray(messages)) throw new Error("messages array is required")
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      )
+    }
 
+    const { messages, currentDiseaseId, imageContext, language } = body;
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "messages array is required and must not be empty" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      )
+    }
+
+    const preferredLanguage = language === 'sw' ? 'Swahili (Kiswahili)' : 'English';
     const lastMessage = messages[messages.length - 1].content
 
     // 3. RAG RETRIEVAL & IMAGE CONTEXT
@@ -53,21 +102,22 @@ serve(async (req) => {
     }
 
     // 4. GROQ API CALL
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY")
     const systemPrompt = `You are "Bingwa AI", a world-class agricultural consultant for Kenyan farmers. 
 
     ABILITIES:
-    1. MULTILINGUAL: You support English, Swahili (Kiswahili), and Sheng. Automatically detect the user's language and respond in the SAME language.
-    2. CONTEXTUAL: You are aware of the image the user is looking at.
+    1. LANGUAGE: Respond ONLY in ${preferredLanguage}.
+    2. CONTEXTUAL: You are aware of the image the user is looking at and their current location in the app.
     3. EXPERTISE: Use the provided RELEVANT KNOWLEDGE to give precise, actionable advice on organic and chemical treatments.
+    4. PROACTIVE: Always suggest next steps or ask follow-up questions to help the farmer.
 
     TONE:
-    - Professional yet empathetic.
-    - Use common Kenyan agricultural terms (e.g., "dawa", "mbolea", "wadudu").
-    - Be concise.
+    - Professional, detailed, and empathetic.
+    - Be thorough in your explanations.
+    - Provide structured advice with clear steps.
+    
+    If responding in Swahili, use standard Kiswahili that is easy for a Kenyan farmer to understand.`
 
-    If the user speaks Swahili/Sheng, ensure your response is culturally relevant and easy to understand.`
-
+    console.log(`Calling Groq API in ${preferredLanguage}...`);
     const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -86,8 +136,26 @@ serve(async (req) => {
       })
     })
 
+    if (!groqResponse.ok) {
+      const errorData = await groqResponse.json().catch(() => ({}));
+      console.error("Groq API Error:", groqResponse.status, errorData);
+      return new Response(
+        JSON.stringify({ 
+          error: "Bingwa AI is having trouble thinking right now", 
+          details: errorData.error?.message || "Groq API returned an error" 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: groqResponse.status === 401 ? 500 : groqResponse.status }
+      )
+    }
+
     const groqData = await groqResponse.json()
+    if (!groqData.choices || !groqData.choices[0]) {
+      console.error("Unexpected Groq response format:", groqData);
+      throw new Error("Invalid response from AI model");
+    }
+    
     const aiMessage = groqData.choices[0].message.content
+    console.log("Groq API call successful");
 
     return new Response(
       JSON.stringify({ content: aiMessage }),
@@ -95,6 +163,7 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
+    console.error("Catch Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }

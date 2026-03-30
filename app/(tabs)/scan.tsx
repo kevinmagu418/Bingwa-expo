@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, Alert, Platform, Image, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, Alert, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditsCard, ScanCard, RecentScanItem } from '../../components/ScanDashboardComponents';
@@ -9,9 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
+import { BingwaAvatar } from '../../components/BingwaAvatar';
 
 import { BingwaLoader } from '../../components/Loader';
-import { FloatingAssistant } from '../../components/FloatingAssistant';
 
 export default function ScanDashboard() {
   const router = useRouter();
@@ -20,18 +20,26 @@ export default function ScanDashboard() {
   const { scans, loading: scansLoading, refreshScans } = useScans(5); // Last 5 scans
   const [refreshing, setRefreshing] = useState(false);
 
+  // Refresh data when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+      refreshScans();
+    }, [])
+  );
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refreshProfile(), refreshScans()]);
     setRefreshing(false);
-  }, []);
+  }, [refreshProfile, refreshScans]);
 
   if (profileLoading || scansLoading) {
     return <BingwaLoader label="Gathering Scan Records..." />;
   }
 
   const handleScanPress = async () => {
-    if (profile && profile.scan_credits <= 0) {
+    if (profile && (profile.scan_credits ?? 0) <= 0) {
       router.push('/(modals)/payment-required');
       return;
     }
@@ -78,26 +86,7 @@ export default function ScanDashboard() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} activeOpacity={0.7}>
-            <MotiView 
-              from={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-14 h-14 rounded-[22px] bg-accent/10 border-2 border-white dark:border-darkSurface shadow-xl overflow-hidden items-center justify-center"
-            >
-               {profile?.avatar_url ? (
-                 <Image source={{ uri: profile.avatar_url }} className="w-full h-full" />
-               ) : (
-                 <LinearGradient
-                   colors={['#25D366', '#128C7E']}
-                   className="w-full h-full items-center justify-center"
-                 >
-                   <Text className="text-white font-poppins-black text-xl">
-                     {profile?.full_name?.charAt(0) || 'B'}
-                   </Text>
-                 </LinearGradient>
-               )}
-            </MotiView>
-          </TouchableOpacity>
+          <BingwaAvatar size={56} borderWidth={2} />
         </View>
 
         {/* Credits */}
@@ -120,8 +109,8 @@ export default function ScanDashboard() {
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible py-2">
-            {scans.length > 0 ? (
-              scans.map((item, index) => (
+            {scans && scans.length > 0 ? (
+              scans.map((item: any, index: number) => (
                 <TouchableOpacity 
                   key={item.id} 
                   onPress={() => router.push({
@@ -134,8 +123,8 @@ export default function ScanDashboard() {
                       ...item,
                       disease: item.diseases?.name || 'Processing...',
                       date: new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-                      image: item.image_url ? { uri: item.image_url } : require('../../assets/freshproduce.png'),
-                      confidence: Math.round(item.confidence_score * 100)
+                      image: item.image_url ? { uri: item.image_url } : require('../../assets/farmer.jpg'),
+                      confidence: Math.round((item.confidence_score || 0) * 100)
                     }} 
                     index={index} 
                   />
@@ -150,28 +139,36 @@ export default function ScanDashboard() {
           </ScrollView>
         </View>
 
-        {/* Quick Tips */}
-        <MotiView 
-          from={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 600 }}
-          className="bg-accent/5 border border-accent/10 p-5 rounded-[24px] flex-row items-center mb-10"
+        {/* AI Assistant Banner */}
+        <TouchableOpacity 
+          onPress={() => router.push('/ai-assistant')}
+          activeOpacity={0.9}
         >
-          <View className="bg-accent/10 p-3 rounded-xl mr-4">
-            <Ionicons name="bulb" size={24} color="#25D366" />
-          </View>
-          <View className="flex-1">
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm mb-1">
-              Pro Tip
-            </Text>
-            <Text className="text-textSecondary dark:text-darkTextSecondary text-[11px] font-poppins-regular opacity-70 leading-relaxed">
-              Ensure good lighting and hold the camera steady for 95% higher accuracy.
-            </Text>
-          </View>
-        </MotiView>
+          <MotiView 
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 700 }}
+            className="mb-10 overflow-hidden rounded-[32px] border border-white/10 shadow-lg"
+          >
+            <LinearGradient
+              colors={['#0B141A', '#121B22']}
+              className="p-8 flex-row items-center"
+            >
+              <View className="w-16 h-16 rounded-3xl bg-accent items-center justify-center mr-6 shadow-2xl shadow-accent/20">
+                <Ionicons name="sparkles" size={32} color="white" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-white font-poppins-black text-xl mb-1">Bingwa AI</Text>
+                <Text className="text-white/40 font-poppins-regular text-xs">Chat for deep agricultural insights</Text>
+              </View>
+              <View className="bg-white/5 p-3 rounded-2xl">
+                <Ionicons name="chevron-forward" size={20} color="white" />
+              </View>
+            </LinearGradient>
+          </MotiView>
+        </TouchableOpacity>
 
       </ScrollView>
-      <FloatingAssistant />
     </SafeAreaView>
   );
 }

@@ -1,17 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, useWindowDimensions, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Platform, useWindowDimensions, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatCard, HistoryCard, HistoryEmptyState } from '../../components/HistoryComponents';
 import { CategoryChip } from '../../components/LearnComponents';
 import { useScans } from '../../hooks/useScans';
+import { useProfile } from '../../hooks/useProfile';
+import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { ReceiptPreview } from '../../components/ReceiptPreview';
 import { MotiView, AnimatePresence } from 'moti';
+import { HistoryCardSkeleton } from '../../components/Loader';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const FILTERS = ["All", "Healthy", "Diseased", "Maize", "Tomatoes"];
-
-import { HistoryCardSkeleton } from '../../components/Loader';
 
 export default function HistoryTab() {
   const router = useRouter();
@@ -22,13 +24,21 @@ export default function HistoryTab() {
 
   const { width } = useWindowDimensions();
   const { scans, loading, refreshScans } = useScans();
+  const { profile, refreshProfile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Refresh profile when tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+    }, [refreshProfile])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshScans();
+    await Promise.all([refreshScans(), refreshProfile()]);
     setRefreshing(false);
-  }, []);
+  }, [refreshScans, refreshProfile]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => 
@@ -77,7 +87,10 @@ export default function HistoryTab() {
       crop: s.diseases?.crop || 'Crop',
       result: s.diseases?.name || 'Diagnosis',
       severity: s.severity || 'low',
-      date: new Date(s.created_at).toLocaleDateString()
+      date: new Date(s.created_at).toLocaleDateString(),
+      organic_advice: s.recommendations?.[0]?.organic_advice,
+      chemical_advice: s.recommendations?.[0]?.chemical_advice,
+      prevention: s.recommendations?.[0]?.prevention,
     }));
 
   const stats = {
@@ -98,28 +111,52 @@ export default function HistoryTab() {
         
         {/* Header */}
         <View className="px-6 py-6 flex-row justify-between items-center">
-          <View>
+          <View className="flex-1">
             <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs uppercase tracking-widest">
               {isSelectionMode ? `${selectedIds.length} Selected` : 'Scan Records'}
             </Text>
             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl">
-              {isSelectionMode ? 'Select Scans' : 'History'}
+              {isSelectionMode ? 'Receipt-ify' : 'History'}
             </Text>
           </View>
-          <TouchableOpacity 
-            onPress={isSelectionMode ? cancelSelection : () => setIsSelectionMode(true)}
-            className={`px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-50 border-red-100' : 'bg-accent/10 border-accent/20'}`}
-          >
-            <Text className={`font-poppins-bold text-xs uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-accent'}`}>
-              {isSelectionMode ? 'Cancel' : 'Select'}
-            </Text>
-          </TouchableOpacity>
+
+          <View className="flex-row items-center">
+            <TouchableOpacity 
+                onPress={isSelectionMode ? cancelSelection : () => setIsSelectionMode(true)}
+                className={`mr-4 px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-50 border-red-100' : 'bg-accent/10 border-accent/20'}`}
+            >
+                <Text className={`font-poppins-bold text-xs uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-accent'}`}>
+                {isSelectionMode ? 'Cancel' : 'Select'}
+                </Text>
+            </TouchableOpacity>
+
+            <BingwaAvatar size={48} borderWidth={2} />
+          </View>
         </View>
 
         <View className="items-center px-6">
           <View style={{ width: contentWidth }}>
             
-            {/* Stats Summary - Hide in selection mode for more space */}
+            {/* Selection Prompt */}
+            {isSelectionMode && selectedIds.length === 0 && (
+              <MotiView 
+                from={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-accent/5 p-6 rounded-[32px] border border-accent/10 mb-8 items-center"
+              >
+                <View className="w-12 h-12 bg-accent/20 rounded-2xl items-center justify-center mb-3">
+                  <Ionicons name="checkmark-circle" size={24} color="#25D366" />
+                </View>
+                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm text-center">
+                  Select scans to Receipt-ify
+                </Text>
+                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[10px] text-center opacity-60 mt-1">
+                  Tap your scan cards to include them in your report
+                </Text>
+              </MotiView>
+            )}
+
+            {/* Stats Summary */}
             {!isSelectionMode && (
               <View className="flex-row space-x-3 mb-8">
                 <StatCard label="Total Scans" value={stats.total} icon="scan" color="#3A86FF" delay={200} />
@@ -128,16 +165,22 @@ export default function HistoryTab() {
               </View>
             )}
 
-            {/* Filters */}
-            <View className="mb-8">
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+            {/* Filters - Improved Spacing and Visibility */}
+            <View className="mb-10">
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                className="overflow-visible"
+                contentContainerStyle={{ paddingRight: 20 }}
+              >
                 {FILTERS.map((filter) => (
-                  <CategoryChip 
-                    key={filter} 
-                    label={filter} 
-                    active={activeFilter === filter} 
-                    onPress={() => setActiveFilter(filter)} 
-                  />
+                  <View key={filter} className="mr-3">
+                    <CategoryChip 
+                      label={filter} 
+                      active={activeFilter === filter} 
+                      onPress={() => setActiveFilter(filter)} 
+                    />
+                  </View>
                 ))}
               </ScrollView>
             </View>
@@ -189,12 +232,19 @@ export default function HistoryTab() {
           >
             <TouchableOpacity 
               onPress={() => setShowReceipt(true)}
-              className="bg-accent h-16 rounded-[24px] flex-row items-center justify-center shadow-2xl shadow-accent/40"
+              className="h-16 rounded-[24px] overflow-hidden shadow-2xl shadow-accent/40"
             >
-              <Ionicons name="receipt" size={24} color="white" className="mr-3" />
-              <Text className="text-white font-poppins-black text-sm uppercase tracking-widest">
-                Generate Receipt ({selectedIds.length})
-              </Text>
+              <LinearGradient
+                colors={['#25D366', '#128C7E']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="flex-1 flex-row items-center justify-center"
+              >
+                <Ionicons name="receipt" size={24} color="white" className="mr-3" />
+                <Text className="text-white font-poppins-black text-sm uppercase tracking-widest">
+                  Receipt-ify ({selectedIds.length})
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
           </MotiView>
         )}
@@ -208,4 +258,3 @@ export default function HistoryTab() {
     </SafeAreaView>
   );
 }
-

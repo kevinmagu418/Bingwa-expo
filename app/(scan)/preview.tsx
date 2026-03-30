@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, SafeAreaView, Platform, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, SafeAreaView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '../../hooks/useProfile';
+import { BingwaLoader } from '../../components/Loader';
 
 import * as Haptics from 'expo-haptics';
 import { Alert } from 'react-native';
@@ -156,7 +157,3 @@ export default function PreviewScreen() {
     </View>
   );
 }
-
-import { ActivityIndicator } from 'react-native';
-import { BingwaLoader } from '../../components/Loader';
-

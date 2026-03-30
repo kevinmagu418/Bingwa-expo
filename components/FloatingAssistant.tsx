@@ -26,10 +26,10 @@ interface FloatingAssistantProps {
 }
 
 const QUICK_CHIPS = [
-  { label: "Dawa gani nioze?", value: "Ni dawa gani naweza kutumia kuzuia huu ugonjwa?" },
-  { label: "Is it contagious?", value: "Huu ugonjwa unaweza kuenea kwa mimea mingine?" },
-  { label: "Organic ways?", value: "Nipe mbinu za kiasili (organic) za kuzuia ugonjwa huu." },
-  { label: "Prevension tips", value: "Nitazuiaje ugonjwa huu usirudi msimu ujao?" },
+  { label: "Recommended medicine?", value: "What medicine can I use to treat this disease?" },
+  { label: "Is it contagious?", value: "Can this disease spread to other plants?" },
+  { label: "Organic ways?", value: "Give me organic methods to prevent this disease." },
+  { label: "Prevention tips", value: "How can I prevent this disease from returning next season?" },
 ];
 
 export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDiseaseId, initialMessage, imageContext }) => {
@@ -45,7 +45,7 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
     if (messages.length === 0) {
       setMessages([{ 
         role: 'assistant', 
-        content: initialMessage || "Hello! Jambo! I'm Bingwa AI. How can I help with your crops today?" 
+        content: initialMessage || "Hello! I'm Bingwa AI. How can I help with your crops today?" 
       }]);
     }
   }, [initialMessage]);
@@ -75,16 +75,29 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Functions Error:', error);
+        throw error;
+      }
+
       setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
+      } catch (error: any) {
       console.error('Chat error:', error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "I'm having trouble connecting. Jaribu tena baada ya muda." 
+      let errorMessage = "I'm having trouble connecting. Please try again in a moment.";
+
+      if (error.context?.json?.error) {
+        errorMessage = error.context.json.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: errorMessage
       }]);
-    } finally {
+      } finally {
+
       setIsLoading(false);
     }
   }, [input, isLoading, messages, currentDiseaseId, imageContext]);
@@ -113,7 +126,7 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
     setRecording(null);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     // Simulate speech to text
-    handleSend("Nisaidie na huu ugonjwa mzee..."); 
+    handleSend("Help me with this crop condition..."); 
   };
 
   useEffect(() => {
@@ -141,7 +154,7 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
                 </View>
                 <View>
                   <Text className="text-white font-poppins-bold text-sm">Bingwa AI</Text>
-                  <Text className="text-white/70 font-poppins-regular text-[10px]">Swahili & English Support</Text>
+                  <Text className="text-white/70 font-poppins-regular text-[10px]">Active Assistant</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={toggleOpen} className="p-2 bg-black/10 rounded-full">

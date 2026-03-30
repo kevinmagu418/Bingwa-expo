@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { BingwaLoader } from '../../components/Loader';
+import { useProfile } from '../../hooks/useProfile';
+import { BingwaAvatar } from '../../components/BingwaAvatar';
 
 const SEVERITY_COLORS = {
   low: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-600', border: 'border-green-200' },
@@ -17,11 +19,19 @@ const SEVERITY_COLORS = {
 export default function DiseaseInfoScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { profile, refreshProfile } = useProfile();
   const [activeTab, setActiveTab] = useState<'treatment' | 'prevention'>('treatment');
   const { width } = useWindowDimensions();
 
   const [disease, setDisease] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Refresh profile when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+    }, [refreshProfile])
+  );
 
   useEffect(() => {
     const fetchDisease = async () => {
@@ -100,78 +110,96 @@ export default function DiseaseInfoScreen() {
                </MotiView>
             </View>
           </LinearGradient>
-          
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            className="absolute top-4 left-4 w-12 h-12 bg-black/40 backdrop-blur-xl rounded-2xl items-center justify-center border border-white/10"
+
+          <MotiView 
+            from={{ opacity: 0, translateY: -20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            className="absolute top-6 left-6 right-6 flex-row justify-between items-center z-10"
           >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
+            <TouchableOpacity 
+                onPress={() => router.back()}
+                className="w-12 h-12 bg-black/40 backdrop-blur-xl rounded-2xl items-center justify-center border border-white/10 shadow-lg"
+            >
+                <Ionicons name="chevron-back" size={24} color="white" />
+            </TouchableOpacity>
+
+            <BingwaAvatar size={48} borderWidth={2} borderColor="rgba(255,255,255,0.3)" />
+          </MotiView>
         </View>
 
-        {/* Info Body */}
-        <View className="flex-1 -mt-10 bg-[#F8F9FA] dark:bg-darkBackground rounded-t-[40px] px-6 pt-10 pb-24 shadow-2xl">
-            
-            {/* Title */}
-            <View className="mb-8">
-                <Text className="text-accent font-poppins-black text-xs uppercase tracking-[4px] mb-2">Plant Pathology</Text>
-                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-4xl leading-tight">{disease.name}</Text>
-                <View className="h-1.5 w-16 bg-accent rounded-full mt-4" />
-            </View>
+        <View className="px-8 pt-8 pb-32">
+            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl mb-2">{disease.name}</Text>
+            <View className="h-1 bg-accent w-12 rounded-full mb-8" />
 
-            <View className="bg-white dark:bg-darkSurface p-6 rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm mb-8">
-                <View className="flex-row items-center mb-4">
-                    <View className="bg-accent/10 p-2 rounded-xl mr-3">
-                        <Ionicons name="information-circle" size={20} color="#25D366" />
-                    </View>
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-base">Description</Text>
-                </View>
-                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm leading-relaxed opacity-80">
-                    {disease.summary || "No summary available for this condition."}
+            <View className="mb-8">
+                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm leading-relaxed">
+                    {disease.description}
                 </Text>
             </View>
 
-            {/* Content Tabs */}
-            <View className="flex-row bg-gray-200/50 dark:bg-darkSurface/50 rounded-[20px] p-1.5 mb-6">
-                {(['treatment', 'prevention'] as const).map((tab) => (
-                    <TouchableOpacity 
-                        key={tab}
-                        onPress={() => setActiveTab(tab)}
-                        className={`flex-1 py-3.5 rounded-[16px] items-center justify-center ${activeTab === tab ? 'bg-white dark:bg-accent shadow-md' : ''}`}
-                    >
-                        <Text className={`font-poppins-bold text-[10px] uppercase tracking-wide ${activeTab === tab ? 'text-accent dark:text-white' : 'text-textSecondary opacity-50'}`}>
-                            {tab}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+            <View className="flex-row mb-8 bg-gray-100 dark:bg-darkSurface p-1.5 rounded-[24px]">
+                <TouchableOpacity 
+                    onPress={() => setActiveTab('treatment')}
+                    className={`flex-1 py-4 rounded-[20px] items-center ${activeTab === 'treatment' ? 'bg-white dark:bg-accent shadow-sm' : ''}`}
+                >
+                    <Text className={`font-poppins-bold text-xs uppercase tracking-widest ${activeTab === 'treatment' ? 'text-accent dark:text-white' : 'text-textSecondary'}`}>Treatment</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    onPress={() => setActiveTab('prevention')}
+                    className={`flex-1 py-4 rounded-[20px] items-center ${activeTab === 'prevention' ? 'bg-white dark:bg-accent shadow-sm' : ''}`}
+                >
+                    <Text className={`font-poppins-bold text-xs uppercase tracking-widest ${activeTab === 'prevention' ? 'text-accent dark:text-white' : 'text-textSecondary'}`}>Prevention</Text>
+                </TouchableOpacity>
             </View>
 
-            {/* Tab Content */}
             <AnimatePresence exitBeforeEnter>
                 <MotiView
                     key={activeTab}
-                    from={{ opacity: 0, translateY: 15 }}
+                    from={{ opacity: 0, translateY: 10 }}
                     animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ type: 'timing', duration: 400 }}
+                    transition={{ type: 'timing', duration: 300 }}
                 >
-                    <View className="bg-white dark:bg-darkSurface p-6 rounded-[32px] border border-black/5 dark:border-white/5 shadow-lg">
-                        <View className="flex-row justify-between items-center mb-6">
-                            <View className="bg-accent/10 dark:bg-accent/20 px-4 py-1.5 rounded-full">
-                                <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-wider">Expert Guide</Text>
+                    {activeTab === 'treatment' ? (
+                        <View>
+                            <View className="mb-6">
+                                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg mb-4">Organic Remedies</Text>
+                                {disease.organic_remedies?.map((item: string, index: number) => (
+                                    <View key={index} className="flex-row mb-3 items-start">
+                                        <View className="bg-green-100 dark:bg-green-900/30 p-1.5 rounded-lg mr-3 mt-0.5">
+                                            <Ionicons name="leaf" size={14} color="#25D366" />
+                                        </View>
+                                        <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm flex-1">{item}</Text>
+                                    </View>
+                                ))}
                             </View>
-                            <View className="bg-accent p-2.5 rounded-2xl">
-                                <Ionicons 
-                                    name={activeTab === 'prevention' ? "shield-checkmark" : "medical"} 
-                                    size={20} 
-                                    color="white" 
-                                />
+
+                            <View className="mb-6">
+                                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg mb-4">Chemical Options</Text>
+                                {disease.chemical_remedies?.map((item: string, index: number) => (
+                                    <View key={index} className="flex-row mb-3 items-start">
+                                        <View className="bg-blue-100 dark:bg-blue-900/30 p-1.5 rounded-lg mr-3 mt-0.5">
+                                            <Ionicons name="flask" size={14} color="#3A86FF" />
+                                        </View>
+                                        <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm flex-1">{item}</Text>
+                                    </View>
+                                ))}
                             </View>
                         </View>
-                        
-                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-regular text-base leading-relaxed mb-6">
-                            {activeTab === 'treatment' ? disease.description : (disease.prevention_tips || "Practice crop rotation and maintain field hygiene to prevent outbreaks.")}
-                        </Text>
+                    ) : (
+                        <View className="mb-6">
+                            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg mb-4">Expert Tips</Text>
+                            {disease.prevention_tips?.map((item: string, index: number) => (
+                                <View key={index} className="flex-row mb-3 items-start">
+                                    <View className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-lg mr-3 mt-0.5">
+                                        <Ionicons name="shield-checkmark" size={14} color="#8B5CF6" />
+                                    </View>
+                                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm flex-1">{item}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
 
+                    <View className="mt-4 p-6 bg-accent/5 rounded-[32px] border border-accent/10">
                         <View className="flex-row items-center bg-gray-50 dark:bg-white/5 p-4 rounded-2xl">
                             <Ionicons name="alert-circle-outline" size={18} color="#8696A0" />
                             <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[11px] ml-2 flex-1">
@@ -182,17 +210,57 @@ export default function DiseaseInfoScreen() {
                 </MotiView>
             </AnimatePresence>
 
+            {/* AI Consultation Card */}
+            <MotiView 
+                from={{ opacity: 0, translateY: 30 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 500 }}
+                className="mt-8 mb-2"
+            >
+                <TouchableOpacity 
+                    onPress={() => router.push({
+                        pathname: '/ai-assistant',
+                        params: { 
+                            currentDiseaseId: disease.id,
+                            imageUri: disease.image_url,
+                            crop: disease.crop,
+                            disease: disease.name,
+                            severity: disease.severity || 'low',
+                            initialMessage: `I see you're learning about ${disease.name} in ${disease.crop}. How can I help you manage or prevent this condition?`
+                        }
+                    })}
+                    activeOpacity={0.9}
+                    className="overflow-hidden rounded-[40px] border border-white/10 shadow-2xl shadow-accent/20"
+                >
+                    <LinearGradient
+                        colors={['#0B141A', '#121B22']}
+                        className="p-8 flex-row items-center"
+                    >
+                        <View className="w-16 h-16 rounded-[24px] bg-accent items-center justify-center mr-5 shadow-xl shadow-accent/30">
+                            <Ionicons name="sparkles" size={32} color="white" />
+                        </View>
+                        <View className="flex-1">
+                            <Text className="text-white font-poppins-black text-xl mb-1">Deep Analysis</Text>
+                            <Text className="text-white/50 font-poppins-regular text-xs leading-relaxed">Chat with Bingwa AI for personalized treatment steps & farm advice.</Text>
+                        </View>
+                        <View className="bg-accent/10 p-3 rounded-full border border-accent/20 ml-2">
+                            <Ionicons name="chatbubbles" size={20} color="#25D366" />
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </MotiView>
+
             <TouchableOpacity 
                 onPress={() => router.push('/(tabs)/scan')}
-                className="mt-10 h-16 rounded-[24px] overflow-hidden shadow-2xl shadow-accent/40 active:scale-[0.98]"
+                activeOpacity={0.8}
+                className="mt-6 h-20 rounded-[32px] overflow-hidden shadow-2xl shadow-accent/20"
             >
                 <LinearGradient
                     colors={['#25D366', '#128C7E']}
                     start={{ x: 0, y: 0 }} 
                     end={{ x: 1, y: 0 }}
-                    className="flex-1 items-center justify-center flex-row"
+                    className="flex-1 items-center justify-center"
                 >
-                    <Ionicons name="camera" size={24} color="white" className="mr-2" />
                     <Text className="text-white font-poppins-black text-sm uppercase tracking-widest">
                         Scan your crop
                     </Text>

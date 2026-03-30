@@ -1,11 +1,9 @@
 import React, { useRef } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, Dimensions, Platform, Share, ActivityIndicator } from 'react-native';
-import { MotiView, AnimatePresence } from 'moti';
+import { View, Text, Modal, TouchableOpacity, ScrollView, Dimensions, Platform, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -16,7 +14,9 @@ interface ReceiptScan {
   result: string;
   severity: string;
   date: string;
-  recommendation?: string;
+  organic_advice?: string;
+  chemical_advice?: string;
+  prevention?: string;
 }
 
 interface ReceiptPreviewProps {
@@ -29,180 +29,332 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
   const viewShotRef = useRef<any>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
 
-  const totalDiseases = selectedScans.filter(s => s.severity !== 'low' && !s.result.toLowerCase().includes('healthy')).length;
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).toUpperCase();
 
   const generatePDF = async () => {
     setIsGenerating(true);
     try {
       const html = `
+        <!DOCTYPE html>
         <html>
           <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+            <meta charset="utf-8">
             <style>
-              @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap');
-              body { font-family: 'Poppins', sans-serif; padding: 20px; color: #111B21; background-color: #fff; }
-              .header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 20px; margin-bottom: 20px; }
-              .title { font-size: 24px; font-weight: 900; color: #25D366; margin: 0; }
-              .subtitle { font-size: 10px; color: #54656F; text-transform: uppercase; letter-spacing: 2px; }
-              .item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-              .item-name { font-weight: 700; font-size: 14px; }
-              .item-detail { font-size: 12px; color: #54656F; }
-              .severity { font-size: 10px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700; }
-              .high { background: #fee2e2; color: #dc2626; }
-              .med { background: #ffedd5; color: #ea580c; }
-              .low { background: #dcfce7; color: #16a34a; }
-              .footer { margin-top: 40px; text-align: center; border-top: 2px dashed #ccc; padding-top: 20px; }
-              .footer-text { font-size: 10px; color: #8696A0; }
+              @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+              body { 
+                font-family: 'Courier Prime', monospace; 
+                padding: 50px; 
+                background-color: #fff;
+                color: #000;
+                line-height: 1.5;
+              }
+              .receipt { width: 100%; max-width: 750px; margin: 0 auto; }
+              .center { text-align: center; }
+              .header { margin-bottom: 40px; border-bottom: 3px dashed #000; padding-bottom: 25px; }
+              .title { font-size: 36px; font-weight: 700; margin: 0; letter-spacing: 2px; }
+              .sub-title { font-size: 14px; font-weight: 700; margin-top: 5px; text-transform: uppercase; }
+              .date { font-size: 14px; margin-top: 15px; }
+              
+              .scan-item { margin-bottom: 50px; page-break-inside: avoid; border-bottom: 1px dashed #ccc; padding-bottom: 30px; }
+              
+              .main-row { margin-bottom: 20px; }
+              .label { font-weight: 700; font-size: 14px; text-decoration: underline; display: block; margin-top: 15px; margin-bottom: 5px; color: #000; }
+              .content { font-size: 14px; display: block; color: #000; text-transform: uppercase; }
+              
+              .diagnosis-box { border: 2px solid #000; padding: 15px; margin-bottom: 15px; background-color: #f9f9f9; }
+              .diagnosis-text { font-size: 20px; font-weight: 700; }
+              .severity-text { font-size: 14px; font-weight: 700; display: block; margin-top: 5px; }
+
+              .footer { margin-top: 80px; text-align: center; border-top: 3px dashed #000; padding-top: 40px; }
+              .footer-title { font-size: 24px; font-weight: 700; margin: 0; }
+              .legal { font-size: 10px; margin-top: 30px; text-align: center; opacity: 0.8; font-style: italic; }
             </style>
           </head>
           <body>
-            <div class="header">
-              <h1 class="title">BINGWA SHAMBANI</h1>
-              <p class="subtitle">Agro-Prescription Receipt</p>
-              <p style="font-size: 12px; margin-top: 10px;">Date: ${new Date().toLocaleDateString()}</p>
-            </div>
-            ${selectedScans.map(scan => `
-              <div class="item">
-                <div>
-                  <div class="item-name">${scan.crop} - ${scan.result}</div>
-                  <div class="item-detail">${scan.date}</div>
-                </div>
-                <div class="severity ${scan.severity === 'high' ? 'high' : scan.severity === 'medium' ? 'med' : 'low'}">
-                  ${scan.severity}
-                </div>
+            <div class="receipt">
+              <div class="center header">
+                <h1 class="title">BINGWA AGRO-REPORT</h1>
+                <p class="sub-title">OFFICIAL AI DIAGNOSIS & PRESCRIPTION</p>
+                <div class="date">${today}</div>
               </div>
-            `).join('')}
-            <div class="footer">
-              <p class="footer-text">Present this receipt to your nearest Agrovet for precise treatment supplies.</p>
-              <p style="font-size: 14px; font-weight: 700; color: #128C7E;">Powered by Bingwa AI</p>
+
+              ${selectedScans.map((scan, i) => `
+                <div class="scan-item">
+                  <div class="diagnosis-box">
+                    <div class="diagnosis-text">ITEM #${i+1}: ${String(scan.crop).toUpperCase()} / ${String(scan.result).toUpperCase()}</div>
+                    <div class="severity-text">SEVERITY LEVEL: ${String(scan.severity).toUpperCase()}</div>
+                    <div style="font-size: 11px; margin-top: 5px;">RECORDED ON: ${scan.date}</div>
+                  </div>
+                  
+                  <div class="main-row">
+                    <span class="label">ORGANIC REMEDY:</span>
+                    <span class="content">${String(scan.organic_advice || 'NO SPECIFIC ORGANIC STEPS LISTED').toUpperCase()}</span>
+                  </div>
+                  
+                  <div class="main-row">
+                    <span class="label">CHEMICAL TREATMENT:</span>
+                    <span class="content">${String(scan.chemical_advice || 'CONSULT AGROVET FOR CHEMICAL COMPATIBILITY').toUpperCase()}</span>
+                  </div>
+                  
+                  <div class="main-row">
+                    <span class="label">PREVENTION STEPS:</span>
+                    <span class="content">${String(scan.prevention || 'MAINTAIN FIELD HYGIENE AND CROP ROTATION').toUpperCase()}</span>
+                  </div>
+                </div>
+              `).join('')}
+
+              <div class="footer">
+                <p>TOTAL ITEMS PROCESSED: ${selectedScans.length}</p>
+                <h2 class="footer-title">BINGWA SHAMBANI AI</h2>
+                <p>DIGITAL CROP PROTECTION SERVICES</p>
+              </div>
+              
+              <div class="legal">
+                IMPORTANT: THIS REPORT IS GENERATED BY ARTIFICIAL INTELLIGENCE. 
+                PLEASE VERIFY WITH A CERTIFIED AGRONOMIST BEFORE APPLYING 
+                INTENSIVE CHEMICAL TREATMENTS. ACCURACY MAY VARY BASED ON PHOTO QUALITY.
+              </div>
             </div>
           </body>
         </html>
       `;
 
       const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri);
+      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
     } catch (error) {
       console.error('PDF Generation Error:', error);
+      Alert.alert('Error', 'Failed to generate PDF. Please check your data and try again.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View className="flex-1 bg-black/60 items-center justify-center p-6">
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
         <MotiView
-          from={{ opacity: 0, scale: 0.9, translateY: 20 }}
-          animate={{ opacity: 1, scale: 1, translateY: 0 }}
-          className="bg-white dark:bg-darkSurface w-full max-h-[85vh] rounded-[32px] overflow-hidden shadow-2xl"
+          from={{ opacity: 0, translateY: 100 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          exit={{ opacity: 0, translateY: 100 }}
+          className="bg-white w-full max-h-[95vh] rounded-t-[40px] overflow-hidden shadow-2xl"
         >
-          {/* Header */}
-          <LinearGradient
-            colors={['#25D366', '#128C7E']}
-            className="p-6 flex-row justify-between items-center"
-          >
-            <View>
-              <Text className="text-white font-poppins-black text-xl">Bingwa Receipt</Text>
-              <Text className="text-white/70 font-poppins-regular text-[10px] uppercase tracking-widest">Agrovet Ready</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} className="p-2 bg-black/10 rounded-full">
-              <Ionicons name="close" size={24} color="white" />
-            </TouchableOpacity>
-          </LinearGradient>
+          {/* Top Drag Bar */}
+          <View className="items-center py-4 bg-white">
+            <View className="w-12 h-1.5 bg-gray-200 rounded-full" />
+          </View>
 
-          <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
-            {/* The Actual Receipt Style View */}
+          <ScrollView className="flex-1 px-6 pb-10" showsVerticalScrollIndicator={false}>
             <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }}>
-              <View className="bg-white p-6 rounded-2xl border border-dashed border-gray-300">
-                <View className="items-center mb-6 border-b border-dashed border-gray-200 pb-6">
-                  <Text className="text-black font-poppins-black text-2xl tracking-tighter">BINGWA SHAMBANI</Text>
-                  <Text className="text-gray-500 font-poppins-regular text-[10px] uppercase tracking-[3px] mt-1">Digital Prescription</Text>
-                </View>
-
-                {/* Scan List */}
-                <View className="mb-6">
-                  <View className="flex-row justify-between mb-4 pb-2 border-b border-gray-100">
-                    <Text className="text-gray-400 font-poppins-bold text-[10px] uppercase">Condition</Text>
-                    <Text className="text-gray-400 font-poppins-bold text-[10px] uppercase">Severity</Text>
+              <View style={styles.receiptContainer}>
+                <View style={styles.jaggedEdge} />
+                
+                <View style={styles.receiptContent}>
+                  <View className="items-center mb-8">
+                    <Text style={styles.receiptTitle}>BINGWA-IFY</Text>
+                    <Text style={styles.receiptSubtitle}>OFFICIAL AGRO-PRESCRIPTION</Text>
+                    <Text style={styles.receiptDate}>{today}</Text>
                   </View>
-                  
+
+                  <View style={styles.receiptDivider} />
+
                   {selectedScans.map((scan, index) => (
-                    <View key={index} className="flex-row justify-between items-center mb-4">
-                      <View className="flex-1 mr-4">
-                        <Text className="text-black font-poppins-bold text-sm leading-tight">{scan.crop} - {scan.result}</Text>
-                        <Text className="text-gray-500 font-poppins-regular text-[10px]">{scan.date}</Text>
+                    <View key={index} className="mb-10">
+                      <View style={styles.diagnosisBox}>
+                        <Text style={styles.monospaceDiagnosis}>
+                          {index + 1}. {scan.crop.toUpperCase()} / {scan.result.toUpperCase()}
+                        </Text>
+                        <Text style={styles.monospaceSeverity}>
+                          SEVERITY: {scan.severity.toUpperCase()}
+                        </Text>
                       </View>
-                      <View className={`px-3 py-1 rounded-md ${
-                        scan.severity === 'high' ? 'bg-red-100' : scan.severity === 'medium' ? 'bg-orange-100' : 'bg-green-100'
-                      }`}>
-                        <Text className={`font-poppins-bold text-[9px] uppercase ${
-                          scan.severity === 'high' ? 'text-red-600' : scan.severity === 'medium' ? 'text-orange-600' : 'text-green-600'
-                        }`}>{scan.severity}</Text>
-                      </View>
+                      
+                      <Text style={styles.sectionHeader}>[ORGANIC REMEDY]</Text>
+                      <Text style={styles.sectionBody}>{scan.organic_advice?.toUpperCase() || 'NO DATA'}</Text>
+                      
+                      <Text style={styles.sectionHeader}>[CHEMICAL TREATMENT]</Text>
+                      <Text style={styles.sectionBody}>{scan.chemical_advice?.toUpperCase() || 'CONSULT AGROVET'}</Text>
+                      
+                      <Text style={styles.sectionHeader}>[PREVENTION]</Text>
+                      <Text style={styles.sectionBody}>{scan.prevention?.toUpperCase() || 'FIELD HYGIENE'}</Text>
+
+                      {index < selectedScans.length - 1 && (
+                        <View style={[styles.receiptDivider, { borderStyle: 'dotted', opacity: 0.3, marginVertical: 30 }]} />
+                      )}
                     </View>
                   ))}
-                </View>
 
-                {/* Summary */}
-                <View className="border-t-2 border-dashed border-gray-200 pt-6 mb-6">
-                  <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-gray-500 font-poppins-regular text-xs">Total Items:</Text>
-                    <Text className="text-black font-poppins-bold text-xs">{selectedScans.length}</Text>
-                  </View>
-                  <View className="flex-row justify-between items-center">
-                    <Text className="text-gray-500 font-poppins-regular text-xs">Alert Level:</Text>
-                    <Text className={`font-poppins-black text-sm ${totalDiseases > 2 ? 'text-red-600' : 'text-green-600'}`}>
-                      {totalDiseases > 2 ? 'CRITICAL' : 'STABLE'}
+                  <View style={styles.receiptDivider} />
+
+                  <View className="mt-8 items-center">
+                    <Text style={styles.monospaceFooter}>REPORT TOTAL: {selectedScans.length} SCANS</Text>
+                    <Text style={[styles.monospaceFooter, { fontSize: 20, fontWeight: '700', marginTop: 10 }]}>
+                      BINGWA SHAMBANI
                     </Text>
                   </View>
-                </View>
 
-                {/* QR Code */}
-                <View className="items-center mt-4">
-                  <View className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm mb-4">
-                    <QRCode
-                      value={`bingwa-expo-agrovet-${selectedScans.map(s => s.id).join('-')}`}
-                      size={100}
-                      color="#111B21"
-                      backgroundColor="white"
-                    />
+                  <View className="mt-10 mb-4 opacity-40">
+                    <Text style={styles.cardInfo}>SECURED BY: BINGWA AI VAULT</Text>
+                    <Text style={styles.cardInfo}>OFFICIAL AI PRESCRIPTION SUMMARY</Text>
                   </View>
-                  <Text className="text-gray-400 font-poppins-regular text-[9px] text-center px-6">
-                    Agrovet: Scan this code to view detailed image analysis and specific treatment chemicals.
-                  </Text>
                 </View>
 
-                <View className="mt-8 items-center">
-                  <Text className="text-gray-300 font-poppins-regular text-[8px] uppercase tracking-widest">
-                    --- END OF PRESCRIPTION ---
-                  </Text>
-                </View>
+                <View style={styles.jaggedEdgeBottom} />
               </View>
             </ViewShot>
 
-            <View className="h-10" />
-          </ScrollView>
-
-          {/* Action Buttons */}
-          <View className="p-6 bg-gray-50 dark:bg-black/20 flex-row space-x-4">
             <TouchableOpacity 
               onPress={generatePDF}
               disabled={isGenerating}
-              className="flex-1 h-14 bg-accent rounded-2xl flex-row items-center justify-center shadow-lg shadow-accent/20"
+              className="mt-10 h-20 bg-accent rounded-[32px] flex-row items-center justify-center shadow-2xl shadow-accent/40"
             >
               {isGenerating ? (
                 <ActivityIndicator color="white" />
               ) : (
                 <>
-                  <Ionicons name="print" size={20} color="white" className="mr-2" />
-                  <Text className="text-white font-poppins-bold text-sm">Print / Share PDF</Text>
+                  <Ionicons name="receipt" size={28} color="white" className="mr-4" />
+                  <View>
+                    <Text className="text-white font-poppins-black text-sm uppercase tracking-widest leading-none">
+                      Receipt-ify
+                    </Text>
+                    <Text className="text-white/70 font-poppins-bold text-[10px] uppercase mt-1">
+                      Download Full PDF Report
+                    </Text>
+                  </View>
                 </>
               )}
             </TouchableOpacity>
-          </View>
+
+            <TouchableOpacity 
+              onPress={onClose}
+              className="mt-6 mb-12 items-center py-4"
+            >
+              <Text className="text-gray-400 font-poppins-bold text-sm uppercase tracking-widest">Close Vault</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </MotiView>
       </View>
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'flex-end',
+  },
+  receiptContainer: {
+    backgroundColor: 'transparent',
+  },
+  receiptContent: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 25,
+    paddingVertical: 30,
+  },
+  jaggedEdge: {
+    height: 15,
+    backgroundColor: '#fff',
+    width: '100%',
+    borderTopWidth: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderBottomWidth: 15,
+    borderStyle: 'solid',
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#fff',
+  },
+  jaggedEdgeBottom: {
+    height: 15,
+    backgroundColor: '#fff',
+    width: '100%',
+    transform: [{ rotate: '180deg' }],
+    borderTopWidth: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderBottomWidth: 15,
+    borderStyle: 'solid',
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#fff',
+  },
+  receiptTitle: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#000',
+    letterSpacing: -2,
+  },
+  receiptSubtitle: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12,
+    color: '#000',
+    marginTop: 5,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  receiptDate: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 10,
+    color: '#000',
+    marginTop: 10,
+  },
+  receiptDivider: {
+    borderBottomWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#000',
+    marginVertical: 20,
+  },
+  diagnosisBox: {
+    borderWidth: 2,
+    borderColor: '#000',
+    padding: 12,
+    marginBottom: 10,
+    backgroundColor: '#f5f5f5',
+  },
+  monospaceDiagnosis: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#000',
+  },
+  monospaceSeverity: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#000',
+    marginTop: 4,
+  },
+  sectionHeader: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 15,
+    textDecorationLine: 'underline',
+  },
+  sectionBody: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 11,
+    color: '#000',
+    marginTop: 6,
+    lineHeight: 16,
+  },
+  monospaceFooter: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12,
+    color: '#000',
+    textAlign: 'center',
+  },
+  cardInfo: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 9,
+    color: '#000',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+});
