@@ -8,6 +8,7 @@ import { MotiView } from 'moti';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
 
@@ -21,28 +22,48 @@ export default function LoginScreen() {
   async function signInWithOAuth(provider: 'google' | 'github') {
     try {
       setLoading(true);
-      const redirectTo = Linking.createURL('/(tabs)/scan');
+      
+      // Use standard web URL on web, and custom scheme on native
+      const redirectTo = Platform.OS === 'web' 
+        ? Linking.createURL('/(tabs)/scan') 
+        : makeRedirectUri({
+            scheme: 'bingwa-shambani',
+            path: '(tabs)/scan',
+          });
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
-          skipBrowserRedirect: true,
+          skipBrowserRedirect: Platform.OS !== 'web',
         },
       });
 
       if (error) throw error;
 
-      if (data?.url) {
+      if (Platform.OS !== 'web' && data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
         
         if (result.type === 'success' && result.url) {
           const { queryParams } = Linking.parse(result.url);
-          if (queryParams?.access_token) {
-            await supabase.auth.setSession({
-              access_token: queryParams.access_token as string,
-              refresh_token: queryParams.refresh_token as string,
+          
+          let accessToken = queryParams?.access_token;
+          let refreshToken = queryParams?.refresh_token;
+
+          // Supabase often puts tokens in the hash fragment
+          if (!accessToken && result.url.includes('#')) {
+            const hash = result.url.split('#')[1];
+            const params = new URLSearchParams(hash);
+            accessToken = params.get('access_token');
+            refreshToken = params.get('refresh_token');
+          }
+
+          if (accessToken) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken as string,
+              refresh_token: (refreshToken || '') as string,
             });
+            if (sessionError) throw sessionError;
           }
         }
       }
