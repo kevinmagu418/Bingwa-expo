@@ -49,6 +49,7 @@
         {
           "photosPermission": "Bingwa needs access to your photos to allow you to upload crop images for analysis.",
           "savePhotosPermission": "Bingwa needs access to your photos to allow you to upload crop images for analysis.",
+          "audioPermission": "Bingwa needs access to your audio files to allow you to upload audio recordings for analysis.",
           "isAccessMediaLocationEnabled": true
         }
       ],

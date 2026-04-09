@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, Pressable, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Pressable, Dimensions, ActivityIndicator } from 'react-native';
+import { useFeedback } from '../../context/FeedbackContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -29,6 +31,7 @@ const PACKAGES: PaymentPackage[] = [
 
 export default function PaymentRequiredModal() {
   const router = useRouter();
+  const { showError, showAlert } = useFeedback();
   const { profile, refreshProfile } = useProfile();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedPackage, setSelectedPackage] = useState<PaymentPackage>(PACKAGES[1]);
@@ -46,8 +49,7 @@ export default function PaymentRequiredModal() {
     let cleanPhone = phoneNumber.trim().replace(/[^0-9]/g, '');
 
     if (!cleanPhone || (cleanPhone.length < 9 || cleanPhone.length > 13)) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Invalid Number', 'Please enter a valid M-Pesa phone number.');
+      showError('Invalid Number', 'Please enter a valid M-Pesa phone number.');
       return;
     }
 
@@ -57,24 +59,23 @@ export default function PaymentRequiredModal() {
       const response = await initiatePayment(cleanPhone, selectedPackage.amount);
       
       if (response.success) {
-        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          'STK Push Sent 🚀',
-          `Please check your phone for the M-Pesa PIN prompt.`,
-          [{ 
+        showAlert({
+          type: 'success',
+          title: 'STK Push Sent 🚀',
+          message: 'Please check your phone for the M-Pesa PIN prompt.',
+          buttons: [{ 
             text: 'I have paid', 
             onPress: () => {
                 refreshProfile();
                 router.back();
             } 
           }]
-        );
+        });
       } else {
         throw new Error(response.message || 'STK Push failed');
       }
     } catch (error: any) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Payment Error', error.message || 'Could not initiate payment.');
+      showError('Payment Error', error.message || 'Could not initiate payment.');
     } finally {
       setIsLoading(false);
     }

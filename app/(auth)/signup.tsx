@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
+import { useFeedback } from '../../context/FeedbackContext';
 import { useRouter, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import PasswordStrength from '../../components/PasswordStrength';
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { showError, showSuccess, showAlert } = useFeedback();
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const [fullName, setFullName] = useState('');
@@ -73,8 +75,7 @@ export default function SignupScreen() {
         }
       }
     } catch (error: any) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Auth Error', error.message);
+      showError('Auth Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -121,14 +122,13 @@ export default function SignupScreen() {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
       if (!session) {
-        Alert.alert('Success', 'Welcome to Bingwa! Please check your email for the confirmation link.');
+        showSuccess('Success', 'Welcome to Bingwa! Please check your email for the confirmation link.');
         router.replace('/(auth)/login');
       } else {
          router.replace('/(onboarding)/complete-profile');
       }
     } catch (error: any) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Signup Error', error.message);
+      showError('Signup Error', error.message);
     } finally {
       setLoading(false);
     }

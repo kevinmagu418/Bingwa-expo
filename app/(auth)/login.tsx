@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useFeedback } from '../../context/FeedbackContext';
 import { useRouter, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ import AuthInput from '../../components/AuthInput';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { showError, showSuccess } = useFeedback();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,8 +70,7 @@ export default function LoginScreen() {
         }
       }
     } catch (error: any) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -77,8 +78,7 @@ export default function LoginScreen() {
 
   async function signInWithEmail() {
     if (!email || !password) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', 'Please fill in all fields');
+      showError('Required', 'Please fill in all fields');
       return;
     }
 
@@ -93,8 +93,7 @@ export default function LoginScreen() {
       
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Login Failed', error.message);
+      showError('Login Failed', error.message);
     } finally {
       setLoading(false);
     }

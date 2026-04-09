@@ -16,6 +16,8 @@ import {
 } from "@expo-google-fonts/poppins";
 import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
+import { FeedbackProvider } from "../context/FeedbackContext";
+import { BingwaAlert } from "../components/BingwaAlert";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -39,14 +41,28 @@ function RootLayout() {
 
   useEffect(() => {
     // Listen for auth state changes
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setInitialized(true);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        if (error) {
+          console.error("Auth initialization error:", error.message);
+          supabase.auth.signOut();
+        }
+        setSession(session);
+        setInitialized(true);
+      })
+      .catch((err) => {
+        console.error("Unexpected auth error:", err);
+        setInitialized(true);
+      });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth event:", event);
       setSession(session);
       setInitialized(true);
+
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+      }
 
       if (event === 'PASSWORD_RECOVERY') {
         router.replace('/(auth)/reset-password');
@@ -84,12 +100,15 @@ function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-      </Stack>
+      <FeedbackProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+          <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        </Stack>
+        <BingwaAlert />
+      </FeedbackProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { useFeedback } from '../../context/FeedbackContext';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ const CROPS = ["Maize", "Tomatoes", "Potatoes", "Beans", "Coffee", "Tea", "Other
 
 export default function CompleteProfileScreen() {
   const router = useRouter();
+  const { showError, showAlert } = useFeedback();
   const { profile, updateProfile, uploadAvatar } = useProfile();
   
   const [fullName, setFullName] = useState('');
@@ -49,7 +51,7 @@ export default function CompleteProfileScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'We need gallery access to update your photo.');
+        showError('Permission Denied', 'We need gallery access to update your photo.');
         return;
       }
 
@@ -64,7 +66,7 @@ export default function CompleteProfileScreen() {
         setAvatarUri(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      showError('Error', 'Failed to pick image');
     }
   };
 
@@ -74,7 +76,7 @@ export default function CompleteProfileScreen() {
 
   const handleSave = async () => {
     if (!fullName.trim()) {
-      Alert.alert('Required', 'Please enter your full name');
+      showError('Required', 'Please enter your full name');
       return;
     }
 
@@ -110,7 +112,7 @@ export default function CompleteProfileScreen() {
       }
 
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      showError('Error', error.message);
     } finally {
       setLoading(false);
       setUploading(false);
