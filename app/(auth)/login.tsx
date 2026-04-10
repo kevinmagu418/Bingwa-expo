@@ -56,8 +56,8 @@ export default function LoginScreen() {
           if (!accessToken && result.url.includes('#')) {
             const hash = result.url.split('#')[1];
             const params = new URLSearchParams(hash);
-            accessToken = params.get('access_token');
-            refreshToken = params.get('refresh_token');
+            accessToken = params.get('access_token') || undefined;
+            refreshToken = params.get('refresh_token') || undefined;
           }
 
           if (accessToken) {

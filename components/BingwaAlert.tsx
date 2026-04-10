@@ -12,7 +12,7 @@ const THEMES = {
     color: '#25D366',
     icon: 'checkmark-circle' as const,
     emoji: '🌽', // Maize - Success/Harvest
-    gradient: ['#25D366', '#128C7E'],
+    gradient: ['#25D366', '#128C7E'] as const,
     bg: 'rgba(37, 211, 102, 0.1)',
     animation: 'pop',
   },
@@ -20,7 +20,7 @@ const THEMES = {
     color: '#F4A261',
     icon: 'alert-circle' as const,
     emoji: '🐛', // Pest/Bug - Error
-    gradient: ['#F4A261', '#E76F51'],
+    gradient: ['#F4A261', '#E76F51'] as const,
     bg: 'rgba(244, 162, 97, 0.1)',
     animation: 'shake',
   },
@@ -28,7 +28,7 @@ const THEMES = {
     color: '#3B82F6',
     icon: 'information-circle' as const,
     emoji: '💡', // Insight/Knowledge - Info
-    gradient: ['#3B82F6', '#2563EB'],
+    gradient: ['#3B82F6', '#2563EB'] as const,
     bg: 'rgba(59, 130, 246, 0.1)',
     animation: 'slide',
   },
@@ -36,7 +36,7 @@ const THEMES = {
     color: '#FBBF24',
     icon: 'warning' as const,
     emoji: '🔔', // Bell/Alert - Warning
-    gradient: ['#FBBF24', '#D97706'],
+    gradient: ['#FBBF24', '#D97706'] as const,
     bg: 'rgba(251, 191, 36, 0.1)',
     animation: 'pulse',
   },
