@@ -5,7 +5,7 @@
     "scheme": "bingwa-shambani",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/new-logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -24,7 +24,7 @@
     "android": {
       "package": "com.bingwa.shambani",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/new-logo.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -72,7 +72,8 @@
         {
           "microphonePermission": "Bingwa needs access to your microphone to allow you to ask questions using your voice."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "router": {},
