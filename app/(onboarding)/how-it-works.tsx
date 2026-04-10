@@ -23,6 +23,11 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 
+import ScanSvg from "../../assets/svgs/scan.svg";
+import AnalysisSvg from "../../assets/svgs/analysis.svg";
+import SolutionsSvg from "../../assets/svgs/solutions.svg";
+import PaymentSvg from "../../assets/svgs/payment.svg";
+
 type Slide = {
   id: string;
   title: string;
@@ -30,36 +35,37 @@ type Slide = {
   description: string;
   color: string;
   icon?: string;
-  image?: any;
+  Svg?: any;
   isPricing?: boolean;
 };
 
 const SLIDES: Slide[] = [
   {
     id: "1",
-    icon: "camera",
+    icon: "camera-outline",
     title: "Snap a Photo",
     subtitle: "STEP 01",
     description: "Point your camera at the affected leaf. Ensure good lighting for the best AI accuracy.",
     color: "#25D366",
+    Svg: ScanSvg,
   },
   {
     id: "2",
-    icon: "analytics",
+    icon: "analytics-outline",
     title: "AI Analysis",
     subtitle: "STEP 02",
     description: "Our neural network scans thousands of disease signatures specific to African crops.",
-   
     color: "#3A86FF",
+    Svg: AnalysisSvg,
   },
   {
     id: "3",
-    icon: "medkit",
+    icon: "medkit-outline",
     title: "Get Solutions",
     subtitle: "STEP 03",
     description: "Receive immediate treatment plans, from organic remedies to targeted chemical solutions.",
-   
     color: "#F4A261",
+    Svg: SolutionsSvg,
   },
   {
     id: "4",
@@ -67,58 +73,72 @@ const SLIDES: Slide[] = [
     title: "Pay as you go",
     subtitle: "PRICING",
     description: "Start with 2 free scans. Affordable top-ups via M-Pesa. No monthly commitments.",
-    color: "#25D366",
+    color: "#128C7E",
+    Svg: PaymentSvg,
   }
 ];
 
-const SlideItem = memo(({ item, width, height }: { item: Slide, width: number, height: number }) => {
+const SlideItem = memo(({ item, width, height, isActive }: { item: Slide, width: number, height: number, isActive: boolean }) => {
   const isWeb = Platform.OS === 'web';
   const contentWidth = isWeb ? Math.min(width, 450) : width;
   
-  const floatValue = useSharedValue(0);
-  useEffect(() => {
-    floatValue.value = withRepeat(withTiming(1, { duration: 3000 }), -1, true);
-  }, []);
-
-  const animatedImageStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(floatValue.value, [0, 1], [0, -10]) }]
-  }));
-
   if (item.isPricing) {
     return (
       <View style={{ width }} className="flex-1 items-center justify-center px-6">
         <MotiView
-          from={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          from={{ opacity: 0, scale: 0.9, translateY: 20 }}
+          animate={{ 
+            opacity: isActive ? 1 : 0.3, 
+            scale: isActive ? 1 : 0.9,
+            translateY: isActive ? 0 : 20 
+          }}
+          transition={{ type: 'spring', damping: 15 }}
           style={{ width: contentWidth - 40 }}
-          className="bg-surface dark:bg-darkSurface p-8 rounded-[48px] shadow-2xl shadow-black/5 border border-black/5 dark:border-white/5"
+          className="bg-white dark:bg-darkSurface p-8 rounded-[48px] shadow-2xl shadow-black/5 border border-black/5 dark:border-white/5"
         >
-          <View className="w-16 h-16 bg-accent/20 rounded-[20px] items-center justify-center mb-6 self-center">
-            <Ionicons name="flash" size={32} color="#25D366" />
-          </View>
+          <MotiView
+            animate={{ 
+              translateY: [0, -10, 0],
+              rotate: ['-2deg', '2deg', '-2deg']
+            }}
+            transition={{
+              type: 'timing',
+              duration: 3000,
+              loop: true,
+              repeat: Infinity
+            }}            className="w-40 h-40 self-center mb-6"
+          >
+            {item.Svg && <item.Svg width="100%" height="100%" />}
+          </MotiView>
           
-          <Text className="text-accent text-center font-poppins-bold tracking-[3px] text-xs mb-2 uppercase">
+          <Text className="text-accent text-center font-poppins-bold tracking-[3px] text-[10px] mb-2 uppercase opacity-60">
             {item.subtitle}
           </Text>
           <Text className="text-textPrimary dark:text-darkTextPrimary text-3xl font-poppins-black text-center mb-3">
             {item.title}
           </Text>
-          <Text className="text-textPrimary dark:text-darkTextPrimary text-center font-poppins-regular text-sm leading-5 mb-8">
+          <Text className="text-textPrimary/60 dark:text-darkTextPrimary/60 text-center font-poppins-regular text-sm leading-5 mb-8 px-2">
             {item.description}
           </Text>
           
-          <View>
+          <View className="space-y-3">
             {[
-              { label: "2 Free Scans", icon: "gift" },
-              { label: "M-Pesa Ready", icon: "phone-portrait" },
-              { label: "No Subscriptions", icon: "infinite" }
+              { label: "2 Free Scans", icon: "gift-outline", color: "#25D366" },
+              { label: "M-Pesa Ready", icon: "phone-portrait-outline", color: "#3A86FF" },
+              { label: "No Subscriptions", icon: "infinite-outline", color: "#F4A261" }
             ].map((feat, idx) => (
-              <View key={idx} className="flex-row items-center bg-muted dark:bg-darkMuted p-4 rounded-[20px] mb-3">
-                <View className="w-10 h-10 bg-accent/10 rounded-xl items-center justify-center mr-4">
-                  <Ionicons name={feat.icon as any} size={18} color="#25D366" />
+              <MotiView 
+                key={idx}
+                from={{ opacity: 0, translateX: -10 }}
+                animate={{ opacity: isActive ? 1 : 0, translateX: isActive ? 0 : -10 }}
+                transition={{ delay: 300 + (idx * 100) }}
+                className="flex-row items-center bg-gray-50 dark:bg-darkMuted/30 p-4 rounded-3xl"
+              >
+                <View style={{ backgroundColor: `${feat.color}20` }} className="w-10 h-10 rounded-2xl items-center justify-center mr-4">
+                  <Ionicons name={feat.icon as any} size={18} color={feat.color} />
                 </View>
                 <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">{feat.label}</Text>
-              </View>
+              </MotiView>
             ))}
           </View>
         </MotiView>
@@ -129,30 +149,118 @@ const SlideItem = memo(({ item, width, height }: { item: Slide, width: number, h
   return (
     <View style={{ width }} className="flex-1 items-center">
       <View style={{ width: contentWidth }} className="flex-1">
-        {/* Adjusted Image Height to Flex: 1 to ensure it doesn't take too much vertical space */}
-        <View className="flex-1 px-8 pt-6 justify-center">
-          <Animated.View style={[animatedImageStyle, { height: '80%', width: '100%' }]}>
-            <MotiView
-              from={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full h-full rounded-[40px] overflow-hidden shadow-xl"
-            >
-              <Image source={item.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.3)']} style={StyleSheet.absoluteFill} />
-            </MotiView>
-          </Animated.View>
+        
+        {/* ANIMATED VECTOR AREA */}
+        <View className="flex-[1.2] px-8 pt-10 justify-center items-center relative">
+          
+          {/* Parallax Layer 1: Subtle Deep Glow */}
+          <MotiView
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.05, 0.1, 0.05]
+            }}
+            transition={{ type: 'timing', duration: 5000, loop: true }}
+            style={{
+              position: 'absolute',
+              width: 400,
+              height: 400,
+              borderRadius: 200,
+              backgroundColor: item.color,
+              filter: 'blur(80px)',
+            }}
+          />
+
+          {/* Parallax Layer 2: Main Pulse */}
+          <MotiView
+            animate={{ 
+              scale: [0.8, 1, 0.8],
+              rotate: ['0deg', '45deg', '0deg']
+            }}
+            transition={{ type: 'timing', duration: 8000, loop: true }}
+            style={{
+              position: 'absolute',
+              width: 260,
+              height: 260,
+              borderRadius: 80,
+              backgroundColor: `${item.color}15`,
+              borderWidth: 2,
+              borderColor: `${item.color}10`,
+            }}
+          />
+
+          {/* Main Character SVG */}
+          <MotiView
+            animate={{ 
+              translateY: isActive ? [0, -15, 0] : 0,
+              scale: isActive ? [1, 1.05, 1] : 0.9,
+              opacity: isActive ? 1 : 0
+            }}
+            transition={{
+              type: 'timing',
+              duration: 3000,
+              loop: true,
+              repeat: Infinity
+            }}            className="w-full h-full items-center justify-center z-10"
+          >
+            {item.Svg && <item.Svg width="90%" height="90%" />}
+          </MotiView>
+
+          {/* Floating Detail Badge */}
+          <MotiView
+            animate={{ 
+              translateY: isActive ? [20, -20, 20] : 0,
+              rotate: isActive ? ['-15deg', '15deg', '-15deg'] : '0deg'
+            }}
+            transition={{ 
+              type: 'timing', 
+              duration: 4000, 
+              loop: true,
+              repeat: Infinity 
+            }}
+            style={{ position: 'absolute', top: '20%', right: '10%' }}
+            className="bg-white dark:bg-darkSurface p-5 rounded-[32px] shadow-2xl shadow-black/10 border border-black/5 dark:border-white/5 z-20"
+          >
+            <Ionicons name={item.icon as any} size={32} color={item.color} />
+          </MotiView>
         </View>
 
-        {/* Content Section */}
-        <View className="px-10 pb-8 pt-4">
-          <MotiView from={{ opacity: 0, translateX: -20 }} animate={{ opacity: 1, translateX: 0 }}>
-            <Text className="text-accent font-poppins-bold tracking-[3px] text-xs mb-2 uppercase">
+        {/* CONTENT AREA: Staggered Entry */}
+        <View className="px-10 pb-16 pt-6">
+          <MotiView 
+            from={{ opacity: 0, translateY: 20 }} 
+            animate={{ 
+              opacity: isActive ? 1 : 0, 
+              translateY: isActive ? 0 : 20 
+            }}
+            transition={{ delay: 200, type: 'spring' }}
+          >
+            <Text style={{ color: item.color }} className="font-poppins-bold tracking-[4px] text-[10px] mb-3 uppercase text-center opacity-80">
               {item.subtitle}
             </Text>
-            <Text className="text-textPrimary dark:text-darkTextPrimary text-4xl font-poppins-black mb-3">
+          </MotiView>
+
+          <MotiView 
+            from={{ opacity: 0, translateY: 20 }} 
+            animate={{ 
+              opacity: isActive ? 1 : 0, 
+              translateY: isActive ? 0 : 20 
+            }}
+            transition={{ delay: 350, type: 'spring' }}
+          >
+            <Text className="text-textPrimary dark:text-darkTextPrimary text-4xl font-poppins-black mb-4 text-center leading-[48px]">
               {item.title}
             </Text>
-            <Text className="text-textPrimary dark:text-darkTextPrimary text-base font-poppins-regular leading-6">
+          </MotiView>
+
+          <MotiView 
+            from={{ opacity: 0, translateY: 20 }} 
+            animate={{ 
+              opacity: isActive ? 1 : 0, 
+              translateY: isActive ? 0 : 20 
+            }}
+            transition={{ delay: 500, type: 'spring' }}
+          >
+            <Text className="text-textPrimary/50 dark:text-darkTextPrimary/50 text-center font-poppins-regular text-base leading-7 px-2">
               {item.description}
             </Text>
           </MotiView>
@@ -189,7 +297,7 @@ export default function HowItWorksScreen() {
         index: nextIndex,
         animated: true,
       });
-    }, 4000); // 4 seconds interval
+    }, 5000); 
   }, [currentIndex, stopAutoPlay]);
 
   useEffect(() => {
@@ -225,16 +333,18 @@ export default function HowItWorksScreen() {
   }, [currentIndex, stopAutoPlay]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#EDEDED', paddingTop: insets.top }} className="dark:bg-darkBackground">
-      {/* Navigation Header */}
+    <View style={{ flex: 1, backgroundColor: '#F8F9FA', paddingTop: insets.top }} className="dark:bg-darkBackground">
+      {/* Dynamic Header */}
       <View className="px-8 pt-4 flex-row justify-between items-center z-10">
-        <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }}>
-           <Image source={require("../../assets/bingwalogo.png")} style={{ width: 80, height: 24, opacity: 0.4 }} resizeMode="contain" />
+        <MotiView 
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 3000, loop: true }}
+        >
+           <Image source={require("../../assets/bingwalogo.png")} style={{ width: 90, height: 28 }} resizeMode="contain" />
         </MotiView>
         <Pressable 
           onPress={() => router.push("/permissions")} 
-          hitSlop={20}
-          className="bg-white/50 dark:bg-darkSurface/50 px-5 py-2 rounded-xl"
+          className="bg-white/80 dark:bg-darkSurface/80 px-6 py-2.5 rounded-2xl border border-black/5"
         >
           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase tracking-[2px]">Skip</Text>
         </Pressable>
@@ -249,28 +359,29 @@ export default function HowItWorksScreen() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-        keyExtractor={(item) => item.id || "pricing"}
-        renderItem={({ item }) => <SlideItem item={item} width={width} height={height} />}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => <SlideItem item={item} width={width} height={height} isActive={index === currentIndex} />}
         onScrollBeginDrag={stopAutoPlay}
         onScrollEndDrag={startAutoPlay}
         windowSize={3}
       />
 
-      {/* Footer Navigation */}
+      {/* Footer Navigation: Liquid Pagination */}
       <View className="items-center pb-12 pt-4 px-8">
         <View style={{ width: isWeb ? Math.min(width - 40, 450) : '100%' }}>
-          {/* Pagination Dots */}
-          <View className="flex-row justify-center mb-10 space-x-3">
+          
+          <View className="flex-row justify-center mb-10 items-center space-x-3">
             {SLIDES.map((_, i) => (
               <MotiView
                 key={i}
                 animate={{
-                  width: i === currentIndex ? 30 : 8,
+                  width: i === currentIndex ? 32 : 10,
+                  height: 10,
                   opacity: i === currentIndex ? 1 : 0.2,
-                  backgroundColor: i === currentIndex ? "#25D366" : "#8696A0",
+                  backgroundColor: i === currentIndex ? SLIDES[currentIndex].color : "#8696A0",
+                  borderRadius: 5,
                 }}
-                transition={{ type: "spring", damping: 15 }}
-                className="h-1.5 rounded-full"
+                transition={{ type: "spring", damping: 12 }}
               />
             ))}
           </View>
@@ -286,9 +397,9 @@ export default function HowItWorksScreen() {
                 >
                   <Pressable 
                     onPress={handleBack} 
-                    className="h-14 w-full border-2 border-accent/30 rounded-[20px] items-center justify-center active:opacity-60"
+                    className="h-16 w-full bg-white dark:bg-darkSurface border border-black/5 dark:border-white/5 rounded-[24px] items-center justify-center active:scale-95"
                   >
-                    <Ionicons name="chevron-back" size={20} color="#25D366" />
+                    <Ionicons name="chevron-back" size={24} color={SLIDES[currentIndex].color} />
                   </Pressable>
                 </MotiView>
               )}
@@ -296,19 +407,18 @@ export default function HowItWorksScreen() {
 
             <Pressable 
               onPress={handleContinue} 
-              className="flex-1 h-14 bg-accent rounded-[20px] items-center justify-center shadow-lg shadow-accent/30 overflow-hidden active:scale-[0.98]"
+              className="flex-1 h-16 rounded-[24px] items-center justify-center shadow-xl overflow-hidden active:scale-[0.97]"
+              style={{ backgroundColor: SLIDES[currentIndex].color }}
             >
               <LinearGradient 
-                colors={['#25D366', '#128C7E']} 
-                start={{ x: 0, y: 0 }} 
-                end={{ x: 1, y: 0 }} 
+                colors={[SLIDES[currentIndex].color, `${SLIDES[currentIndex].color}CC`]} 
                 className="absolute inset-0" 
               />
               <View className="flex-row items-center">
-                <Text className="text-white font-poppins-black text-sm mr-2 uppercase tracking-widest">
-                  {currentIndex === SLIDES.length - 1 ? "Start Now" : "Continue"}
+                <Text className="text-white font-poppins-black text-sm mr-3 uppercase tracking-[3px]">
+                  {currentIndex === SLIDES.length - 1 ? "Get Started" : "Continue"}
                 </Text>
-                <Ionicons name="arrow-forward" size={18} color="white" />
+                <Ionicons name="arrow-forward" size={20} color="white" />
               </View>
             </Pressable>
           </View>

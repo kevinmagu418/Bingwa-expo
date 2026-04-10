@@ -11,32 +11,42 @@ const THEMES = {
   success: {
     color: '#25D366',
     icon: 'checkmark-circle' as const,
+    emoji: '🌽', // Maize - Success/Harvest
     gradient: ['#25D366', '#128C7E'],
     bg: 'rgba(37, 211, 102, 0.1)',
+    animation: 'pop',
   },
   error: {
-    color: '#F4A261', // The Orange color from Permissions page
-    icon: 'shield-alert' as const,
+    color: '#F4A261',
+    icon: 'alert-circle' as const,
+    emoji: '🐛', // Pest/Bug - Error
     gradient: ['#F4A261', '#E76F51'],
     bg: 'rgba(244, 162, 97, 0.1)',
+    animation: 'shake',
   },
   info: {
     color: '#3B82F6',
     icon: 'information-circle' as const,
+    emoji: '💡', // Insight/Knowledge - Info
     gradient: ['#3B82F6', '#2563EB'],
     bg: 'rgba(59, 130, 246, 0.1)',
+    animation: 'slide',
   },
   warning: {
     color: '#FBBF24',
     icon: 'warning' as const,
+    emoji: '🔔', // Bell/Alert - Warning
     gradient: ['#FBBF24', '#D97706'],
     bg: 'rgba(251, 191, 36, 0.1)',
+    animation: 'pulse',
   },
 };
 
 export const BingwaAlert = () => {
   const { alertConfig, hideAlert } = useFeedback();
   const theme = THEMES[alertConfig.type] || THEMES.info;
+
+  const isError = alertConfig.type === 'error';
 
   return (
     <Modal
@@ -49,12 +59,12 @@ export const BingwaAlert = () => {
         <AnimatePresence>
           {alertConfig.visible && (
             <Pressable style={StyleSheet.absoluteFill} onPress={hideAlert}>
-                <MotiView
-                    from={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    style={styles.backdrop}
-                />
+              <MotiView
+                from={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={styles.backdrop}
+              />
             </Pressable>
           )}
         </AnimatePresence>
@@ -62,26 +72,93 @@ export const BingwaAlert = () => {
         <AnimatePresence>
           {alertConfig.visible && (
             <MotiView
-              from={{ opacity: 0, scale: 0.9, translateY: 20 }}
-              animate={{ opacity: 1, scale: 1, translateY: 0 }}
-              exit={{ opacity: 0, scale: 0.9, translateY: 20 }}
-              transition={{ type: 'spring', damping: 20 }}
+              from={{ 
+                opacity: 0, 
+                scale: 0.8, 
+                translateY: 20,
+                translateX: 0 
+              }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                translateY: 0,
+                translateX: isError ? [0, -10, 10, -10, 10, 0] : 0
+              }}
+              exit={{ opacity: 0, scale: 0.8, translateY: 20 }}
+              transition={{ 
+                type: 'spring', 
+                damping: 20,
+                translateX: { type: 'timing', duration: 400 } 
+              }}
+              className="bg-white dark:bg-darkSurface"
               style={styles.modalContainer}
             >
+              {/* Floating Decorative Emoji with Hover Animation */}
+              <MotiView
+                from={{ opacity: 0, scale: 0, translateY: 0 }}
+                animate={{ 
+                  opacity: 0.4, 
+                  scale: 1, 
+                  rotate: '15deg',
+                  translateY: [0, -15, 0] // Continuous Hover
+                }}
+                transition={{ 
+                  opacity: { delay: 200 },
+                  scale: { delay: 200 },
+                  translateY: { 
+                    loop: true, 
+                    duration: 3000, 
+                    type: 'timing' 
+                  }
+                }}
+                style={{ position: 'absolute', top: 20, right: 20 }}
+              >
+                <Text style={{ fontSize: 48 }}>{theme.emoji}</Text>
+              </MotiView>
+
               <View style={[styles.iconContainer, { backgroundColor: theme.bg }]}>
-                <Ionicons name={theme.icon} size={48} color={theme.color} />
+                <MotiView
+                    from={{ scale: 0, rotate: '-180deg' }}
+                    animate={{ scale: 1, rotate: '0deg' }}
+                    transition={{ type: 'spring', damping: 12, delay: 100 }}
+                >
+                    <Ionicons name={theme.icon} size={48} color={theme.color} />
+                </MotiView>
+                
                 <MotiView
                     from={{ scale: 0.8, opacity: 0.5 }}
-                    animate={{ scale: 1.4, opacity: 0 }}
-                    transition={{ loop: true, duration: 2000, type: 'timing' }}
+                    animate={{ scale: 1.6, opacity: 0 }}
+                    transition={{ loop: true, duration: 2500, type: 'timing' }}
                     style={[styles.pulse, { backgroundColor: theme.color }]}
                 />
               </View>
 
-              <Text style={styles.title}>{alertConfig.title}</Text>
-              <Text style={styles.message}>{alertConfig.message}</Text>
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 300 }}
+              >
+                <Text className="text-textPrimary dark:text-darkTextPrimary" style={styles.title}>
+                    {alertConfig.title}
+                </Text>
+              </MotiView>
 
-              <View style={styles.buttonContainer}>
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 450 }}
+              >
+                <Text className="text-textSecondary dark:text-darkTextSecondary" style={styles.message}>
+                    {alertConfig.message}
+                </Text>
+              </MotiView>
+
+              <MotiView
+                from={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 600 }}
+                style={styles.buttonContainer}
+              >
                 {alertConfig.buttons ? (
                   alertConfig.buttons.map((btn, idx) => (
                     <TouchableOpacity
@@ -114,7 +191,7 @@ export const BingwaAlert = () => {
                     </LinearGradient>
                   </TouchableOpacity>
                 )}
-              </View>
+              </MotiView>
             </MotiView>
           )}
         </AnimatePresence>
@@ -131,47 +208,48 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(11, 20, 26, 0.8)', // Matches Bingwa dark theme
+    backgroundColor: 'rgba(11, 20, 26, 0.85)',
   },
   modalContainer: {
     width: width * 0.85,
     maxWidth: 400,
-    backgroundColor: '#FFFFFF', // Light mode bg (TODO: support dark mode)
-    borderRadius: 40,
+    borderRadius: 48,
     padding: 32,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 40,
-    elevation: 20,
+    elevation: 25,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   iconContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 32,
+    width: 96,
+    height: 96,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   pulse: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 32,
+    borderRadius: 36,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: 'Poppins_900Black',
-    color: '#0B141A',
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Poppins_400Regular',
-    color: 'rgba(11, 20, 26, 0.6)',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
+    paddingHorizontal: 10,
   },
   buttonContainer: {
     width: '100%',
@@ -181,8 +259,8 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    height: 56,
-    borderRadius: 22,
+    height: 60,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   gradient: {
@@ -195,6 +273,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_800ExtraBold',
     color: '#FFFFFF',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
 });

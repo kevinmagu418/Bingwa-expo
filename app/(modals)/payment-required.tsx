@@ -4,7 +4,7 @@ import { useFeedback } from '../../context/FeedbackContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
+import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { initiatePayment } from '../../services/payment';
 import { useProfile } from '../../hooks/useProfile';
@@ -31,12 +31,54 @@ const PACKAGES: PaymentPackage[] = [
 
 export default function PaymentRequiredModal() {
   const router = useRouter();
-  const { showError, showAlert } = useFeedback();
+  const { showError } = useFeedback();
   const { profile, refreshProfile } = useProfile();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedPackage, setSelectedPackage] = useState<PaymentPackage>(PACKAGES[1]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const initialCredits = useRef(profile?.scan_credits || 0);
   const inputRef = useRef<TextInput>(null);
+
+  // Automatic Success Detection & Polling
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isWaiting && !isSuccess) {
+      // Polling fallback every 5 seconds
+      interval = setInterval(() => {
+        console.log('Polling for payment status...');
+        refreshProfile();
+      }, 5000);
+
+      if (profile) {
+        console.log('Payment Wait Status:', {
+          isWaiting,
+          currentCredits: profile.scan_credits,
+          initialCredits: initialCredits.current
+        });
+
+        if (profile.scan_credits > initialCredits.current) {
+          console.log('✅ Payment detected! Transitioning to success...');
+          setIsSuccess(true);
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          
+          const timer = setTimeout(() => {
+            router.back();
+          }, 2500);
+          return () => {
+            clearTimeout(timer);
+            clearInterval(interval);
+          };
+        }
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [profile?.scan_credits, isWaiting, isSuccess]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -59,18 +101,8 @@ export default function PaymentRequiredModal() {
       const response = await initiatePayment(cleanPhone, selectedPackage.amount);
       
       if (response.success) {
-        showAlert({
-          type: 'success',
-          title: 'STK Push Sent 🚀',
-          message: 'Please check your phone for the M-Pesa PIN prompt.',
-          buttons: [{ 
-            text: 'I have paid', 
-            onPress: () => {
-                refreshProfile();
-                router.back();
-            } 
-          }]
-        });
+        initialCredits.current = profile?.scan_credits || 0;
+        setIsWaiting(true);
       } else {
         throw new Error(response.message || 'STK Push failed');
       }
@@ -260,6 +292,113 @@ export default function PaymentRequiredModal() {
             </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
+
+        {/* PREMIUM PROCESSING OVERLAY */}
+        <AnimatePresence>
+          {isWaiting && (
+            <MotiView
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-[#0B141A] items-center justify-center px-10"
+            >
+              <View className="items-center justify-center">
+                {/* Radar Pulse Effect */}
+                <MotiView
+                  from={{ scale: 0.6, opacity: 0.5 }}
+                  animate={{ scale: 2, opacity: 0 }}
+                  transition={{ loop: true, duration: 2000, type: 'timing' }}
+                  style={{ position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: '#25D366' }}
+                />
+                <MotiView
+                  from={{ scale: 0.6, opacity: 0.5 }}
+                  animate={{ scale: 2, opacity: 0 }}
+                  transition={{ loop: true, duration: 2000, delay: 1000, type: 'timing' }}
+                  style={{ position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: '#25D366' }}
+                />
+                
+                <View className="w-24 h-24 bg-accent rounded-full items-center justify-center shadow-2xl shadow-accent/50">
+                  <AnimatePresence exitBeforeEnter>
+                    {isSuccess ? (
+                      <MotiView
+                        key="success"
+                        from={{ scale: 0, rotate: '-180deg' }}
+                        animate={{ scale: 1, rotate: '0deg' }}
+                        transition={{ type: 'spring' }}
+                      >
+                        <Ionicons name="checkmark" size={50} color="white" />
+                      </MotiView>
+                    ) : (
+                      <MotiView
+                        key="waiting"
+                        animate={{ rotate: '360deg' }}
+                        transition={{ loop: true, duration: 2000, type: 'timing' }}
+                      >
+                        <Ionicons name="sync" size={40} color="white" />
+                      </MotiView>
+                    )}
+                  </AnimatePresence>
+                </View>
+              </View>
+
+              <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 300 }}
+                className="items-center mt-12"
+              >
+                <Text className="text-white font-poppins-black text-2xl text-center mb-2">
+                  {isSuccess ? 'Payment Confirmed! 🌽' : 'Awaiting Payment...'}
+                </Text>
+                <Text className="text-white/40 font-poppins-regular text-center leading-6">
+                  {isSuccess 
+                    ? 'Your credits have been recharged. Redirecting you to your scan...' 
+                    : 'Please enter your M-Pesa PIN on the prompt sent to your phone.'}
+                </Text>
+              </MotiView>
+
+              {!isSuccess && (
+                <MotiView
+                  from={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 5000 }} // Show after 5 seconds
+                  className="mt-12 bg-white/5 p-6 rounded-3xl border border-white/5 w-full"
+                >
+                  <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-[2px] mb-2 text-center">Farmer Tip</Text>
+                  <Text className="text-white/60 font-poppins-regular text-xs text-center leading-5">
+                    Didn't get the prompt? Dial <Text className="text-white font-poppins-bold">*334#</Text> or open your M-Pesa App to complete the transaction manually.
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    onPress={async () => {
+                        const newProfile = await refreshProfile();
+                        // If they manually click it, we check again
+                        if (newProfile && newProfile.scan_credits > initialCredits.current) {
+                            setIsSuccess(true);
+                        } else {
+                            if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            // Maybe add a temporary visual feedback that it's still pending
+                        }
+                    }}
+                    className="mt-6 py-3 border-t border-white/5"
+                  >
+                    <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-[3px] text-center">I've already paid</Text>
+                  </TouchableOpacity>
+                </MotiView>
+              )}
+              
+              <TouchableOpacity 
+                onPress={() => setIsWaiting(false)}
+                className="mt-8"
+              >
+                <Text className="text-white/20 font-poppins-bold text-[10px] uppercase tracking-[4px]">
+                    Cancel
+                </Text>
+              </TouchableOpacity>
+            </MotiView>
+          )}
+        </AnimatePresence>
+
       </LinearGradient>
     </View>
   );

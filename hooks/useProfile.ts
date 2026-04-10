@@ -65,8 +65,10 @@ export const useProfile = () => {
       };
 
       notifyListeners(mergedProfile);
+      return mergedProfile;
     } catch (err: any) {
       setError(err.message);
+      return null;
     } finally {
       setLoading(false);
     }
