@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Pressable, Dimensions, ActivityIndicator } from 'react-native';
 import { useFeedback } from '../../context/FeedbackContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,6 +33,8 @@ export default function PaymentRequiredModal() {
   const router = useRouter();
   const { showError } = useFeedback();
   const { profile, refreshProfile } = useProfile();
+  // Params passed from processing.tsx when a scan was already analyzed but credits ran out
+  const { pendingScanId, pendingImageUri } = useLocalSearchParams<{ pendingScanId?: string; pendingImageUri?: string }>();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedPackage, setSelectedPackage] = useState<PaymentPackage>(PACKAGES[1]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +42,29 @@ export default function PaymentRequiredModal() {
   const [isSuccess, setIsSuccess] = useState(false);
   const initialCredits = useRef(profile?.scan_credits || 0);
   const inputRef = useRef<TextInput>(null);
+
+  // Redirect after success is confirmed
+  useEffect(() => {
+    if (isSuccess) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const timer = setTimeout(() => {
+        console.log('🚀 Redirecting after successful payment...');
+        // If a pending scan exists (came from processing.tsx), go directly to the result
+        if (pendingScanId) {
+          router.replace({
+            pathname: '/(scan)/result',
+            params: { scanId: pendingScanId, imageUri: pendingImageUri || '' },
+          });
+        } else if (router.canGoBack()) {
+          router.back();
+        } else {
+          // Fallback: web or modal opened as root screen — go to the scan tab
+          router.replace('/(tabs)/scan');
+        }
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess]);
 
   // Automatic Success Detection & Polling
   useEffect(() => {
@@ -62,15 +87,6 @@ export default function PaymentRequiredModal() {
         if (profile.scan_credits > initialCredits.current) {
           console.log('✅ Payment detected! Transitioning to success...');
           setIsSuccess(true);
-          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          
-          const timer = setTimeout(() => {
-            router.back();
-          }, 2500);
-          return () => {
-            clearTimeout(timer);
-            clearInterval(interval);
-          };
         }
       }
     }

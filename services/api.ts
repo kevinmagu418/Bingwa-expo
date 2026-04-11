@@ -1,3 +1,5 @@
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
 
 export interface ScanResult {
@@ -9,18 +11,30 @@ export interface ScanResult {
   error?: string;
 }
 
-/**
- * Uploads an image to Supabase Storage and returns the public URL
+  /**
+ * Uploads an image to Supabase Storage and returns the public URL and file name
  */
 const uploadImageToSupabase = async (imageUri: string) => {
-  const response = await fetch(imageUri);
-  const blob = await response.blob();
+  let uploadBody: any;
+
+  if (imageUri.startsWith('content://') || imageUri.startsWith('file://')) {
+    const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: 'base64',
+    });
+    uploadBody = decode(base64);
+  } else {
+    const response = await fetch(imageUri);
+    uploadBody = await response.blob();
+  }
 
   const fileName = `scan-${Date.now()}.jpg`;
 
   const { error } = await supabase.storage
     .from("scans")
-    .upload(fileName, blob);
+    .upload(fileName, uploadBody, {
+      contentType: 'image/jpeg',
+      upsert: true
+    });
 
   if (error) {
     throw new Error("Image upload failed: " + error.message);
@@ -30,7 +44,7 @@ const uploadImageToSupabase = async (imageUri: string) => {
     .from("scans")
     .getPublicUrl(fileName);
 
-  return data.publicUrl;
+  return { publicUrl: data.publicUrl, fileName };
 };
 
 /**
@@ -38,11 +52,12 @@ const uploadImageToSupabase = async (imageUri: string) => {
  */
 export const processImageScan = async (imageUri: string, selectedCrop: string = 'Maize'): Promise<ScanResult> => {
   try {
-    const imageUrl = await uploadImageToSupabase(imageUri);
+    const { publicUrl, fileName } = await uploadImageToSupabase(imageUri);
 
     const { data, error } = await supabase.functions.invoke("process-scan", {
       body: {
-        imageUrl,
+        imageUrl: publicUrl,
+        storagePath: fileName,
         crop: selectedCrop
       }
     });

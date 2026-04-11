@@ -21,27 +21,18 @@ serve(async (req) => {
     // 1. AUTHENTICATION
     const authHeader = req.headers.get("Authorization")
     if (!authHeader) throw new Error("Missing Authorization")
-    const token = authHeader.replace("Bearer ", "")
+    const token = authHeader.replace(/Bearer /i, "").trim()
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) throw new Error("Unauthorized")
 
     // 2. REQUEST BODY
-    const { imageUrl, crop } = await req.json()
-    if (!imageUrl) throw new Error("imageUrl is required")
+    const { imageUrl, crop, storagePath } = await req.json()
+    if (!imageUrl && !storagePath) throw new Error("Image reference is required")
 
     // 3. NORMALIZE CROP
     const allowedCrops = [
-      "apple",
-      "bean",
-      "bellpepper",
-      "cassava",
-      "cherry",
-      "grape",
-      "maize",
-      "peach",
-      "potato",
-      "strawberry",
-      "tomato"
+      "apple", "bean", "bellpepper", "cassava", "cherry",
+      "grape", "maize", "peach", "potato", "strawberry", "tomato"
     ]
 
     let normalizedCrop = (crop || "maize").toLowerCase().trim()
@@ -57,25 +48,40 @@ serve(async (req) => {
     if (!profile || profile.scan_credits <= 0) {
       return new Response(
         JSON.stringify({ success: false, error: "Insufficient credits", code: 'INSUFFICIENT_CREDITS' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200, // Returning 200 so frontend can handle the business logic error
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       )
     }
 
-    // 5. FETCH IMAGE & PREDICT
-    const imageRes = await fetch(imageUrl)
-    if (!imageRes.ok) throw new Error("Failed to fetch image from storage")
-    const imageBlob = await imageRes.blob()
+    // 5. FETCH IMAGE (Directly from Storage for reliability)
+    let imageBlob: Blob;
+    try {
+      const fileName = storagePath || imageUrl.split('/').pop()?.split('?')[0];
+      console.log(`Downloading image from storage: ${fileName}`);
+      
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("scans")
+        .download(fileName);
+        
+      if (downloadError || !fileData) {
+        console.error("Storage download failed, falling back to fetch:", downloadError?.message);
+        const imageRes = await fetch(imageUrl);
+        if (!imageRes.ok) throw new Error("Failed to fetch image from storage");
+        imageBlob = await imageRes.blob();
+      } else {
+        imageBlob = fileData;
+      }
+    } catch (e) {
+      console.error("Image retrieval error:", e.message);
+      throw new Error("Could not retrieve image for analysis");
+    }
 
     const formData = new FormData()
     formData.append("crop", normalizedCrop)
     formData.append("file", imageBlob, "scan.jpg")
 
-    const modelApiUrl =
-      "https://kevinkiragu-bingwa-shambani.hf.space/api/predict"
+    const modelApiUrl = "https://kevinkiragu-bingwa-shambani.hf.space/api/predict"
 
+    console.log(`Sending to Hugging Face: ${normalizedCrop}`);
     const predictResponse = await fetch(modelApiUrl, {
       method: "POST",
       body: formData,
@@ -84,10 +90,11 @@ serve(async (req) => {
     if (!predictResponse.ok) {
       const errorDetail = await predictResponse.text();
       console.error("Prediction API failed:", predictResponse.status, errorDetail);
-      throw new Error("Prediction API failed");
+      throw new Error("Prediction AI is currently unavailable. Please try again later.");
     }
 
     const prediction = await predictResponse.json()
+    console.log("Prediction received:", prediction);
     
     // Support both 'display_label'/'disease' and handle missing fields
     const diseaseName = prediction.display_label || prediction.disease || prediction.label || 'Unknown'

@@ -8,6 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
 import { StatusBar } from 'expo-status-bar';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../hooks/useProfile';
 import { BingwaAvatar } from '../components/BingwaAvatar';
@@ -43,6 +45,7 @@ export default function AIAssistantScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -50,17 +53,20 @@ export default function AIAssistantScreen() {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   useEffect(() => {
+    // Only set the welcome message once on mount — do NOT depend on language
+    // to avoid resetting chat history when the user toggles language
     if (messages.length === 0) {
-      const welcomeMessage = language === 'en' 
+      const welcomeMessage = language === 'en'
         ? "Hello! I'm Bingwa AI. I've combined my expert knowledge library with interactive chat to help you grow better. How can I assist you today?"
         : "Jambo! Mimi ni Bingwa AI. Nimeunganisha maktaba yangu ya maarifa ya kitaalamu na mazungumzo ili kukusaidia kukuza mazao yako vyema. Nawezaje kukusaidia leo?";
 
-      setMessages([{ 
-        role: 'assistant', 
+      setMessages([{
+        role: 'assistant',
         content: (initialMessage as string) || welcomeMessage
       }]);
     }
-  }, [initialMessage, language]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMessage]); // intentionally omit `language` — changing language should NOT reset chat
 
   const toggleLanguage = () => {
     const newLang = language === 'en' ? 'sw' : 'en';
@@ -80,9 +86,21 @@ export default function AIAssistantScreen() {
     setIsLoading(true);
 
     try {
+      // Append a clear language instruction to the last user message so the LLM
+      // always responds in the correct language regardless of history
+      const langInstruction = language === 'en'
+        ? '\n\n[IMPORTANT: Respond strictly in English only.]'
+        : '\n\n[MUHIMU: Jibu kwa Kiswahili tu. Do not use English.]';
+
+      const messagesWithLangHint = updatedMessages.map((m, i) =>
+        i === updatedMessages.length - 1 && m.role === 'user'
+          ? { ...m, content: m.content + langInstruction }
+          : m
+      );
+
       const { data, error } = await supabase.functions.invoke('ai-assistant', {
-        body: { 
-          messages: updatedMessages,
+        body: {
+          messages: messagesWithLangHint,
           currentDiseaseId,
           language,
           imageContext: imageUri ? {
@@ -140,10 +158,51 @@ export default function AIAssistantScreen() {
     try {
       await audioRecorder.stop();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      const queryMsg = language === 'en' ? "Help me with this crop condition..." : "Nisaidie na hali hii ya zao...";
-      handleSend(queryMsg);
+      
+      const uri = audioRecorder.uri;
+      if (!uri) return;
+
+      setIsTranscribing(true);
+      
+      // 1. Prepare file for upload using robust ArrayBuffer method
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
+      const arrayBuffer = decode(base64);
+      const fileExt = uri.split('.').pop()?.toLowerCase() || 'wav';
+      const fileName = `audio/${Date.now()}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('scans')
+        .upload(fileName, arrayBuffer, {
+          contentType: `audio/${fileExt === 'm4a' ? 'mpeg' : 'wav'}`,
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Call Transcription service with the storage path
+      const { data, error } = await supabase.functions.invoke('transcribe', {
+        body: {
+          storagePath: fileName,
+          language: language
+        },
+      });
+
+      if (error) throw error;
+
+      if (data && data.text) {
+        handleSend(data.text);
+      }
     } catch (err) {
-      console.error('Failed to stop recording', err);
+      console.error('Failed to process recording:', err);
+      // Better fallback message if transcription fails
+      const queryMsg = language === 'en' 
+        ? "I want to learn more about this crop condition..." 
+        : "Ningependa kujua zaidi kuhusu hali hii ya zao...";
+      handleSend(queryMsg);
+    } finally {
+      setIsTranscribing(false);
     }
   };
 
@@ -238,11 +297,13 @@ export default function AIAssistantScreen() {
               </MotiView>
             ))}
 
-            {isLoading && (
+            {(isLoading || isTranscribing) && (
               <View className="self-start flex-row items-center bg-white/5 p-4 rounded-2xl">
                 <ActivityIndicator size="small" color="#25D366" />
                 <Text className="text-white/40 text-xs font-poppins-regular ml-3">
-                  {language === 'en' ? 'Synthesizing expert knowledge...' : 'Kukusanya maarifa ya kitaalamu...'}
+                  {isTranscribing 
+                    ? (language === 'en' ? 'Transcribing your voice...' : 'Kunukuu sauti yako...')
+                    : (language === 'en' ? 'Synthesising expert knowledge...' : 'Kukusanya maarifa ya kitaalamu...')}
                 </Text>
               </View>
             )}

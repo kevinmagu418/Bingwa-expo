@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
 
 export interface Profile {
@@ -150,15 +152,25 @@ export const useProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
-      const response = await fetch(uri);
-      const blob = await response.blob();
+      let uploadBody: any;
+
+      if (uri.startsWith('content://') || uri.startsWith('file://')) {
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: 'base64',
+        });
+        uploadBody = decode(base64);
+      } else {
+        const response = await fetch(uri);
+        uploadBody = await response.blob();
+      }
+
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       const filePath = fileName;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, blob, {
+        .upload(filePath, uploadBody, {
           contentType: `image/${fileExt}`,
           upsert: true
         });

@@ -32,7 +32,13 @@ export default function ProcessingScreen() {
         });
       } else {
         if (result.error === 'Insufficient scan credits') {
-          router.replace('/(modals)/payment-required');
+          router.replace({
+            pathname: '/(modals)/payment-required',
+            params: {
+              pendingScanId: result.scanId || '',
+              pendingImageUri: imageUri as string || '',
+            }
+          });
         } else {
           throw new Error(result.error || "Failed to analyze crop");
         }

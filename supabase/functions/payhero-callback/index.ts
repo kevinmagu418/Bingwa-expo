@@ -11,12 +11,16 @@ serve(async (req) => {
     const data = await req.json()
     console.log('Received Payhero callback:', JSON.stringify(data, null, 2))
 
+    // Check if Payhero nested the data inside a "response" or "Result" object
+    const payload = data.response || data.Result || data;
+
     // Payhero can send keys in either lowercase or TitleCase depending on version/configuration
-    const success = data.success ?? data.Success;
-    const status = data.status ?? data.Status;
-    const external_reference = data.external_reference ?? data.ExternalReference;
-    const amount = data.amount ?? data.Amount;
-    const reference = data.reference ?? data.Reference;
+    // Sometimes success boolean is omitted, so default to true if we process it
+    const success = payload.success ?? payload.Success ?? true; 
+    const status = payload.status ?? payload.Status ?? payload.ResultDesc;
+    const external_reference = payload.external_reference ?? payload.ExternalReference ?? payload.reference ?? payload.Reference;
+    const amount = payload.amount ?? payload.Amount ?? 0;
+    const reference = payload.reference ?? payload.Reference ?? payload.MpesaReceiptNumber ?? external_reference;
 
     console.log('Normalized callback data:', { success, status, external_reference, amount, reference });
 
@@ -53,8 +57,7 @@ serve(async (req) => {
         .from('payments')
         .update({ 
           status: 'success', 
-          reference: external_reference, // Keep our reference for lookup, but maybe we should have another col for payhero_ref
-          updated_at: new Date().toISOString()
+          reference: external_reference // Keep our reference for lookup, but maybe we should have another col for payhero_ref
         })
         .eq('reference', external_reference);
 
