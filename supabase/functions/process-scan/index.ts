@@ -73,10 +73,10 @@ serve(async (req) => {
     formData.append("crop", normalizedCrop)
     formData.append("file", imageBlob, "scan.jpg")
 
-    const railwayUrl =
-      "https://fastapiserver-production-087d.up.railway.app/api/predict"
+    const modelApiUrl =
+      "https://kevinkiragu-bingwa-shambani.hf.space/api/predict"
 
-    const predictResponse = await fetch(railwayUrl, {
+    const predictResponse = await fetch(modelApiUrl, {
       method: "POST",
       body: formData,
     })
