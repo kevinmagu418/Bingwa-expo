@@ -32,10 +32,9 @@ export default function SignupScreen() {
       setLoading(true);
       
       const redirectTo = Platform.OS === 'web'
-        ? Linking.createURL('/(onboarding)/complete-profile')
+        ? Linking.createURL('/')
         : makeRedirectUri({
             scheme: 'bingwa-shambani',
-            path: '(onboarding)/complete-profile',
           });
       
       const { data, error } = await supabase.auth.signInWithOAuth({

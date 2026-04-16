@@ -157,25 +157,36 @@ export default function AIAssistantScreen() {
     if (Platform.OS === 'web') return;
     try {
       await audioRecorder.stop();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
       const uri = audioRecorder.uri;
       if (!uri) return;
 
       setIsTranscribing(true);
       
-      // 1. Prepare file for upload using robust ArrayBuffer method
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: 'base64',
-      });
-      const arrayBuffer = decode(base64);
-      const fileExt = uri.split('.').pop()?.toLowerCase() || 'wav';
+      const fileExt = uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase() || 'wav';
       const fileName = `audio/${Date.now()}.${fileExt}`;
+      const mimeType = `audio/${fileExt === 'm4a' ? 'mpeg' : 'wav'}`;
+
+      let uploadBody: any;
+
+      if (Platform.OS !== 'web') {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: uri,
+          name: fileName,
+          type: mimeType,
+        } as any);
+        uploadBody = formData;
+      } else {
+        const response = await fetch(uri);
+        uploadBody = await response.blob();
+      }
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('scans')
-        .upload(fileName, arrayBuffer, {
-          contentType: `audio/${fileExt === 'm4a' ? 'mpeg' : 'wav'}`,
+        .upload(fileName, uploadBody, {
+          cacheControl: '3600',
           upsert: true
         });
 

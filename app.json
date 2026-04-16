@@ -5,26 +5,27 @@
     "scheme": "bingwa-shambani",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/appicon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/new-logo.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F8F9FA"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bingwa.shambani",
       "infoPlist": {
         "NSCameraUsageDescription": "Bingwa needs access to your camera to scan crops for diseases.",
-        "NSPhotoLibraryUsageDescription": "Bingwa needs access to your photos to allow you to upload crop images for analysis."
+        "NSPhotoLibraryUsageDescription": "Bingwa needs access to your photos to allow you to upload crop images for analysis.",
+        "NSMicrophoneUsageDescription": "Bingwa needs access to your microphone to allow you to ask questions using your voice."
       }
     },
     "android": {
       "package": "com.bingwa.shambani",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/appicon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -44,7 +45,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/new-logo.png"
+      "favicon": "./assets/appicon.png"
     },
     "plugins": [
       "expo-router",

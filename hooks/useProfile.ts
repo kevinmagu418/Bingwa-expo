@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
+import { Platform } from 'react-native';
 
 export interface Profile {
   id: string;
@@ -152,43 +153,49 @@ export const useProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
+      console.log("[Avatar] Starting upload for user:", user.id);
+
+      const fileExt = uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const mimeType = fileExt === 'jpg' || fileExt === 'jpeg' ? 'image/jpeg' : `image/${fileExt}`;
+
       let uploadBody: any;
 
-      if (uri.startsWith('content://') || uri.startsWith('file://')) {
-        const base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: 'base64',
-        });
-        uploadBody = decode(base64);
+      if (Platform.OS !== 'web') {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: uri,
+          name: fileName,
+          type: mimeType,
+        } as any);
+        uploadBody = formData;
       } else {
         const response = await fetch(uri);
         uploadBody = await response.blob();
       }
 
-      const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const filePath = fileName;
-
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, uploadBody, {
-          contentType: `image/${fileExt}`,
+        .upload(fileName, uploadBody, {
+          cacheControl: '3600',
           upsert: true
         });
 
       if (uploadError) {
-        console.error("Supabase Storage Upload Error:", uploadError);
+        console.error("[Avatar] Supabase Storage Upload Error:", uploadError);
         throw uploadError;
       }
 
-      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
       
       if (data) {
+          console.log("[Avatar] Upload successful, updating profile...");
           await updateProfile({ avatar_url: data.publicUrl });
       }
       
       return { success: true, publicUrl: data.publicUrl };
     } catch (error: any) {
-      console.error("Full upload process error:", error);
+      console.error("[Avatar] Full upload process error:", error);
       return { success: false, error: error.message };
     }
   };

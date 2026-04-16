@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
+import { Platform } from 'react-native';
 
 export interface ScanResult {
   success: boolean;
@@ -13,38 +14,55 @@ export interface ScanResult {
 
   /**
  * Uploads an image to Supabase Storage and returns the public URL and file name
+ * Optimized for production APK builds.
  */
 const uploadImageToSupabase = async (imageUri: string) => {
-  let uploadBody: any;
+  try {
+    const fileExt = imageUri.split(/[?#]/)[0].split('.').pop()?.toLowerCase() || 'jpg';
+    const fileName = `scan-${Date.now()}.${fileExt}`;
+    const mimeType = fileExt === 'jpg' || fileExt === 'jpeg' ? 'image/jpeg' : `image/${fileExt}`;
 
-  if (imageUri.startsWith('content://') || imageUri.startsWith('file://')) {
-    const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: 'base64',
-    });
-    uploadBody = decode(base64);
-  } else {
-    const response = await fetch(imageUri);
-    uploadBody = await response.blob();
+    console.log(`[Upload] Preparing image: ${fileName} (${mimeType})`);
+
+    let uploadBody: any;
+
+    // Use FormData for production reliability on Android/iOS
+    // This avoids reading large files into memory as base64 strings
+    if (Platform.OS !== 'web') {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: imageUri,
+        name: fileName,
+        type: mimeType,
+      } as any);
+      uploadBody = formData;
+    } else {
+      // Fallback for Web or if FormData approach is not desired
+      const response = await fetch(imageUri);
+      uploadBody = await response.blob();
+    }
+
+    const { error } = await supabase.storage
+      .from("scans")
+      .upload(fileName, uploadBody, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error("[Upload] Supabase Storage Error:", error);
+      throw new Error(`Storage upload failed: ${error.message}`);
+    }
+
+    const { data } = supabase.storage
+      .from("scans")
+      .getPublicUrl(fileName);
+
+    return { publicUrl: data.publicUrl, fileName };
+  } catch (err: any) {
+    console.error("[Upload] Critical failure:", err);
+    throw err;
   }
-
-  const fileName = `scan-${Date.now()}.jpg`;
-
-  const { error } = await supabase.storage
-    .from("scans")
-    .upload(fileName, uploadBody, {
-      contentType: 'image/jpeg',
-      upsert: true
-    });
-
-  if (error) {
-    throw new Error("Image upload failed: " + error.message);
-  }
-
-  const { data } = supabase.storage
-    .from("scans")
-    .getPublicUrl(fileName);
-
-  return { publicUrl: data.publicUrl, fileName };
 };
 
 /**

@@ -22,7 +22,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      const redirectTo = Linking.createURL('/(auth)/reset-password');
+      const redirectTo = Linking.createURL('/');
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });

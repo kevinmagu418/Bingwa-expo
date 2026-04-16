@@ -27,10 +27,9 @@ export default function LoginScreen() {
       
       // Use standard web URL on web, and custom scheme on native
       const redirectTo = Platform.OS === 'web' 
-        ? Linking.createURL('/(tabs)/scan') 
+        ? Linking.createURL('/') 
         : makeRedirectUri({
             scheme: 'bingwa-shambani',
-            path: '(tabs)/scan',
           });
       
       const { data, error } = await supabase.auth.signInWithOAuth({
