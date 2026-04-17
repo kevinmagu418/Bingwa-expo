@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect, useState } from "react";
+import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
