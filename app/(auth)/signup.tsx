@@ -14,6 +14,9 @@ import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
 import PasswordStrength from '../../components/PasswordStrength';
 
+// Required for the web browser to close automatically after auth on Android/iOS
+WebBrowser.maybeCompleteAuthSession();
+
 export default function SignupScreen() {
   const router = useRouter();
   const { showError, showSuccess, showAlert } = useFeedback();
@@ -32,7 +35,7 @@ export default function SignupScreen() {
       setLoading(true);
       
       const redirectTo = Platform.OS === 'web'
-        ? Linking.createURL('/')
+        ? typeof window !== 'undefined' ? window.location.origin : ''
         : makeRedirectUri({
             scheme: 'bingwa-shambani',
           });

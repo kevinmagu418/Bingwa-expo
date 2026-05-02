@@ -13,6 +13,9 @@ import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
 
+// Required for the web browser to close automatically after auth on Android/iOS
+WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginScreen() {
   const router = useRouter();
   const { showError, showSuccess } = useFeedback();
@@ -25,9 +28,9 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       
-      // Use standard web URL on web, and custom scheme on native
+      // Use standard web origin on web, and custom scheme on native
       const redirectTo = Platform.OS === 'web' 
-        ? Linking.createURL('/') 
+        ? typeof window !== 'undefined' ? window.location.origin : '' 
         : makeRedirectUri({
             scheme: 'bingwa-shambani',
           });
