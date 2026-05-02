@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { BingwaLoader } from '../../components/Loader';
 import { useProfile } from '../../hooks/useProfile';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
+import { cleanArrayString } from '../../utils/formatters';
 
 const ORANGE = "#F4A261";
 const GREEN = "#25D366";
@@ -88,9 +89,9 @@ export default function ResultScreen() {
   
   const getTabContent = () => {
     switch (activeTab) {
-      case 'chemical': return recommendations.chemical_advice || "No chemical remedies recommended.";
-      case 'organic': return recommendations.organic_advice || "No organic remedies recommended.";
-      case 'prevention': return recommendations.prevention || "No prevention tips available.";
+      case 'chemical': return cleanArrayString(recommendations.chemical_advice) || "No chemical remedies recommended.";
+      case 'organic': return cleanArrayString(recommendations.organic_advice) || "No organic remedies recommended.";
+      case 'prevention': return cleanArrayString(recommendations.prevention) || "No prevention tips available.";
       default: return "";
     }
   };

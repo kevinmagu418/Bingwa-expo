@@ -9,6 +9,7 @@ import { useScans } from '../../hooks/useScans';
 import { useProfile } from '../../hooks/useProfile';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { ReceiptPreview } from '../../components/ReceiptPreview';
+import { cleanArrayString } from '../../utils/formatters';
 import { MotiView, AnimatePresence } from 'moti';
 import { HistoryCardSkeleton } from '../../components/Loader';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -88,9 +89,9 @@ export default function HistoryTab() {
       result: s.diseases?.name || 'Diagnosis',
       severity: s.severity || 'low',
       date: new Date(s.created_at).toLocaleDateString(),
-      organic_advice: s.recommendations?.[0]?.organic_advice,
-      chemical_advice: s.recommendations?.[0]?.chemical_advice,
-      prevention: s.recommendations?.[0]?.prevention,
+      organic_advice: cleanArrayString(s.recommendations?.[0]?.organic_advice),
+      chemical_advice: cleanArrayString(s.recommendations?.[0]?.chemical_advice),
+      prevention: cleanArrayString(s.recommendations?.[0]?.prevention),
     }));
 
   const stats = {

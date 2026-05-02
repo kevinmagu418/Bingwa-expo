@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
-import ViewShot from 'react-native-view-shot';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -27,7 +26,6 @@ interface ReceiptPreviewProps {
 }
 
 export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose, selectedScans }) => {
-  const viewShotRef = useRef<any>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [generatedUri, setGeneratedUri] = React.useState<string | null>(null);
 
@@ -185,14 +183,14 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
           from={{ opacity: 0, translateY: 100 }}
           animate={{ opacity: 1, translateY: 0 }}
           exit={{ opacity: 0, translateY: 100 }}
-          className="bg-white w-full max-h-[95vh] rounded-t-[40px] overflow-hidden shadow-2xl"
+          className="bg-white w-full mt-auto max-h-[90%] rounded-t-[40px] overflow-hidden shadow-2xl flex-shrink"
         >
           {/* Top Drag Bar */}
           <View className="items-center py-4 bg-white">
             <View className="w-12 h-1.5 bg-gray-200 rounded-full" />
           </View>
 
-          <ScrollView className="flex-1 px-6 pb-10" showsVerticalScrollIndicator={false}>
+          <ScrollView className="flex-grow px-6 pb-10" showsVerticalScrollIndicator={false}>
             {generatedUri ? (
               <MotiView 
                 from={{ opacity: 0, scale: 0.9 }}
@@ -227,7 +225,6 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
               </MotiView>
             ) : (
               <>
-                <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }}>
                   <View style={styles.receiptContainer}>
                     <View style={styles.jaggedEdge} />
                     
@@ -244,10 +241,10 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
                         <View key={index} className="mb-10">
                           <View style={styles.diagnosisBox}>
                             <Text style={styles.monospaceDiagnosis}>
-                              {index + 1}. {scan.crop.toUpperCase()} / {scan.result.toUpperCase()}
+                              {index + 1}. {scan.crop?.toUpperCase() || 'UNKNOWN'} / {scan.result?.toUpperCase() || 'UNKNOWN'}
                             </Text>
                             <Text style={styles.monospaceSeverity}>
-                              SEVERITY: {scan.severity.toUpperCase()}
+                              SEVERITY: {scan.severity?.toUpperCase() || 'UNKNOWN'}
                             </Text>
                           </View>
                           
@@ -283,7 +280,6 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
 
                     <View style={styles.jaggedEdgeBottom} />
                   </View>
-                </ViewShot>
 
                 <TouchableOpacity 
                   onPress={generatePDF}
