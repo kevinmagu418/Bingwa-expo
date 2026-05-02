@@ -85,15 +85,45 @@ export default function ResultScreen() {
   const confidence = Math.round(scanResult.confidence_score * 100);
   const severity = (scanResult.severity || "low") as keyof typeof SEVERITY_THEME;
   const description = scanResult.diseases?.description || "No description available.";
-  const recommendations = scanResult.recommendations?.[0] || {};
+  // Safely extract recommendations whether it's returned as an Array or an Object
+  const recommendations = Array.isArray(scanResult.recommendations) 
+    ? scanResult.recommendations[0] 
+    : scanResult.recommendations || {};
   
   const getTabContent = () => {
+    let specificContent = "";
+    let globalContent = "";
+    let fallbackMsg = "";
+
     switch (activeTab) {
-      case 'chemical': return cleanArrayString(recommendations.chemical_advice) || "No chemical remedies recommended.";
-      case 'organic': return cleanArrayString(recommendations.organic_advice) || "No organic remedies recommended.";
-      case 'prevention': return cleanArrayString(recommendations.prevention) || "No prevention tips available.";
-      default: return "";
+      case 'chemical':
+        specificContent = cleanArrayString(recommendations.chemical_advice);
+        globalContent = cleanArrayString(scanResult.diseases?.chemical_remedies);
+        fallbackMsg = "No chemical remedies recommended.";
+        break;
+      case 'organic':
+        specificContent = cleanArrayString(recommendations.organic_advice);
+        globalContent = cleanArrayString(scanResult.diseases?.organic_remedies);
+        fallbackMsg = "No organic remedies recommended.";
+        break;
+      case 'prevention':
+        specificContent = cleanArrayString(recommendations.prevention);
+        globalContent = cleanArrayString(scanResult.diseases?.prevention_tips);
+        fallbackMsg = "No prevention tips available.";
+        break;
+      default:
+        return "";
     }
+
+    // Smart Fallback Logic:
+    // If specific advice is empty, OR if it's explicitly the generic fallback text, pull from the diseases table instead!
+    const isSpecificEmptyOrGeneric = !specificContent || (specificContent.toLowerCase().includes("no ") && specificContent.toLowerCase().includes("recommended"));
+    
+    if (!isSpecificEmptyOrGeneric) {
+      return specificContent;
+    }
+    
+    return globalContent || fallbackMsg;
   };
 
   const theme = SEVERITY_THEME[severity];

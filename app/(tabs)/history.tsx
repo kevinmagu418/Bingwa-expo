@@ -83,16 +83,33 @@ export default function HistoryTab() {
 
   const selectedScansData = scans
     .filter(s => selectedIds.includes(s.id))
-    .map(s => ({
-      id: s.id,
-      crop: s.diseases?.crop || 'Crop',
-      result: s.diseases?.name || 'Diagnosis',
-      severity: s.severity || 'low',
-      date: new Date(s.created_at).toLocaleDateString(),
-      organic_advice: cleanArrayString(s.recommendations?.[0]?.organic_advice),
-      chemical_advice: cleanArrayString(s.recommendations?.[0]?.chemical_advice),
-      prevention: cleanArrayString(s.recommendations?.[0]?.prevention),
-    }));
+    .map(s => {
+      // Safely extract recommendations whether it's an array or an object
+      const rec = Array.isArray(s.recommendations) ? s.recommendations[0] : s.recommendations || {};
+
+      const specificOrg = cleanArrayString(rec.organic_advice);
+      const isOrgGeneric = !specificOrg || (specificOrg.toLowerCase().includes("no ") && specificOrg.toLowerCase().includes("recommended"));
+      const organic_advice = isOrgGeneric ? (cleanArrayString(s.diseases?.organic_remedies) || specificOrg) : specificOrg;
+
+      const specificChem = cleanArrayString(rec.chemical_advice);
+      const isChemGeneric = !specificChem || (specificChem.toLowerCase().includes("no ") && specificChem.toLowerCase().includes("recommended"));
+      const chemical_advice = isChemGeneric ? (cleanArrayString(s.diseases?.chemical_remedies) || specificChem) : specificChem;
+
+      const specificPrev = cleanArrayString(rec.prevention);
+      const isPrevGeneric = !specificPrev || (specificPrev.toLowerCase().includes("no ") && specificPrev.toLowerCase().includes("available"));
+      const prevention = isPrevGeneric ? (cleanArrayString(s.diseases?.prevention_tips) || specificPrev) : specificPrev;
+
+      return {
+        id: s.id,
+        crop: s.diseases?.crop || 'Crop',
+        result: s.diseases?.name || 'Diagnosis',
+        severity: s.severity || 'low',
+        date: new Date(s.created_at).toLocaleDateString(),
+        organic_advice,
+        chemical_advice,
+        prevention,
+      };
+    });
 
   const stats = {
     total: scans.length,

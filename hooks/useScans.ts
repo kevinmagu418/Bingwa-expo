@@ -14,12 +14,11 @@ export interface Scan {
   diseases: {
     name: string;
     crop: string;
+    organic_remedies?: any;
+    chemical_remedies?: any;
+    prevention_tips?: any;
   };
-  recommendations?: {
-    organic_advice: string;
-    chemical_advice: string;
-    prevention: string;
-  }[];
+  recommendations?: any;
 }
 
 const SCANS_CACHE_KEY = 'bingwa_scans_cache';
@@ -44,7 +43,10 @@ export const useScans = (limit?: number) => {
             *,
             diseases (
               name,
-              crop
+              crop,
+              organic_remedies,
+              chemical_remedies,
+              prevention_tips
             ),
             recommendations (
               organic_advice,
