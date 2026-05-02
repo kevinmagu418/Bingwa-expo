@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
+import { useAudioRecorder, AudioModule, RecordingPresets, useAudioRecorderState } from 'expo-audio';
 import { StatusBar } from 'expo-status-bar';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
@@ -47,10 +47,19 @@ export default function AIAssistantScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // New expo-audio recorder
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder, 100);
+
+  const formatDuration = (millis: number) => {
+    const seconds = Math.floor(millis / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     // Only set the welcome message once on mount — do NOT depend on language
@@ -71,7 +80,7 @@ export default function AIAssistantScreen() {
   const toggleLanguage = () => {
     const newLang = language === 'en' ? 'sw' : 'en';
     setLanguage(newLang);
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if ((Platform.OS as string) !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleSend = useCallback(async (textOverride?: string) => {
@@ -79,7 +88,7 @@ export default function AIAssistantScreen() {
     if (!textToSend || isLoading) return;
 
     setInput('');
-    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    if ((Platform.OS as string) !== 'web') Haptics.selectionAsync();
 
     const updatedMessages: Message[] = [...messages, { role: 'user', content: textToSend }];
     setMessages(updatedMessages);
@@ -118,7 +127,7 @@ export default function AIAssistantScreen() {
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if ((Platform.OS as string) !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
       console.error('Chat error:', error);
       let errorMessage = language === 'en' 
@@ -140,80 +149,84 @@ export default function AIAssistantScreen() {
     }
   }, [input, isLoading, messages, currentDiseaseId, imageUri, crop, disease, severity, language]);
 
-  const startRecording = async () => {
-    if (Platform.OS === 'web') return;
+  const toggleRecording = async () => {
     try {
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      if (status.granted) {
-        audioRecorder.record();
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      }
-    } catch (err) {
-      console.error('Failed to start recording', err);
-    }
-  };
+      if (audioRecorder.isRecording) {
+        // STOP RECORDING
+        await audioRecorder.stop();
+        
+        const now = Date.now();
+        const duration = recordingStartTime ? now - recordingStartTime : 0;
+        setRecordingStartTime(null);
 
-  const stopRecording = async () => {
-    if (Platform.OS === 'web') return;
-    try {
-      await audioRecorder.stop();
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
-      const uri = audioRecorder.uri;
-      if (!uri) return;
+        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        const uri = audioRecorder.uri;
+        if (!uri) return;
 
-      setIsTranscribing(true);
-      
-      const fileExt = uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase() || 'wav';
-      const fileName = `audio/${Date.now()}.${fileExt}`;
-      const mimeType = `audio/${fileExt === 'm4a' ? 'mpeg' : 'wav'}`;
+        // Minimum duration check
+        if (duration < 1000) {
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          return;
+        }
 
-      let uploadBody: any;
+        setIsTranscribing(true);
+        
+        const fileExt = Platform.OS === 'web' ? 'webm' : (uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase() || 'wav');
+        const fileName = `audio/${Date.now()}.${fileExt}`;
+        const mimeType = Platform.OS === 'web' ? 'audio/webm' : `audio/${fileExt === 'm4a' ? 'mpeg' : 'wav'}`;
 
-      if (Platform.OS !== 'web') {
-        const formData = new FormData();
-        formData.append('file', {
-          uri: uri,
-          name: fileName,
-          type: mimeType,
-        } as any);
-        uploadBody = formData;
-      } else {
-        const response = await fetch(uri);
-        uploadBody = await response.blob();
-      }
+        let uploadBody: any;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('scans')
-        .upload(fileName, uploadBody, {
-          cacheControl: '3600',
-          upsert: true
+        if (Platform.OS !== 'web') {
+          const formData = new FormData();
+          formData.append('file', {
+            uri: uri,
+            name: fileName,
+            type: mimeType,
+          } as any);
+          uploadBody = formData;
+        } else {
+          const response = await fetch(uri);
+          uploadBody = await response.blob();
+        }
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('scans')
+          .upload(fileName, uploadBody, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data, error } = await supabase.functions.invoke('transcribe', {
+          body: {
+            storagePath: fileName,
+            language: language
+          },
         });
 
-      if (uploadError) throw uploadError;
+        if (error) throw error;
 
-      // 2. Call Transcription service with the storage path
-      const { data, error } = await supabase.functions.invoke('transcribe', {
-        body: {
-          storagePath: fileName,
-          language: language
-        },
-      });
-
-      if (error) throw error;
-
-      if (data && data.text) {
-        handleSend(data.text);
+        if (data && data.text) {
+          handleSend(data.text);
+        }
+        setIsTranscribing(false);
+      } else {
+        // START RECORDING
+        const status = await AudioModule.requestRecordingPermissionsAsync();
+        if (status.granted) {
+          await audioRecorder.prepareToRecordAsync();
+          setRecordingStartTime(Date.now());
+          audioRecorder.record();
+          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
       }
     } catch (err) {
-      console.error('Failed to process recording:', err);
-      // Better fallback message if transcription fails
-      const queryMsg = language === 'en' 
-        ? "I want to learn more about this crop condition..." 
-        : "Ningependa kujua zaidi kuhusu hali hii ya zao...";
-      handleSend(queryMsg);
-    } finally {
+      console.error('Recording error:', err);
       setIsTranscribing(false);
+      setRecordingStartTime(null);
     }
   };
 
@@ -354,11 +367,10 @@ export default function AIAssistantScreen() {
                 />
                 {!input.trim() && (
                   <TouchableOpacity 
-                    onPressIn={startRecording} 
-                    onPressOut={stopRecording} 
+                    onPress={toggleRecording} 
                     className={`w-12 h-12 rounded-full items-center justify-center mb-1 mr-1 ${audioRecorder.isRecording ? 'bg-red-500' : 'bg-accent/10'}`}
                   >
-                    <Ionicons name={audioRecorder.isRecording ? "mic" : "mic-outline"} size={22} color={audioRecorder.isRecording ? "white" : "#25D366"} />
+                    <Ionicons name={audioRecorder.isRecording ? "stop" : "mic-outline"} size={22} color={audioRecorder.isRecording ? "white" : "#25D366"} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -383,23 +395,74 @@ export default function AIAssistantScreen() {
             from={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }} 
-            className="absolute inset-0 bg-[#0B141A]/95 items-center justify-center z-[999]"
+            className="absolute inset-0 bg-[#0B141A]/98 items-center justify-center z-[999]"
           >
-             <MotiView 
-                from={{ scale: 1, opacity: 0.5 }} 
-                animate={{ scale: 3, opacity: 0 }} 
-                transition={{ loop: true, duration: 2000, type: 'timing' }} 
-                className="w-40 h-40 rounded-full bg-accent/20 absolute" 
-             />
-             <View className="w-32 h-32 rounded-full bg-accent items-center justify-center shadow-2xl shadow-accent/50">
-               <Ionicons name="mic" size={50} color="white" />
+             <StatusBar style="light" />
+             
+             {/* Dynamic Waveform Simulation */}
+             <View className="flex-row items-center justify-center h-20 mb-12">
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <MotiView
+                    key={i}
+                    from={{ height: 10, opacity: 0.3 }}
+                    animate={{ 
+                      height: 10 + (Math.random() * 50), 
+                      opacity: 1 
+                    }}
+                    transition={{
+                      type: 'timing',
+                      duration: 150,
+                      loop: true,
+                      delay: i * 50
+                    }}
+                    className="w-1.5 bg-accent mx-1 rounded-full"
+                  />
+                ))}
              </View>
-             <Text className="text-white font-poppins-black mt-12 uppercase tracking-[8px] text-sm">
-               {language === 'en' ? 'Listening' : 'Sikiliza'}
-             </Text>
-             <Text className="text-white/40 font-poppins-regular mt-4 text-xs">
-               {language === 'en' ? 'Voice query for Bingwa AI' : 'Swali la sauti kwa Bingwa AI'}
-             </Text>
+
+             <View className="items-center mb-16">
+                <Text className="text-white font-poppins-black text-4xl mb-2 tracking-tighter">
+                  {formatDuration(recorderState.durationMillis)}
+                </Text>
+                <View className="flex-row items-center bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+                   <View className="w-2 h-2 rounded-full bg-red-500 mr-2" />
+                   <Text className="text-white/60 font-poppins-bold text-[10px] uppercase tracking-widest">
+                     {language === 'en' ? 'Live Audio' : 'Sauti ya Moja kwa Moja'}
+                   </Text>
+                </View>
+             </View>
+
+             <TouchableOpacity 
+               onPress={toggleRecording}
+               activeOpacity={0.8}
+               className="w-28 h-28 rounded-full bg-red-500/10 items-center justify-center border-2 border-red-500/20"
+             >
+               <MotiView 
+                  from={{ scale: 1, opacity: 0.5 }} 
+                  animate={{ scale: 1.4, opacity: 0 }} 
+                  transition={{ loop: true, duration: 1500, type: 'timing' }} 
+                  className="w-full h-full rounded-full bg-red-500 absolute" 
+               />
+               <View className="w-16 h-16 bg-red-500 rounded-2xl items-center justify-center shadow-2xl shadow-red-500/50">
+                 <Ionicons name="stop" size={32} color="white" />
+               </View>
+             </TouchableOpacity>
+
+             <View className="absolute bottom-20 items-center">
+                <Text className="text-white/40 font-poppins-regular text-xs mb-6 px-12 text-center leading-5">
+                  {language === 'en' 
+                    ? 'Bingwa AI is listening to your agricultural query. Speak clearly for best results.' 
+                    : 'Bingwa AI inasikiliza swali lako la kilimo. Ongea wazi kwa matokeo bora.'}
+                </Text>
+                <TouchableOpacity 
+                  onPress={toggleRecording}
+                  className="bg-white/5 px-8 py-4 rounded-3xl border border-white/10"
+                >
+                  <Text className="text-white font-poppins-bold text-xs uppercase tracking-widest">
+                    {language === 'en' ? 'Finish Speaking' : 'Maliza Kuongea'}
+                  </Text>
+                </TouchableOpacity>
+             </View>
           </MotiView>
         )}
       </AnimatePresence>

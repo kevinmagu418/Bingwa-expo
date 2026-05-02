@@ -4,7 +4,7 @@ import { MotiView, AnimatePresence } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
+import { useAudioRecorder, AudioModule, RecordingPresets, useAudioRecorderState } from 'expo-audio';
 import { supabase } from '../lib/supabase';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -37,9 +37,20 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // New expo-audio recorder
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder, 100);
+
+  const formatDuration = (millis: number) => {
+    const seconds = Math.floor(millis / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -51,7 +62,7 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
   }, [initialMessage]);
 
   const toggleOpen = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsOpen(prev => !prev);
   }, []);
 
@@ -60,7 +71,7 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
     if (!textToSend || isLoading) return;
 
     setInput('');
-    Haptics.selectionAsync();
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
 
     const updatedMessages: Message[] = [...messages, { role: 'user', content: textToSend }];
     setMessages(updatedMessages);
@@ -81,7 +92,7 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error: any) {
       console.error('Chat error:', error);
       let errorMessage = "I'm having trouble connecting. Please try again in a moment.";
@@ -102,31 +113,86 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
     }
   }, [input, isLoading, messages, currentDiseaseId, imageContext]);
 
-  // Voice Recording Logic
-  const startRecording = async () => {
+  const toggleRecording = async () => {
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (permission.status === 'granted') {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
+      if (audioRecorder.isRecording) {
+        // STOP RECORDING
+        await audioRecorder.stop();
+        
+        const now = Date.now();
+        const duration = recordingStartTime ? now - recordingStartTime : 0;
+        setRecordingStartTime(null);
+
+        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        const uri = audioRecorder.uri;
+        if (!uri) return;
+
+        // Minimum duration check
+        if (duration < 1000) {
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          return;
+        }
+
+        setIsTranscribing(true);
+        
+        const fileExt = Platform.OS === 'web' ? 'webm' : (uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase() || 'wav');
+        const fileName = `audio/${Date.now()}.${fileExt}`;
+        const mimeType = Platform.OS === 'web' ? 'audio/webm' : `audio/${fileExt === 'm4a' ? 'mpeg' : 'wav'}`;
+
+        let uploadBody: any;
+
+        if (Platform.OS !== 'web') {
+          const formData = new FormData();
+          formData.append('file', {
+            uri: uri,
+            name: fileName,
+            type: mimeType,
+          } as any);
+          uploadBody = formData;
+        } else {
+          const response = await fetch(uri);
+          uploadBody = await response.blob();
+        }
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('scans')
+          .upload(fileName, uploadBody, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Call Transcription service
+        const { data, error } = await supabase.functions.invoke('transcribe', {
+          body: {
+            storagePath: fileName,
+            language: 'en'
+          },
         });
-        const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-        setRecording(recording);
-        setIsRecording(true);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+        if (error) throw error;
+
+        if (data && data.text) {
+          handleSend(data.text);
+        }
+        setIsTranscribing(false);
+      } else {
+        // START RECORDING
+        const status = await AudioModule.requestRecordingPermissionsAsync();
+        if (status.granted) {
+          await audioRecorder.prepareToRecordAsync();
+          setRecordingStartTime(Date.now());
+          audioRecorder.record();
+          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
       }
     } catch (err) {
-      console.error('Failed to start recording', err);
+      console.error('Recording error:', err);
+      setIsTranscribing(false);
+      setRecordingStartTime(null);
     }
-  };
-
-  const stopRecording = async () => {
-    setIsRecording(false);
-    setRecording(null);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Simulate speech to text
-    handleSend("Help me with this crop condition..."); 
   };
 
   useEffect(() => {
@@ -189,10 +255,12 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
                 </View>
               ))}
 
-              {isLoading && (
+              {(isLoading || isTranscribing) && (
                 <View className="self-start bg-[#F0F2F5] dark:bg-white/5 p-4 rounded-[24px] rounded-tl-none flex-row items-center">
                   <ActivityIndicator size="small" color="#25D366" />
-                  <Text className="text-textSecondary text-[11px] font-poppins-regular ml-3">Bingwa is typing...</Text>
+                  <Text className="text-textSecondary text-[11px] font-poppins-regular ml-3">
+                    {isTranscribing ? 'Bingwa is listening...' : 'Bingwa is typing...'}
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -221,8 +289,8 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
                     multiline
                   />
                   {!input.trim() && (
-                    <TouchableOpacity onPressIn={startRecording} onPressOut={stopRecording} className={`w-10 h-10 rounded-full items-center justify-center ${isRecording ? 'bg-red-500' : 'bg-accent/10'}`}>
-                      <Ionicons name={isRecording ? "mic" : "mic-outline"} size={20} color={isRecording ? "white" : "#25D366"} />
+                    <TouchableOpacity onPress={toggleRecording} className={`w-10 h-10 rounded-full items-center justify-center ${audioRecorder.isRecording ? 'bg-red-500' : 'bg-accent/10'}`}>
+                      <Ionicons name={audioRecorder.isRecording ? "stop" : "mic-outline"} size={20} color={audioRecorder.isRecording ? "white" : "#25D366"} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -237,13 +305,43 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
             
             {/* Recording Pulse Overlay */}
             <AnimatePresence>
-              {isRecording && (
-                <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-accent/90 items-center justify-center">
-                   <MotiView from={{ scale: 1, opacity: 0.5 }} animate={{ scale: 2, opacity: 0 }} transition={{ loop: true, duration: 1000 }} className="w-20 h-20 rounded-full bg-white absolute" />
-                   <MotiView from={{ scale: 1, opacity: 0.5 }} animate={{ scale: 1.5, opacity: 0 }} transition={{ loop: true, duration: 1500 }} className="w-20 h-20 rounded-full bg-white absolute" />
-                   <Ionicons name="mic" size={40} color="white" />
-                   <Text className="text-white font-poppins-black mt-6 uppercase tracking-widest text-xs">Listening to your voice...</Text>
-                   <Text className="text-white/70 font-poppins-regular mt-2 text-[10px]">Release to send message</Text>
+              {audioRecorder.isRecording && (
+                <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#0B141A]/95 items-center justify-center">
+                   <View className="items-center mb-8">
+                      <Text className="text-white font-poppins-black text-3xl mb-1">
+                        {formatDuration(recorderState.durationMillis)}
+                      </Text>
+                      <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-widest">Listening to you...</Text>
+                   </View>
+
+                   <View className="flex-row items-center justify-center h-12 mb-10">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <MotiView
+                          key={i}
+                          from={{ height: 4, opacity: 0.3 }}
+                          animate={{ height: 4 + (Math.random() * 30), opacity: 1 }}
+                          transition={{ type: 'timing', duration: 150, loop: true, delay: i * 50 }}
+                          className="w-1 bg-accent mx-1 rounded-full"
+                        />
+                      ))}
+                   </View>
+
+                   <TouchableOpacity 
+                     onPress={toggleRecording}
+                     className="w-20 h-20 rounded-full bg-red-500/10 items-center justify-center border border-red-500/20"
+                   >
+                     <MotiView 
+                        from={{ scale: 1, opacity: 0.5 }} 
+                        animate={{ scale: 1.5, opacity: 0 }} 
+                        transition={{ loop: true, duration: 1500 }} 
+                        className="w-full h-full rounded-full bg-red-500 absolute" 
+                     />
+                     <View className="w-12 h-12 bg-red-500 rounded-xl items-center justify-center shadow-xl shadow-red-500/40">
+                       <Ionicons name="stop" size={24} color="white" />
+                     </View>
+                   </TouchableOpacity>
+                   
+                   <Text className="text-white/40 font-poppins-regular mt-8 text-[10px] uppercase tracking-widest">Tap to finish</Text>
                 </MotiView>
               )}
             </AnimatePresence>

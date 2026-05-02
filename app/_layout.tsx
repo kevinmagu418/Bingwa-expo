@@ -3,9 +3,11 @@ import "../global.css";
 import * as WebBrowser from 'expo-web-browser';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
+import NetInfo from "@react-native-community/netinfo";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   useFonts,
   Poppins_400Regular,
@@ -19,16 +21,29 @@ import { supabase } from "../lib/supabase";
 import { Session } from "@supabase/supabase-js";
 import { FeedbackProvider } from "../context/FeedbackContext";
 import { BingwaAlert } from "../components/BingwaAlert";
+import { useNetwork } from "../hooks/useNetwork";
+import { OfflineMessage, OfflineBanner } from "../components/OfflineUI";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 WebBrowser.maybeCompleteAuthSession();
 
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
 function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const segments = useSegments();
+  const { isOnline } = useNetwork();
+  const segments = useSegments() as string[];
   const router = useRouter();
 
   const [fontsLoaded, fontError] = useFonts({
@@ -76,20 +91,25 @@ function RootLayout() {
       handleDeepLink(url);
     });
 
-    // Listen for auth state changes
-    supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
+    // Quick initial session check
+    const initAuth = async () => {
+      try {
+        // getSession() will prioritize local storage
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Auth initialization error:", error.message);
-          supabase.auth.signOut();
+          // If we are offline, don't sign out, just use what we have (or don't have)
+          if (isOnline) supabase.auth.signOut();
         }
         setSession(session);
-        setInitialized(true);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Unexpected auth error:", err);
+      } finally {
         setInitialized(true);
-      });
+      }
+    };
+
+    initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth event:", event);
@@ -126,7 +146,6 @@ function RootLayout() {
       if (isResetPassword) return;
 
       // If logged in and in auth group, or on welcome screen, go to scan
-      // But allow them to stay on complete-profile
       if (inAuthGroup || (inOnboardingGroup && !isCompleteProfile) || segments.length < 1 || segments[0] === "index") {
         router.replace("/(tabs)/scan");
       }
@@ -135,7 +154,10 @@ function RootLayout() {
     }
 
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
+      // Small delay to ensure navigation has started if needed
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {});
+      }, 100);
     }
   }, [session, initialized, segments, fontsLoaded, fontError]);
 
@@ -143,20 +165,33 @@ function RootLayout() {
     return null;
   }
 
+  // If not initialized, keep showing nothing (splash will be on top)
+  if (!initialized) {
+    return null;
+  }
+
+  // Offline handling: Not logged in AND offline = Full screen message
+  if (!session && !isOnline) {
+    return <OfflineMessage onRetry={() => NetInfo.refresh()} />;
+  }
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <FeedbackProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-          <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
-          <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-          <Stack.Screen name="(modals)/payment-required" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-          <Stack.Screen name="(modals)/error" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-        </Stack>
-        <BingwaAlert />
-      </FeedbackProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <FeedbackProvider>
+          {!isOnline && session && <OfflineBanner />}
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+            <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
+            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+            <Stack.Screen name="(modals)/payment-required" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+            <Stack.Screen name="(modals)/error" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+          </Stack>
+          <BingwaAlert />
+        </FeedbackProvider>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }
 

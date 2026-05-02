@@ -4,6 +4,7 @@ import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as Haptics from 'expo-haptics';
 import ViewShot from 'react-native-view-shot';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -28,6 +29,7 @@ interface ReceiptPreviewProps {
 export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose, selectedScans }) => {
   const viewShotRef = useRef<any>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [generatedUri, setGeneratedUri] = React.useState<string | null>(null);
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -35,6 +37,34 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
     month: 'long',
     day: 'numeric',
   }).toUpperCase();
+
+  const handleShare = async () => {
+    if (!generatedUri) return;
+    try {
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(generatedUri, {
+          UTI: '.pdf',
+          mimeType: 'application/pdf',
+          dialogTitle: 'Bingwa Agro-Report',
+        });
+      } else {
+        Alert.alert('Sharing Unavailable', 'Sharing is not available on this device.');
+      }
+    } catch (error) {
+      console.error('Sharing Error:', error);
+      Alert.alert('Error', 'Failed to share the report.');
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!generatedUri) return;
+    try {
+      await Print.printAsync({ uri: generatedUri });
+    } catch (error) {
+      console.error('Print Error:', error);
+      Alert.alert('Error', 'Failed to open print dialog.');
+    }
+  };
 
   const generatePDF = async () => {
     setIsGenerating(true);
@@ -44,35 +74,36 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
         <html>
           <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
               @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
               body { 
                 font-family: 'Courier Prime', monospace; 
-                padding: 50px; 
+                padding: 40px 20px; 
                 background-color: #fff;
                 color: #000;
-                line-height: 1.5;
+                line-height: 1.4;
               }
-              .receipt { width: 100%; max-width: 750px; margin: 0 auto; }
+              .receipt { width: 100%; max-width: 800px; margin: 0 auto; }
               .center { text-align: center; }
-              .header { margin-bottom: 40px; border-bottom: 3px dashed #000; padding-bottom: 25px; }
-              .title { font-size: 36px; font-weight: 700; margin: 0; letter-spacing: 2px; }
-              .sub-title { font-size: 14px; font-weight: 700; margin-top: 5px; text-transform: uppercase; }
-              .date { font-size: 14px; margin-top: 15px; }
+              .header { margin-bottom: 30px; border-bottom: 2px dashed #000; padding-bottom: 20px; }
+              .title { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: 1px; }
+              .sub-title { font-size: 12px; font-weight: 700; margin-top: 5px; text-transform: uppercase; }
+              .date { font-size: 12px; margin-top: 10px; }
               
-              .scan-item { margin-bottom: 50px; page-break-inside: avoid; border-bottom: 1px dashed #ccc; padding-bottom: 30px; }
+              .scan-item { margin-bottom: 40px; page-break-inside: avoid; border-bottom: 1px dashed #ccc; padding-bottom: 20px; }
               
-              .main-row { margin-bottom: 20px; }
-              .label { font-weight: 700; font-size: 14px; text-decoration: underline; display: block; margin-top: 15px; margin-bottom: 5px; color: #000; }
-              .content { font-size: 14px; display: block; color: #000; text-transform: uppercase; }
+              .main-row { margin-bottom: 15px; }
+              .label { font-weight: 700; font-size: 12px; text-decoration: underline; display: block; margin-bottom: 3px; color: #000; }
+              .content { font-size: 12px; display: block; color: #000; text-transform: uppercase; }
               
-              .diagnosis-box { border: 2px solid #000; padding: 15px; margin-bottom: 15px; background-color: #f9f9f9; }
-              .diagnosis-text { font-size: 20px; font-weight: 700; }
-              .severity-text { font-size: 14px; font-weight: 700; display: block; margin-top: 5px; }
+              .diagnosis-box { border: 2px solid #000; padding: 12px; margin-bottom: 15px; background-color: #f5f5f5; }
+              .diagnosis-text { font-size: 16px; font-weight: 700; }
+              .severity-text { font-size: 12px; font-weight: 700; display: block; margin-top: 3px; }
 
-              .footer { margin-top: 80px; text-align: center; border-top: 3px dashed #000; padding-top: 40px; }
-              .footer-title { font-size: 24px; font-weight: 700; margin: 0; }
-              .legal { font-size: 10px; margin-top: 30px; text-align: center; opacity: 0.8; font-style: italic; }
+              .footer { margin-top: 60px; text-align: center; border-top: 2px dashed #000; padding-top: 30px; }
+              .footer-title { font-size: 20px; font-weight: 700; margin: 0; }
+              .legal { font-size: 9px; margin-top: 25px; text-align: center; opacity: 0.7; font-style: italic; }
             </style>
           </head>
           <body>
@@ -88,7 +119,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
                   <div class="diagnosis-box">
                     <div class="diagnosis-text">ITEM #${i+1}: ${String(scan.crop).toUpperCase()} / ${String(scan.result).toUpperCase()}</div>
                     <div class="severity-text">SEVERITY LEVEL: ${String(scan.severity).toUpperCase()}</div>
-                    <div style="font-size: 11px; margin-top: 5px;">RECORDED ON: ${scan.date}</div>
+                    <div style="font-size: 10px; margin-top: 4px;">RECORDED ON: ${scan.date}</div>
                   </div>
                   
                   <div class="main-row">
@@ -109,9 +140,9 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
               `).join('')}
 
               <div class="footer">
-                <p>TOTAL ITEMS PROCESSED: ${selectedScans.length}</p>
+                <p style="font-size: 12px;">TOTAL ITEMS PROCESSED: ${selectedScans.length}</p>
                 <h2 class="footer-title">BINGWA SHAMBANI AI</h2>
-                <p>DIGITAL CROP PROTECTION SERVICES</p>
+                <p style="font-size: 12px;">DIGITAL CROP PROTECTION SERVICES</p>
               </div>
               
               <div class="legal">
@@ -124,18 +155,31 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
         </html>
       `;
 
+      if ((Platform.OS as string) !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      }
+      
       const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+      setGeneratedUri(uri);
+      
+      if ((Platform.OS as string) !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      }
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      Alert.alert('Error', 'Failed to generate PDF. Please check your data and try again.');
+      Alert.alert('Error', 'Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const resetAndClose = () => {
+    setGeneratedUri(null);
+    onClose();
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={resetAndClose}>
       <View style={styles.modalOverlay}>
         <MotiView
           from={{ opacity: 0, translateY: 100 }}
@@ -149,91 +193,132 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
           </View>
 
           <ScrollView className="flex-1 px-6 pb-10" showsVerticalScrollIndicator={false}>
-            <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }}>
-              <View style={styles.receiptContainer}>
-                <View style={styles.jaggedEdge} />
-                
-                <View style={styles.receiptContent}>
-                  <View className="items-center mb-8">
-                    <Text style={styles.receiptTitle}>BINGWA-IFY</Text>
-                    <Text style={styles.receiptSubtitle}>OFFICIAL AGRO-PRESCRIPTION</Text>
-                    <Text style={styles.receiptDate}>{today}</Text>
-                  </View>
+            {generatedUri ? (
+              <MotiView 
+                from={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="items-center py-10"
+              >
+                <View className="w-24 h-24 bg-green-50 rounded-full items-center justify-center mb-6">
+                  <Ionicons name="checkmark-circle" size={64} color="#25D366" />
+                </View>
+                <Text className="text-2xl font-poppins-black text-center mb-2">Report Ready!</Text>
+                <Text className="text-gray-500 font-poppins-regular text-center mb-10">
+                  Your official agro-report has been generated successfully.
+                </Text>
 
-                  <View style={styles.receiptDivider} />
+                <View className="w-full space-y-4">
+                  <TouchableOpacity 
+                    onPress={handleShare}
+                    className="h-16 bg-accent rounded-[24px] flex-row items-center justify-center shadow-lg shadow-accent/20 mb-4"
+                  >
+                    <Ionicons name="share-social-outline" size={24} color="white" className="mr-3" />
+                    <Text className="text-white font-poppins-black text-sm uppercase tracking-widest">Share Report</Text>
+                  </TouchableOpacity>
 
-                  {selectedScans.map((scan, index) => (
-                    <View key={index} className="mb-10">
-                      <View style={styles.diagnosisBox}>
-                        <Text style={styles.monospaceDiagnosis}>
-                          {index + 1}. {scan.crop.toUpperCase()} / {scan.result.toUpperCase()}
-                        </Text>
-                        <Text style={styles.monospaceSeverity}>
-                          SEVERITY: {scan.severity.toUpperCase()}
+                  <TouchableOpacity 
+                    onPress={handlePrint}
+                    className="h-16 bg-white border-2 border-accent rounded-[24px] flex-row items-center justify-center"
+                  >
+                    <Ionicons name="print-outline" size={24} color="#25D366" className="mr-3" />
+                    <Text className="text-accent font-poppins-black text-sm uppercase tracking-widest">Print Report</Text>
+                  </TouchableOpacity>
+                </View>
+              </MotiView>
+            ) : (
+              <>
+                <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }}>
+                  <View style={styles.receiptContainer}>
+                    <View style={styles.jaggedEdge} />
+                    
+                    <View style={styles.receiptContent}>
+                      <View className="items-center mb-8">
+                        <Text style={styles.receiptTitle}>BINGWA-IFY</Text>
+                        <Text style={styles.receiptSubtitle}>OFFICIAL AGRO-PRESCRIPTION</Text>
+                        <Text style={styles.receiptDate}>{today}</Text>
+                      </View>
+
+                      <View style={styles.receiptDivider} />
+
+                      {selectedScans.map((scan, index) => (
+                        <View key={index} className="mb-10">
+                          <View style={styles.diagnosisBox}>
+                            <Text style={styles.monospaceDiagnosis}>
+                              {index + 1}. {scan.crop.toUpperCase()} / {scan.result.toUpperCase()}
+                            </Text>
+                            <Text style={styles.monospaceSeverity}>
+                              SEVERITY: {scan.severity.toUpperCase()}
+                            </Text>
+                          </View>
+                          
+                          <Text style={styles.sectionHeader}>[ORGANIC REMEDY]</Text>
+                          <Text style={styles.sectionBody}>{scan.organic_advice?.toUpperCase() || 'NO DATA'}</Text>
+                          
+                          <Text style={styles.sectionHeader}>[CHEMICAL TREATMENT]</Text>
+                          <Text style={styles.sectionBody}>{scan.chemical_advice?.toUpperCase() || 'CONSULT AGROVET'}</Text>
+                          
+                          <Text style={styles.sectionHeader}>[PREVENTION]</Text>
+                          <Text style={styles.sectionBody}>{scan.prevention?.toUpperCase() || 'FIELD HYGIENE'}</Text>
+
+                          {index < selectedScans.length - 1 && (
+                            <View style={[styles.receiptDivider, { borderStyle: 'dotted', opacity: 0.3, marginVertical: 30 }]} />
+                          )}
+                        </View>
+                      ))}
+
+                      <View style={styles.receiptDivider} />
+
+                      <View className="mt-8 items-center">
+                        <Text style={styles.monospaceFooter}>REPORT TOTAL: {selectedScans.length} SCANS</Text>
+                        <Text style={[styles.monospaceFooter, { fontSize: 20, fontWeight: '700', marginTop: 10 }]}>
+                          BINGWA SHAMBANI
                         </Text>
                       </View>
-                      
-                      <Text style={styles.sectionHeader}>[ORGANIC REMEDY]</Text>
-                      <Text style={styles.sectionBody}>{scan.organic_advice?.toUpperCase() || 'NO DATA'}</Text>
-                      
-                      <Text style={styles.sectionHeader}>[CHEMICAL TREATMENT]</Text>
-                      <Text style={styles.sectionBody}>{scan.chemical_advice?.toUpperCase() || 'CONSULT AGROVET'}</Text>
-                      
-                      <Text style={styles.sectionHeader}>[PREVENTION]</Text>
-                      <Text style={styles.sectionBody}>{scan.prevention?.toUpperCase() || 'FIELD HYGIENE'}</Text>
 
-                      {index < selectedScans.length - 1 && (
-                        <View style={[styles.receiptDivider, { borderStyle: 'dotted', opacity: 0.3, marginVertical: 30 }]} />
-                      )}
+                      <View className="mt-10 mb-4 opacity-40">
+                        <Text style={styles.cardInfo}>SECURED BY: BINGWA AI VAULT</Text>
+                        <Text style={styles.cardInfo}>OFFICIAL AI PRESCRIPTION SUMMARY</Text>
+                      </View>
                     </View>
-                  ))}
 
-                  <View style={styles.receiptDivider} />
-
-                  <View className="mt-8 items-center">
-                    <Text style={styles.monospaceFooter}>REPORT TOTAL: {selectedScans.length} SCANS</Text>
-                    <Text style={[styles.monospaceFooter, { fontSize: 20, fontWeight: '700', marginTop: 10 }]}>
-                      BINGWA SHAMBANI
-                    </Text>
+                    <View style={styles.jaggedEdgeBottom} />
                   </View>
+                </ViewShot>
 
-                  <View className="mt-10 mb-4 opacity-40">
-                    <Text style={styles.cardInfo}>SECURED BY: BINGWA AI VAULT</Text>
-                    <Text style={styles.cardInfo}>OFFICIAL AI PRESCRIPTION SUMMARY</Text>
-                  </View>
-                </View>
-
-                <View style={styles.jaggedEdgeBottom} />
-              </View>
-            </ViewShot>
+                <TouchableOpacity 
+                  onPress={generatePDF}
+                  disabled={isGenerating}
+                  className="mt-10 h-20 bg-accent rounded-[32px] flex-row items-center justify-center shadow-2xl shadow-accent/40"
+                >
+                  {isGenerating ? (
+                    <View className="flex-row items-center">
+                      <ActivityIndicator color="white" className="mr-3" />
+                      <Text className="text-white font-poppins-bold uppercase tracking-widest">Generating PDF...</Text>
+                    </View>
+                  ) : (
+                    <>
+                      <Ionicons name="receipt" size={28} color="white" className="mr-4" />
+                      <View>
+                        <Text className="text-white font-poppins-black text-sm uppercase tracking-widest leading-none">
+                          Receipt-ify
+                        </Text>
+                        <Text className="text-white/70 font-poppins-bold text-[10px] uppercase mt-1">
+                          Create Official Report
+                        </Text>
+                      </View>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
 
             <TouchableOpacity 
-              onPress={generatePDF}
-              disabled={isGenerating}
-              className="mt-10 h-20 bg-accent rounded-[32px] flex-row items-center justify-center shadow-2xl shadow-accent/40"
-            >
-              {isGenerating ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <>
-                  <Ionicons name="receipt" size={28} color="white" className="mr-4" />
-                  <View>
-                    <Text className="text-white font-poppins-black text-sm uppercase tracking-widest leading-none">
-                      Receipt-ify
-                    </Text>
-                    <Text className="text-white/70 font-poppins-bold text-[10px] uppercase mt-1">
-                      Download Full PDF Report
-                    </Text>
-                  </View>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={onClose}
+              onPress={resetAndClose}
               className="mt-6 mb-12 items-center py-4"
             >
-              <Text className="text-gray-400 font-poppins-bold text-sm uppercase tracking-widest">Close Vault</Text>
+              <Text className="text-gray-400 font-poppins-bold text-sm uppercase tracking-widest">
+                {generatedUri ? 'Done' : 'Close Vault'}
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </MotiView>

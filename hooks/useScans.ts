@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
 export interface Scan {
@@ -20,95 +22,92 @@ export interface Scan {
   }[];
 }
 
-// Manual Cache for scans
-let scansCache: Scan[] = [];
-let scansListeners: Array<(s: Scan[]) => void> = [];
+const SCANS_CACHE_KEY = 'bingwa_scans_cache';
 
 export const useScans = (limit?: number) => {
-  const [scans, setScans] = useState<Scan[]>(scansCache);
-  const [loading, setLoading] = useState(scansCache.length === 0);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const notifyListeners = (s: Scan[]) => {
-    scansCache = s;
-    scansListeners.forEach(listener => listener(s));
-  };
+  const { data: scans, isLoading, error, refetch } = useQuery<Scan[]>({
+    queryKey: ['scans', limit],
+    queryFn: async () => {
+      // 1. Load from cache first
+      const cached = await AsyncStorage.getItem(SCANS_CACHE_KEY);
+      const initialData = cached ? JSON.parse(cached) : [];
 
-  const fetchScans = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        notifyListeners([]);
-        setLoading(false);
-        return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        let query = supabase
+          .from('scans')
+          .select(`
+            *,
+            diseases (
+              name,
+              crop
+            ),
+            recommendations (
+              organic_advice,
+              chemical_advice,
+              prevention
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (limit) {
+          query = query.limit(limit);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const results = data || [];
+        // 2. Save fresh data to cache (only if not limited for main list)
+        if (!limit) {
+          await AsyncStorage.setItem(SCANS_CACHE_KEY, JSON.stringify(results));
+        }
+        
+        return results;
+      } catch (err) {
+        console.warn("Scans fetch failed, using cache:", err);
+        if (initialData.length > 0) return limit ? initialData.slice(0, limit) : initialData;
+        throw err;
       }
-
-      let query = supabase
-        .from('scans')
-        .select(`
-          *,
-          diseases (
-            name,
-            crop
-          ),
-          recommendations (
-            organic_advice,
-            chemical_advice,
-            prevention
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (limit) {
-        query = query.limit(limit);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      notifyListeners(data || []);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   useEffect(() => {
-    const listener = (s: Scan[]) => setScans(s);
-    scansListeners.push(listener);
-
-    if (scansCache.length === 0) {
-      fetchScans();
-    }
-
-    // Realtime listener for new scans
     let scansSubscription: any;
-    const setupRealtime = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
 
-        scansSubscription = supabase
-            .channel(`scans-cache-${user.id}`)
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'scans',
-                filter: `user_id=eq.${user.id}`
-            }, () => {
-                fetchScans(); // Refresh on new scan
-            })
-            .subscribe();
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      scansSubscription = supabase
+        .channel(`scans-changes-${user.id}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'scans',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          queryClient.invalidateQueries({ queryKey: ['scans'] });
+        })
+        .subscribe();
     };
 
     setupRealtime();
 
     return () => {
-      scansListeners = scansListeners.filter(l => listener !== l);
       if (scansSubscription) supabase.removeChannel(scansSubscription);
     };
-  }, [limit]);
+  }, [queryClient]);
 
-  return { scans, loading, error, refreshScans: fetchScans };
+  return { 
+    scans: scans || [], 
+    loading: isLoading, 
+    error: error instanceof Error ? error.message : null, 
+    refreshScans: refetch 
+  };
 };
