@@ -22,6 +22,9 @@ export interface Scan {
 }
 
 const SCANS_CACHE_KEY = 'bingwa_scans_cache';
+// Increment this whenever the query shape changes so stale caches are auto-cleared.
+const CACHE_VERSION = 'v3'; // bumped: added chemical_remedies, organic_remedies, recommendations
+const CACHE_VERSION_KEY = 'bingwa_scans_cache_version';
 
 export const useScans = (limit?: number) => {
   const queryClient = useQueryClient();
@@ -29,7 +32,15 @@ export const useScans = (limit?: number) => {
   const { data: scans, isLoading, error, refetch } = useQuery<Scan[]>({
     queryKey: ['scans', limit],
     queryFn: async () => {
-      // 1. Load from cache first
+      // 1. Validate cache version — if stale, discard it so mobile doesn't
+      //    serve old data that's missing chemical_remedies / recommendations.
+      const cachedVersion = await AsyncStorage.getItem(CACHE_VERSION_KEY);
+      if (cachedVersion !== CACHE_VERSION) {
+        await AsyncStorage.removeItem(SCANS_CACHE_KEY);
+        await AsyncStorage.setItem(CACHE_VERSION_KEY, CACHE_VERSION);
+      }
+
+      // 2. Load from (now-validated) cache first
       const cached = await AsyncStorage.getItem(SCANS_CACHE_KEY);
       const initialData = cached ? JSON.parse(cached) : [];
 

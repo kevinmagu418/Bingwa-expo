@@ -85,10 +85,12 @@ export default function ResultScreen() {
   const confidence = Math.round(scanResult.confidence_score * 100);
   const severity = (scanResult.severity || "low") as keyof typeof SEVERITY_THEME;
   const description = scanResult.diseases?.description || "No description available.";
-  // Safely extract recommendations whether it's returned as an Array or an Object
-  const recommendations = Array.isArray(scanResult.recommendations) 
-    ? scanResult.recommendations[0] 
-    : scanResult.recommendations || {};
+  // Safely extract recommendations whether it's returned as an Array or an Object.
+  // IMPORTANT: Use `|| {}` so an empty array (no rec row) doesn't produce undefined,
+  // which would silently crash every .chemical_advice / .organic_advice access.
+  const recommendations = Array.isArray(scanResult.recommendations)
+    ? (scanResult.recommendations[0] || {})
+    : (scanResult.recommendations || {});
   
   const getTabContent = () => {
     let specificContent = "";
@@ -116,13 +118,19 @@ export default function ResultScreen() {
     }
 
     // Smart Fallback Logic:
-    // If specific advice is empty, OR if it's explicitly the generic fallback text, pull from the diseases table instead!
-    const isSpecificEmptyOrGeneric = !specificContent || (specificContent.toLowerCase().includes("no ") && specificContent.toLowerCase().includes("recommended"));
-    
+    // Use specific AI advice if it's non-empty AND not a generic placeholder.
+    // The fallback keywords cover: "no ... recommended", "no ... available", "not available"
+    const lc = specificContent.toLowerCase();
+    const isSpecificEmptyOrGeneric =
+      !specificContent ||
+      (lc.includes('no ') && (lc.includes('recommended') || lc.includes('available'))) ||
+      lc === 'not available' ||
+      lc === 'n/a';
+
     if (!isSpecificEmptyOrGeneric) {
       return specificContent;
     }
-    
+
     return globalContent || fallbackMsg;
   };
 
