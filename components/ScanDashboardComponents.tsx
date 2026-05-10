@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, Image, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,14 +15,14 @@ export const CreditsCard = ({ count }: { count: number }) => (
     {/* Decorative background circle */}
     <View className="absolute -right-6 -top-6 w-24 h-24 bg-accent/5 rounded-full" />
     
-    <View className="flex-row items-center">
+    <View className="flex-row items-center flex-1">
       <LinearGradient
         colors={['#25D366', '#128C7E']}
         className="p-3 rounded-2xl mr-4 shadow-lg shadow-accent/20"
       >
         <Ionicons name="flash" size={24} color="white" />
       </LinearGradient>
-      <View>
+      <View className="flex-1">
         <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-base">
           Scan Credits
         </Text>
@@ -30,8 +31,11 @@ export const CreditsCard = ({ count }: { count: number }) => (
         </Text>
       </View>
     </View>
-    <View className={`${count > 0 ? 'bg-accent/10' : 'bg-red-500/10'} px-4 py-2 rounded-2xl border border-accent/20`}>
-      <Text className={`${count > 0 ? 'text-accent' : 'text-red-500'} font-poppins-black text-lg`}>{count}</Text>
+
+    <View className="flex-row items-center">
+        <View className={`${count > 0 ? 'bg-accent/10' : 'bg-red-500/10'} px-4 py-2 rounded-2xl border border-accent/20`}>
+          <Text className={`${count > 0 ? 'text-accent' : 'text-red-500'} font-poppins-black text-lg`}>{count}</Text>
+        </View>
     </View>
   </MotiView>
 );
@@ -89,7 +93,13 @@ export const RecentScanItem = ({ item, index }: { item: any, index: number }) =>
     className="mr-5 w-48"
   >
     <View className="h-64 rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-lg relative">
-      <Image source={item.image} className="w-full h-40" resizeMode="cover" />
+      <Image 
+        source={item.image} 
+        style={{ width: '100%', height: 160 }} 
+        contentFit="cover"
+        transition={300}
+        cachePolicy="disk"
+      />
       
       {/* Severity badge on image */}
       <View className={`absolute top-3 right-3 px-2 py-1 rounded-full backdrop-blur-md border ${

@@ -72,7 +72,7 @@ const SLIDES: Slide[] = [
     isPricing: true,
     title: "Pay as you go",
     subtitle: "PRICING",
-    description: "Start with 2 free scans. Affordable top-ups via M-Pesa. No monthly commitments.",
+    description: "Start with 3 free scans. Affordable top-ups via M-Pesa. No monthly commitments.",
     color: "#128C7E",
     Svg: PaymentSvg,
   }
@@ -123,7 +123,7 @@ const SlideItem = memo(({ item, width, height, isActive }: { item: Slide, width:
           
           <View className="space-y-3">
             {[
-              { label: "2 Free Scans", icon: "gift-outline", color: "#25D366" },
+              { label: "3 Free Scans", icon: "gift-outline", color: "#25D366" },
               { label: "M-Pesa Ready", icon: "phone-portrait-outline", color: "#3A86FF" },
               { label: "No Subscriptions", icon: "infinite-outline", color: "#F4A261" }
             ].map((feat, idx) => (
@@ -272,10 +272,14 @@ const SlideItem = memo(({ item, width, height, isActive }: { item: Slide, width:
 
 export default function HowItWorksScreen() {
   const router = useRouter();
-  const { width, height } = useWindowDimensions();
+  const { width: windowWidth, height } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<Slide>>(null);
   const isWeb = Platform.OS === 'web';
+  
+  // Constrain width on web to a mobile-like frame (max 480px)
+  const width = isWeb ? Math.min(windowWidth, 480) : windowWidth;
+  
   const insets = useSafeAreaInsets();
   const autoPlayTimer = useRef<any>(null);
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
@@ -333,94 +337,96 @@ export default function HowItWorksScreen() {
   }, [currentIndex, stopAutoPlay]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F8F9FA', paddingTop: insets.top }} className="dark:bg-darkBackground">
-      {/* Dynamic Header */}
-      <View className="px-8 pt-4 flex-row justify-between items-center z-10">
-        <MotiView 
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 3000, loop: true }}
-        >
-           <Image source={require("../../assets/bingwalogo.png")} style={{ width: 90, height: 28 }} resizeMode="contain" />
-        </MotiView>
-        <Pressable 
-          onPress={() => router.push("/permissions")} 
-          className="bg-white/80 dark:bg-darkSurface/80 px-6 py-2.5 rounded-2xl border border-black/5"
-        >
-          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase tracking-[2px]">Skip</Text>
-        </Pressable>
-      </View>
+    <View className="flex-1 bg-[#F8F9FA] dark:bg-darkBackground items-center" style={{ paddingTop: insets.top }}>
+      <View style={{ width, flex: 1 }}>
+        
+        {/* Dynamic Header */}
+        <View className="px-8 pt-4 flex-row justify-between items-center z-10">
+          <MotiView 
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3000, loop: true }}
+          >
+             <Image source={require("../../assets/bingwalogo.png")} style={{ width: 90, height: 28 }} resizeMode="contain" />
+          </MotiView>
+          <Pressable 
+            onPress={() => router.push("/permissions")} 
+            className="bg-white/80 dark:bg-darkSurface/80 px-6 py-2.5 rounded-2xl border border-black/5"
+          >
+            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase tracking-[2px]">Skip</Text>
+          </Pressable>
+        </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={SLIDES}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => <SlideItem item={item} width={width} height={height} isActive={index === currentIndex} />}
-        onScrollBeginDrag={stopAutoPlay}
-        onScrollEndDrag={startAutoPlay}
-        windowSize={3}
-      />
+        <FlatList
+          ref={flatListRef}
+          data={SLIDES}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+          renderItem={({ item, index }) => <SlideItem item={item} width={width} height={height} isActive={index === currentIndex} />}
+          onScrollBeginDrag={stopAutoPlay}
+          onScrollEndDrag={startAutoPlay}
+          windowSize={3}
+        />
 
-      {/* Footer Navigation: Liquid Pagination */}
-      <View className="items-center pb-12 pt-4 px-8">
-        <View style={{ width: isWeb ? Math.min(width - 40, 450) : '100%' }}>
-          
-          <View className="flex-row justify-center mb-10 items-center space-x-3">
-            {SLIDES.map((_, i) => (
-              <MotiView
-                key={i}
-                animate={{
-                  width: i === currentIndex ? 32 : 10,
-                  height: 10,
-                  opacity: i === currentIndex ? 1 : 0.2,
-                  backgroundColor: i === currentIndex ? SLIDES[currentIndex].color : "#8696A0",
-                  borderRadius: 5,
-                }}
-                transition={{ type: "spring", damping: 12 }}
-              />
-            ))}
-          </View>
+        {/* Footer Navigation: Liquid Pagination */}
+        <View className="items-center pb-12 pt-4 px-8">
+          <View style={{ width: '100%' }}>
+            
+            <View className="flex-row justify-center mb-10 items-center space-x-3">
+              {SLIDES.map((_, i) => (
+                <MotiView
+                  key={i}
+                  animate={{
+                    width: i === currentIndex ? 32 : 10,
+                    height: 10,
+                    opacity: i === currentIndex ? 1 : 0.2,
+                    backgroundColor: i === currentIndex ? SLIDES[currentIndex].color : "#8696A0",
+                    borderRadius: 5,
+                  }}
+                  transition={{ type: "spring", damping: 12 }}
+                />
+              ))}
+            </View>
 
-          <View className="flex-row space-x-4">
-            <AnimatePresence>
-              {currentIndex > 0 && (
-                <MotiView 
-                  from={{ opacity: 0, scale: 0.5, width: 0 }} 
-                  animate={{ opacity: 1, scale: 1, width: 80 }} 
-                  exit={{ opacity: 0, scale: 0.5, width: 0 }} 
-                  className="overflow-hidden"
-                >
-                  <Pressable 
-                    onPress={handleBack} 
-                    className="h-16 w-full bg-white dark:bg-darkSurface border border-black/5 dark:border-white/5 rounded-[24px] items-center justify-center active:scale-95"
+            <View className="flex-row space-x-4">
+              <AnimatePresence>
+                {currentIndex > 0 && (
+                  <MotiView 
+                    from={{ opacity: 0, scale: 0.5, width: 0 }} 
+                    animate={{ opacity: 1, scale: 1, width: 80 }} 
+                    exit={{ opacity: 0, scale: 0.5, width: 0 }} 
+                    className="overflow-hidden"
                   >
-                    <Ionicons name="chevron-back" size={24} color={SLIDES[currentIndex].color} />
-                  </Pressable>
-                </MotiView>
-              )}
-            </AnimatePresence>
+                    <Pressable 
+                      onPress={handleBack} 
+                      className="h-16 w-full bg-white dark:bg-darkSurface border border-black/5 dark:border-white/5 rounded-[24px] items-center justify-center active:scale-95"
+                    >
+                      <Ionicons name="chevron-back" size={24} color={SLIDES[currentIndex].color} />
+                    </Pressable>
+                  </MotiView>
+                )}
+              </AnimatePresence>
 
-            <Pressable 
-              onPress={handleContinue} 
-              className="flex-1 h-16 rounded-[24px] items-center justify-center shadow-xl overflow-hidden active:scale-[0.97]"
-              style={{ backgroundColor: SLIDES[currentIndex].color }}
-            >
-              <LinearGradient 
-                colors={[SLIDES[currentIndex].color, `${SLIDES[currentIndex].color}CC`]} 
-                className="absolute inset-0" 
-              />
-              <View className="flex-row items-center">
-                <Text className="text-white font-poppins-black text-sm mr-3 uppercase tracking-[3px]">
-                  {currentIndex === SLIDES.length - 1 ? "Get Started" : "Continue"}
-                </Text>
-                <Ionicons name="arrow-forward" size={20} color="white" />
-              </View>
-            </Pressable>
+              <Pressable 
+                onPress={handleContinue} 
+                className="flex-1 h-16 rounded-[24px] items-center justify-center shadow-xl overflow-hidden active:scale-[0.97]"
+                style={{ backgroundColor: SLIDES[currentIndex].color }}
+              >
+                <LinearGradient 
+                  colors={[SLIDES[currentIndex].color, `${SLIDES[currentIndex].color}CC`]} 
+                  className="absolute inset-0" 
+                />
+                <View className="flex-row items-center">
+                  <Text className="text-white font-poppins-black text-sm mr-3 uppercase tracking-[3px]">
+                    {currentIndex === SLIDES.length - 1 ? "Get Started" : "Continue"}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={20} color="white" />
+                </View>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>

@@ -29,21 +29,30 @@ const CACHE_VERSION_KEY = 'bingwa_scans_cache_version';
 export const useScans = (limit?: number) => {
   const queryClient = useQueryClient();
 
-  const { data: scans, isLoading, error, refetch } = useQuery<Scan[]>({
-    queryKey: ['scans', limit],
-    queryFn: async () => {
-      // 1. Validate cache version — if stale, discard it so mobile doesn't
-      //    serve old data that's missing chemical_remedies / recommendations.
+  // 1. Initial hydration from AsyncStorage
+  useEffect(() => {
+    const hydrate = async () => {
+      // Validate cache version
       const cachedVersion = await AsyncStorage.getItem(CACHE_VERSION_KEY);
       if (cachedVersion !== CACHE_VERSION) {
         await AsyncStorage.removeItem(SCANS_CACHE_KEY);
         await AsyncStorage.setItem(CACHE_VERSION_KEY, CACHE_VERSION);
+        return;
       }
 
-      // 2. Load from (now-validated) cache first
       const cached = await AsyncStorage.getItem(SCANS_CACHE_KEY);
-      const initialData = cached ? JSON.parse(cached) : [];
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Only hydrate if we are not asking for a specific limit, or if the limit fits the cache
+        queryClient.setQueryData(['scans', limit], limit ? parsed.slice(0, limit) : parsed);
+      }
+    };
+    hydrate();
+  }, [queryClient, limit]);
 
+  const { data: scans, isLoading, error, refetch } = useQuery<Scan[]>({
+    queryKey: ['scans', limit],
+    queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return [];
@@ -83,11 +92,16 @@ export const useScans = (limit?: number) => {
         
         return results;
       } catch (err) {
-        console.warn("Scans fetch failed, using cache:", err);
-        if (initialData.length > 0) return limit ? initialData.slice(0, limit) : initialData;
+        console.warn("Scans fetch failed, checking cache...");
+        const cached = await AsyncStorage.getItem(SCANS_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          return limit ? parsed.slice(0, limit) : parsed;
+        }
         throw err;
       }
     },
+    staleTime: 1000 * 60 * 5, // 5 mins
   });
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
+import PasswordStrength from '../../components/PasswordStrength';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -26,28 +27,42 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    if (password.length < 6) {
-        Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+        Alert.alert('Error', 'Password must be at least 8 characters for better security');
         return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({
-      password: password,
-    });
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password,
+      });
 
-    if (error) {
-      Alert.alert('Update Failed', error.message);
-    } else {
-      Alert.alert('Success', 'Your password has been updated!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/scan') }
-      ]);
+      if (error) {
+        Alert.alert('Update Failed', error.message);
+      } else {
+        Alert.alert('Success', 'Your password has been updated! You can now log in with your new password.', [
+          { text: 'OK', onPress: () => router.replace('/(auth)/login') }
+        ]);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8F9FA] dark:bg-darkBackground">
+      <View className="px-6 pt-4">
+        <TouchableOpacity 
+          onPress={() => router.replace('/(auth)/login')}
+          className="w-10 h-10 bg-white dark:bg-darkSurface rounded-full items-center justify-center shadow-sm border border-black/5 dark:border-white/5"
+        >
+          <Ionicons name="close" size={20} color="#25D366" />
+        </TouchableOpacity>
+      </View>
+
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -84,15 +99,19 @@ export default function ResetPasswordScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              isValid={password.length >= 8}
             />
+
+            <PasswordStrength password={password} />
 
             <AuthInput
               label="Confirm New Password"
-              icon="lock-closed-outline"
+              icon="shield-checkmark-outline"
               placeholder="Confirm new password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showPassword}
+              isValid={confirmPassword.length > 0 && confirmPassword === password}
             />
 
             <TouchableOpacity 
@@ -118,3 +137,4 @@ export default function ResetPasswordScreen() {
     </SafeAreaView>
   );
 }
+

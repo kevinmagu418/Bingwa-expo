@@ -85,19 +85,25 @@ export default function HistoryTab() {
     .filter(s => selectedIds.includes(s.id))
     .map(s => {
       // Safely extract recommendations whether it's an array or an object
-      const rec = Array.isArray(s.recommendations) ? s.recommendations[0] : s.recommendations || {};
+      const rec = Array.isArray(s.recommendations) ? (s.recommendations[0] || {}) : (s.recommendations || {});
 
       const specificOrg = cleanArrayString(rec.organic_advice);
-      const isOrgGeneric = !specificOrg || (specificOrg.toLowerCase().includes("no ") && specificOrg.toLowerCase().includes("recommended"));
-      const organic_advice = isOrgGeneric ? (cleanArrayString(s.diseases?.organic_remedies) || specificOrg) : specificOrg;
+      const globalOrg = cleanArrayString(s.diseases?.organic_remedies);
+      const organic_advice = (specificOrg && !specificOrg.toLowerCase().includes("no ")) 
+        ? specificOrg 
+        : (globalOrg || specificOrg || 'No organic remedies available');
 
       const specificChem = cleanArrayString(rec.chemical_advice);
-      const isChemGeneric = !specificChem || (specificChem.toLowerCase().includes("no ") && specificChem.toLowerCase().includes("recommended"));
-      const chemical_advice = isChemGeneric ? (cleanArrayString(s.diseases?.chemical_remedies) || specificChem) : specificChem;
+      const globalChem = cleanArrayString(s.diseases?.chemical_remedies);
+      const chemical_advice = (specificChem && !specificChem.toLowerCase().includes("no ")) 
+        ? specificChem 
+        : (globalChem || specificChem || 'Consult agrovet for chemical options');
 
       const specificPrev = cleanArrayString(rec.prevention);
-      const isPrevGeneric = !specificPrev || (specificPrev.toLowerCase().includes("no ") && specificPrev.toLowerCase().includes("available"));
-      const prevention = isPrevGeneric ? (cleanArrayString(s.diseases?.prevention_tips) || specificPrev) : specificPrev;
+      const globalPrev = cleanArrayString(s.diseases?.prevention_tips);
+      const prevention = (specificPrev && !specificPrev.toLowerCase().includes("no ")) 
+        ? specificPrev 
+        : (globalPrev || specificPrev || 'No prevention tips available');
 
       return {
         id: s.id,

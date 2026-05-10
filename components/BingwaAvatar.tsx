@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, Text, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
+import { Text, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
@@ -66,7 +67,9 @@ export const BingwaAvatar: React.FC<BingwaAvatarProps> = ({
           <Image 
             source={{ uri: profile.avatar_url }} 
             style={{ width: '100%', height: '100%' }}
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="disk"
+            transition={200}
           />
         ) : (
           <LinearGradient

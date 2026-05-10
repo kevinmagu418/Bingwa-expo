@@ -23,14 +23,22 @@ const PROFILE_CACHE_KEY = 'bingwa_profile_cache';
 export const useProfile = () => {
   const queryClient = useQueryClient();
 
+  // 1. Initial hydration from AsyncStorage
+  useEffect(() => {
+    const hydrate = async () => {
+      const cached = await AsyncStorage.getItem(PROFILE_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        queryClient.setQueryData(['profile'], parsed);
+      }
+    };
+    hydrate();
+  }, [queryClient]);
+
   // Query to fetch profile
   const { data: profile, isLoading, error, refetch } = useQuery<Profile | null>({
     queryKey: ['profile'],
     queryFn: async () => {
-      // 1. Try to get from AsyncStorage first (as a backup if cache is empty)
-      const cached = await AsyncStorage.getItem(PROFILE_CACHE_KEY);
-      const initialData = cached ? JSON.parse(cached) : null;
-
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
@@ -64,14 +72,13 @@ export const useProfile = () => {
         await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(mergedProfile));
         return mergedProfile;
       } catch (err) {
-        console.warn("Profile fetch failed, using cache:", err);
-        // If API fails, return cached data if we have it
-        if (initialData) return initialData;
+        console.warn("Profile fetch failed, checking cache...");
+        const cached = await AsyncStorage.getItem(PROFILE_CACHE_KEY);
+        if (cached) return JSON.parse(cached);
         throw err;
       }
     },
-    // Use initial data from AsyncStorage if available
-    initialData: undefined, 
+    staleTime: 1000 * 60 * 30, // 30 mins
   });
 
   // Mutation to update profile

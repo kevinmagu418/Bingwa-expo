@@ -101,17 +101,17 @@ export default function ResultScreen() {
       case 'chemical':
         specificContent = cleanArrayString(recommendations.chemical_advice);
         globalContent = cleanArrayString(scanResult.diseases?.chemical_remedies);
-        fallbackMsg = "No chemical remedies recommended.";
+        fallbackMsg = "Consult a local agrovet for chemical treatment options suitable for your region.";
         break;
       case 'organic':
         specificContent = cleanArrayString(recommendations.organic_advice);
         globalContent = cleanArrayString(scanResult.diseases?.organic_remedies);
-        fallbackMsg = "No organic remedies recommended.";
+        fallbackMsg = "No specific organic remedies found. Try maintaining soil health and proper irrigation.";
         break;
       case 'prevention':
         specificContent = cleanArrayString(recommendations.prevention);
         globalContent = cleanArrayString(scanResult.diseases?.prevention_tips);
-        fallbackMsg = "No prevention tips available.";
+        fallbackMsg = "No prevention tips available. Always use certified seeds and clean tools.";
         break;
       default:
         return "";
@@ -119,19 +119,20 @@ export default function ResultScreen() {
 
     // Smart Fallback Logic:
     // Use specific AI advice if it's non-empty AND not a generic placeholder.
-    // The fallback keywords cover: "no ... recommended", "no ... available", "not available"
     const lc = specificContent.toLowerCase();
-    const isSpecificEmptyOrGeneric =
-      !specificContent ||
-      (lc.includes('no ') && (lc.includes('recommended') || lc.includes('available'))) ||
-      lc === 'not available' ||
-      lc === 'n/a';
+    const isGeneric = 
+      lc === 'not available' || 
+      lc === 'n/a' || 
+      lc === 'none' ||
+      (lc.includes('no ') && (lc.includes('recommended') || lc.includes('available') || lc.includes('advice'))) && lc.length < 40;
 
-    if (!isSpecificEmptyOrGeneric) {
+    // If we have specific content and it's not a short generic string, use it.
+    if (specificContent && !isGeneric) {
       return specificContent;
     }
 
-    return globalContent || fallbackMsg;
+    // Otherwise, try global database content, then fallback message.
+    return globalContent || specificContent || fallbackMsg;
   };
 
   const theme = SEVERITY_THEME[severity];

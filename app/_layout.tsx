@@ -42,6 +42,7 @@ const queryClient = new QueryClient({
 function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [recoveryInProgress, setRecoveryInProgress] = useState(false);
   const { isOnline } = useNetwork();
   const segments = useSegments() as string[];
   const router = useRouter();
@@ -59,7 +60,12 @@ function RootLayout() {
     // Handle deep links for password recovery manually
     const handleDeepLink = async (url: string) => {
       console.log("Processing deep link:", url);
-      if (url.includes('access_token=') && (url.includes('type=recovery') || url.includes('reset-password'))) {
+      
+      // Look for type=recovery or reset-password in the URL
+      const isRecovery = url.includes('type=recovery') || url.includes('reset-password');
+      
+      if (url.includes('access_token=') && isRecovery) {
+        setRecoveryInProgress(true);
         const hash = url.split('#')[1] || url.split('?')[1];
         if (hash) {
           const params = new URLSearchParams(hash);
@@ -67,13 +73,22 @@ function RootLayout() {
           const refreshToken = params.get('refresh_token');
 
           if (accessToken) {
+            console.log("Found recovery token, setting session...");
             const { error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken || '',
             });
+            
             if (!error) {
-              console.log("Recovery session set successfully");
-              router.replace('/(auth)/reset-password');
+              console.log("Recovery session set successfully, routing to reset-password");
+              // Small delay to ensure session is registered before navigation
+              setTimeout(() => {
+                router.replace('/(auth)/reset-password');
+                setRecoveryInProgress(false);
+              }, 500);
+            } else {
+              console.error("Error setting recovery session:", error.message);
+              setRecoveryInProgress(false);
             }
           }
         }
@@ -94,11 +109,9 @@ function RootLayout() {
     // Quick initial session check
     const initAuth = async () => {
       try {
-        // getSession() will prioritize local storage
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Auth initialization error:", error.message);
-          // If we are offline, don't sign out, just use what we have (or don't have)
           if (isOnline) supabase.auth.signOut();
         }
         setSession(session);
@@ -121,8 +134,12 @@ function RootLayout() {
       }
 
       if (event === 'PASSWORD_RECOVERY') {
-        // Delay slightly to ensure session is fully set
-        setTimeout(() => router.replace('/(auth)/reset-password'), 100);
+        setRecoveryInProgress(true);
+        console.log("PASSWORD_RECOVERY event triggered");
+        setTimeout(() => {
+          router.replace('/(auth)/reset-password');
+          setRecoveryInProgress(false);
+        }, 500);
       }
     });
 
@@ -133,7 +150,7 @@ function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!initialized || !fontsLoaded) return;
+    if (!initialized || !fontsLoaded || recoveryInProgress) return;
 
     const inAuthGroup = segments[0] === "(auth)";
     const inTabsGroup = segments[0] === "(tabs)";
@@ -142,7 +159,7 @@ function RootLayout() {
     const isResetPassword = segments[1] === "reset-password";
 
     if (session) {
-      // If we are in a recovery session, DO NOT redirect to tabs
+      // If we are on the reset-password screen, don't redirect
       if (isResetPassword) return;
 
       // If logged in and in auth group, or on welcome screen, go to scan
@@ -159,7 +176,7 @@ function RootLayout() {
         SplashScreen.hideAsync().catch(() => {});
       }, 100);
     }
-  }, [session, initialized, segments, fontsLoaded, fontError]);
+  }, [session, initialized, segments, fontsLoaded, fontError, recoveryInProgress]);
 
   if (!fontsLoaded && !fontError) {
     return null;

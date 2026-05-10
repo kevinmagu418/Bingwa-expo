@@ -109,16 +109,23 @@ export const OfflineMessage = ({ onRetry }: OfflineMessageProps) => {
 export const OfflineBanner = () => {
   return (
     <MotiView 
-      from={{ translateY: -50 }}
+      from={{ translateY: -100 }}
       animate={{ translateY: 0 }}
-      className="bg-[#EF4444] px-4 shadow-lg z-50"
-      style={{ paddingTop: Platform.OS === 'ios' ? 40 : 10, paddingBottom: 10 }}
+      className="bg-[#1C2C35] px-6 py-2 shadow-2xl z-50 border-b border-white/5"
+      style={{ paddingTop: Platform.OS === 'ios' ? 50 : 15 }}
     >
-      <View className="flex-row items-center justify-center">
-        <Ionicons name="cloud-offline" size={16} color="white" />
-        <Text className="text-white text-[12px] font-poppins-bold ml-2 uppercase tracking-widest">
-          Offline Mode • Showing Cached Data
-        </Text>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center">
+          <MotiView
+            animate={{ opacity: [1, 0.4, 1] }}
+            transition={{ loop: true, duration: 2000 }}
+            className="w-2 h-2 rounded-full bg-orange-500 mr-3"
+          />
+          <Text className="text-white/90 text-[10px] font-poppins-bold uppercase tracking-[2px]">
+            Offline Mode • Using Vault Cache
+          </Text>
+        </View>
+        <Ionicons name="cloud-offline-outline" size={14} color="rgba(255,255,255,0.4)" />
       </View>
     </MotiView>
   );

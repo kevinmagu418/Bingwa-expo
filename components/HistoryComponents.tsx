@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Pressable, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { MotiView, AnimatePresence } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -71,7 +72,13 @@ export const HistoryCard = ({
           )}
         </AnimatePresence>
 
-        <Image source={{ uri: item.image }} className="w-20 h-20 rounded-[22px] mr-4" resizeMode="cover" />
+        <Image 
+          source={{ uri: item.image }} 
+          style={{ width: 80, height: 80, borderRadius: 22, marginRight: 16 }}
+          contentFit="cover"
+          cachePolicy="disk"
+          transition={200}
+        />
         
         <View className="flex-1">
           <View className="flex-row justify-between items-start mb-1">

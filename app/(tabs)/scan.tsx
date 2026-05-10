@@ -81,9 +81,11 @@ export default function ScanDashboard() {
               <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">
                 Bingwa Farmer 
               </Text>
-              <Text className="text-[#128C7E] font-poppins-black text-2xl ml-2">
-                {profile?.full_name?.split(' ')[0] || '...'}
-              </Text>
+              {profile?.full_name && (
+                <Text className="text-[#128C7E] font-poppins-black text-2xl ml-2">
+                  {profile.full_name.split(' ')[0]}
+                </Text>
+              )}
             </View>
           </View>
           <BingwaAvatar size={56} borderWidth={2} />
@@ -131,9 +133,20 @@ export default function ScanDashboard() {
                 </TouchableOpacity>
               ))
             ) : (
-              <View className="bg-white dark:bg-darkSurface p-6 rounded-[24px] border border-black/5 dark:border-white/5 w-64 items-center justify-center">
-                <Ionicons name="leaf-outline" size={32} color="#8696A0" className="mb-2 opacity-50" />
-                <Text className="text-textSecondary font-poppins-regular text-xs text-center">No scans yet. Start by scanning your first crop!</Text>
+              <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 w-[280px] items-center justify-center shadow-sm">
+                <View className="bg-accent/5 w-16 h-16 rounded-full items-center justify-center mb-4">
+                    <Ionicons name="leaf-outline" size={32} color="#25D366" opacity={0.5} />
+                </View>
+                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm text-center mb-1">No Scans Recorded</Text>
+                <Text className="text-textSecondary font-poppins-regular text-[11px] text-center opacity-60 mb-6">
+                    Start your first crop diagnosis to see results here.
+                </Text>
+                <TouchableOpacity 
+                    onPress={handleScanPress}
+                    className="bg-accent px-6 py-2.5 rounded-full"
+                >
+                    <Text className="text-white font-poppins-black text-[10px] uppercase tracking-widest">Start First Scan</Text>
+                </TouchableOpacity>
               </View>
             )}
           </ScrollView>
