@@ -137,6 +137,36 @@ export default function ResultScreen() {
 
   const theme = SEVERITY_THEME[severity];
 
+  // Pre-calculate content to avoid logic in render
+  const organicContent = (() => {
+    const specificContent = cleanArrayString(recommendations.organic_advice);
+    const globalContent = cleanArrayString(scanResult.diseases?.organic_remedies);
+    const lc = specificContent.toLowerCase();
+    const isGeneric = lc === 'not available' || lc === 'n/a' || lc === 'none' ||
+      ((lc.includes('no ') && (lc.includes('recommended') || lc.includes('available') || lc.includes('advice'))) && lc.length < 40);
+    return (specificContent && !isGeneric) ? specificContent : (globalContent || specificContent || "No specific organic remedies found. Try maintaining soil health and proper irrigation.");
+  })();
+
+  const chemicalContent = (() => {
+    const specificContent = cleanArrayString(recommendations.chemical_advice);
+    const globalContent = cleanArrayString(scanResult.diseases?.chemical_remedies);
+    const lc = specificContent.toLowerCase();
+    const isGeneric = lc === 'not available' || lc === 'n/a' || lc === 'none' ||
+      ((lc.includes('no ') && (lc.includes('recommended') || lc.includes('available') || lc.includes('advice'))) && lc.length < 40);
+    return (specificContent && !isGeneric) ? specificContent : (globalContent || specificContent || "Consult a local agrovet for chemical treatment options suitable for your region.");
+  })();
+
+  const preventionContent = (() => {
+    const specificContent = cleanArrayString(recommendations.prevention);
+    const globalContent = cleanArrayString(scanResult.diseases?.prevention_tips);
+    const lc = specificContent.toLowerCase();
+    const isGeneric = lc === 'not available' || lc === 'n/a' || lc === 'none' ||
+      ((lc.includes('no ') && (lc.includes('recommended') || lc.includes('available') || lc.includes('advice'))) && lc.length < 40);
+    return (specificContent && !isGeneric) ? specificContent : (globalContent || specificContent || "No prevention tips available. Always use certified seeds and clean tools.");
+  })();
+
+  const currentContent = activeTab === 'organic' ? organicContent : activeTab === 'chemical' ? chemicalContent : preventionContent;
+
   return (
     <SafeAreaView className="flex-1 bg-[#FFF9F5] dark:bg-darkBackground" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -241,42 +271,45 @@ export default function ResultScreen() {
                     ))}
                 </View>
 
-                <AnimatePresence exitBeforeEnter>
-                    <MotiView
-                        key={activeTab}
-                        from={{ opacity: 0, translateY: 10 }}
-                        animate={{ opacity: 1, translateY: 0 }}
-                        transition={{ type: 'timing', duration: 300 }}
-                        className="bg-white dark:bg-darkSurface p-8 rounded-[48px] border border-orange-100 dark:border-white/5 shadow-xl relative overflow-hidden"
-                    >
-                        <View className="flex-row justify-between items-center mb-8">
-                            <View className="bg-orange-50 dark:bg-orange-900/10 px-5 py-2 rounded-full border border-orange-100">
-                                <Text className="text-orange-500 font-poppins-bold text-[10px] uppercase tracking-widest">{activeTab} Plan</Text>
-                            </View>
-                            <View className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/40">
-                                <Ionicons 
-                                    name={activeTab === 'prevention' ? "shield-checkmark" : activeTab === 'organic' ? "leaf" : "flask"} 
-                                    size={20} 
-                                    color="white" 
-                                />
-                            </View>
-                        </View>
-                        
-                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-regular text-base leading-[26px] mb-8">
-                            {getTabContent()}
-                        </Text>
+                <View className="bg-white dark:bg-darkSurface p-8 rounded-[48px] border border-orange-100 dark:border-white/5 shadow-xl min-h-[300px]">
+                  <AnimatePresence>
+                      <MotiView
+                          key={activeTab}
+                          from={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ type: 'timing', duration: 150 }}
+                          className="flex-1"
+                      >
+                          <View className="flex-row justify-between items-center mb-8">
+                              <View className="bg-orange-50 dark:bg-orange-900/10 px-5 py-2 rounded-full border border-orange-100">
+                                  <Text className="text-orange-500 font-poppins-bold text-[10px] uppercase tracking-widest">{activeTab} Plan</Text>
+                              </View>
+                              <View className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/40">
+                                  <Ionicons 
+                                      name={activeTab === 'prevention' ? "shield-checkmark" : activeTab === 'organic' ? "leaf" : "flask"} 
+                                      size={20} 
+                                      color="white" 
+                                  />
+                              </View>
+                          </View>
+                          
+                          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-regular text-base leading-[26px] mb-8">
+                              {currentContent}
+                          </Text>
 
-                        <View className="flex-row items-center bg-[#FFF9F5] dark:bg-white/5 p-5 rounded-3xl border border-orange-50">
-                            <Ionicons name="information-circle" size={20} color={ORANGE} />
-                            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-[11px] ml-3 flex-1 leading-tight">
-                                This recommendation is synthesized by Bingwa AI for educational purposes.
-                            </Text>
-                        </View>
-                    </MotiView>
-                </AnimatePresence>
+                          <View className="flex-row items-center bg-[#FFF9F5] dark:bg-white/5 p-5 rounded-3xl border border-orange-50 mt-auto">
+                              <Ionicons name="information-circle" size={20} color={ORANGE} />
+                              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-[11px] ml-3 flex-1 leading-tight">
+                                  This recommendation is synthesized by Bingwa AI for educational purposes.
+                              </Text>
+                          </View>
+                      </MotiView>
+                  </AnimatePresence>
+                </View>
             </View>
 
-            {/* Vault AI Banner */}
+            {/* Premium AI Assistant Banner */}
             <TouchableOpacity 
                 onPress={() => router.push({
                     pathname: '/ai-assistant',
@@ -290,23 +323,51 @@ export default function ResultScreen() {
                     }
                 })}
                 activeOpacity={0.9}
-                className="mt-8 mb-6"
+                className="mt-10 mb-6"
             >
                 <MotiView 
-                    from={{ opacity: 0, translateY: 20 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    className="overflow-hidden rounded-[40px] border border-orange-100 dark:border-white/10 shadow-2xl shadow-orange-900/5"
+                    from={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative overflow-hidden rounded-[40px] border border-orange-200 dark:border-orange-500/20 shadow-2xl shadow-orange-200/50"
                 >
                     <LinearGradient
-                        colors={[ORANGE, '#E76F51']}
-                        className="p-10 flex-row items-center"
+                        colors={['#FFF1E6', '#FFFFFF']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        className="p-8 flex-row items-center"
                     >
-                        <View className="w-16 h-16 rounded-[24px] bg-white/20 items-center justify-center mr-6 border border-white/20">
-                            <Ionicons name="chatbubbles" size={32} color="white" />
+                        {/* Decorative background element */}
+                        <View className="absolute -right-10 -top-10 w-40 h-40 bg-orange-100/50 rounded-full" />
+                        
+                        <View className="w-20 h-20 rounded-3xl bg-white items-center justify-center mr-6 shadow-xl shadow-orange-200 border border-orange-50">
+                            <MotiView
+                                animate={{ 
+                                    scale: [1, 1.1, 1],
+                                    rotate: ['0deg', '10deg', '-10deg', '0deg']
+                                }}
+                                transition={{
+                                    loop: true,
+                                    duration: 4000,
+                                    type: 'timing'
+                                }}
+                            >
+                                <Ionicons name="sparkles" size={32} color={ORANGE} />
+                            </MotiView>
                         </View>
+                        
                         <View className="flex-1">
-                            <Text className="text-white font-poppins-black text-2xl mb-1">Deep Learning</Text>
-                            <Text className="text-white/70 font-poppins-regular text-xs leading-relaxed">Consult Bingwa AI for personalized next steps and treatment guidance.</Text>
+                            <View className="flex-row items-center mb-1">
+                                <Text className="text-orange-600 font-poppins-black text-[10px] uppercase tracking-[3px]">Bingwa Intelligence</Text>
+                                <View className="ml-2 w-1.5 h-1.5 rounded-full bg-green-400" />
+                            </View>
+                            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl mb-1">Expert Guidance</Text>
+                            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs opacity-60 leading-relaxed">
+                                Need deeper insights? Chat with our AI expert for a step-by-step recovery plan.
+                            </Text>
+                        </View>
+
+                        <View className="ml-2 bg-orange-500 w-12 h-12 rounded-2xl items-center justify-center shadow-lg shadow-orange-500/30">
+                            <Ionicons name="chevron-forward" size={20} color="white" />
                         </View>
                     </LinearGradient>
                 </MotiView>
@@ -317,10 +378,12 @@ export default function ResultScreen() {
                 className="mt-4 h-20 rounded-[32px] overflow-hidden shadow-2xl shadow-orange-900/10 active:scale-[0.98]"
             >
                 <LinearGradient
-                    colors={['#111B21', '#121B22']}
+                    colors={[ORANGE, '#E76F51']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
                     className="flex-1 items-center justify-center flex-row"
                 >
-                    <Ionicons name="checkmark-done" size={24} color={ORANGE} className="mr-3" />
+                    <Ionicons name="checkmark-done" size={24} color="white" className="mr-3" />
                     <Text className="text-white font-poppins-black text-sm uppercase tracking-[4px]">
                         Save to Vault
                     </Text>

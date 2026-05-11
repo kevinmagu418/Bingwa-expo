@@ -1,25 +1,80 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { MotiView, AnimatePresence } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
-// --- Stats Card ---
+// --- Alive Stats Card ---
 export const StatCard = ({ label, value, icon, color, delay }: { label: string, value: string | number, icon: keyof typeof Ionicons.glyphMap, color: string, delay: number }) => (
   <MotiView
-    from={{ opacity: 0, scale: 0.9, translateY: 10 }}
-    animate={{ opacity: 1, scale: 1, translateY: 0 }}
-    transition={{ type: 'spring', delay }}
-    className="flex-1 bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5 shadow-sm items-center"
+    from={{ opacity: 0, translateY: 20, scale: 0.9 }}
+    animate={{ opacity: 1, translateY: 0, scale: 1 }}
+    transition={{ type: 'timing', duration: 600, delay }}
+    className="flex-1 bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-2xl shadow-black/5 overflow-hidden"
   >
-    <View className="w-10 h-10 rounded-xl items-center justify-center mb-2" style={{ backgroundColor: `${color}15` }}>
-      <Ionicons name={icon} size={20} color={color} />
-    </View>
-    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">{value}</Text>
-    <Text className="text-textSecondary dark:text-darkTextSecondary text-[9px] font-poppins-bold uppercase opacity-60 text-center">
-      {label}
-    </Text>
+    <LinearGradient
+        colors={[`${color}05`, 'transparent']}
+        className="p-5 items-center justify-center"
+    >
+        <MotiView
+            animate={{ 
+                translateY: [0, -4, 0],
+            }}
+            transition={{
+                loop: true,
+                duration: 3000,
+                type: 'timing',
+                delay: delay + 1000
+            }}
+            className="w-12 h-12 rounded-2xl items-center justify-center mb-3 shadow-lg"
+            style={{ backgroundColor: `${color}15`, shadowColor: color, shadowOpacity: 0.2, shadowRadius: 10 }}
+        >
+            <Ionicons name={icon} size={22} color={color} />
+        </MotiView>
+
+        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl mb-0.5">{value}</Text>
+        <Text className="text-textSecondary dark:text-darkTextSecondary text-[9px] font-poppins-black uppercase tracking-widest opacity-40 text-center">
+            {label}
+        </Text>
+    </LinearGradient>
   </MotiView>
+);
+
+// --- Receiptify Teaser ---
+export const ReceiptifyTeaser = ({ onPress }: { onPress: () => void }) => (
+    <MotiView
+        from={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', delay: 100 }}
+        className="mb-8 overflow-hidden rounded-[32px] border border-accent/20 dark:border-accent/10 shadow-xl shadow-accent/5"
+    >
+        <Pressable onPress={onPress}>
+            <LinearGradient
+                colors={['#25D366', '#128C7E']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="p-6 flex-row items-center justify-between"
+            >
+                <View className="flex-1">
+                    <View className="flex-row items-center mb-1">
+                        <View className="bg-white/20 px-2 py-0.5 rounded-full mr-2">
+                            <Text className="text-white font-poppins-bold text-[8px] uppercase tracking-widest">Premium Tool</Text>
+                        </View>
+                        <Ionicons name="sparkles" size={12} color="white" />
+                    </View>
+                    <Text className="text-white font-poppins-black text-xl mb-1">Receipt-ify</Text>
+                    <Text className="text-white/80 font-poppins-regular text-[10px] leading-tight">
+                        Convert multiple scans into a professional PDF report for your records or agrovet.
+                    </Text>
+                </View>
+
+                <View className="ml-4 w-14 h-14 bg-white/20 rounded-2xl items-center justify-center border border-white/20">
+                    <Ionicons name="receipt" size={28} color="white" />
+                </View>
+            </LinearGradient>
+        </Pressable>
+    </MotiView>
 );
 
 // --- History Card ---

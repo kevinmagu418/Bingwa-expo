@@ -7,11 +7,64 @@ import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useScans, Scan } from '../../hooks/useScans';
 import { useProfile } from '../../hooks/useProfile';
+import { useTrends, Trend } from '../../hooks/useTrends';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { BingwaLoader } from '../../components/Loader';
 
 const ORANGE = "#F4A261";
 const GREEN = "#25D366";
+
+// Static data for Knowledge Hub
+const FUN_FACTS = [
+  { id: '1', icon: 'sunny', title: 'Solar Power', text: 'Plants use only 1% of the sunlight they receive for photosynthesis.', color: '#FFB703' },
+  { id: '2', icon: 'water', title: 'Water Usage', text: 'Drip irrigation can save up to 80% more water than traditional methods.', color: '#219EBC' },
+  { id: '3', icon: 'bug', title: 'Ladybugs', text: 'Ladybugs can eat up to 5,000 aphids during their lifetime.', color: '#E63946' },
+];
+
+const InsightCard = memo(({ item, index }: { item: any, index: number }) => (
+    <MotiView
+        from={{ opacity: 0, scale: 0.9, translateX: 50 }}
+        animate={{ opacity: 1, scale: 1, translateX: 0 }}
+        transition={{ delay: 200 + (index * 100), type: 'spring' }}
+        className="mr-4 w-64 bg-white dark:bg-darkSurface rounded-[32px] p-6 border border-black/5 shadow-xl shadow-black/5"
+    >
+        <View className="w-12 h-12 rounded-2xl items-center justify-center mb-4 shadow-sm" style={{ backgroundColor: `${item.color}15` }}>
+            <Ionicons name={item.icon} size={22} color={item.color} />
+        </View>
+        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-sm mb-2">{item.title}</Text>
+        <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[11px] leading-[18px] opacity-60">
+            {item.text}
+        </Text>
+    </MotiView>
+));
+
+const TrendCard = memo(({ item }: { item: Trend }) => (
+    <Pressable className="mb-4 active:scale-[0.98]">
+        <MotiView className="bg-white dark:bg-darkSurface rounded-[32px] overflow-hidden border border-black/5 shadow-sm flex-row p-4">
+            <Image 
+                source={{ uri: item.image || 'https://images.unsplash.com/photo-1560493676-04071c5f467b?auto=format&fit=crop&q=80&w=200' }} 
+                className="w-20 h-20 rounded-2xl" 
+                resizeMode="cover" 
+            />
+            <View className="flex-1 ml-4 justify-center">
+                <View className="flex-row items-center mb-1">
+                    <View className="bg-orange-50 dark:bg-orange-950/20 px-2 py-0.5 rounded-full mr-2">
+                        <Text className="text-orange-500 font-poppins-bold text-[8px] uppercase tracking-widest">{item.category}</Text>
+                    </View>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary text-[9px] font-poppins-medium opacity-40">{item.date}</Text>
+                </View>
+                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm leading-tight" numberOfLines={2}>
+                    {item.title}
+                </Text>
+            </View>
+            <View className="justify-center ml-2">
+                <View className="w-10 h-10 bg-orange-50 dark:bg-darkBackground rounded-xl items-center justify-center border border-orange-100/50">
+                    <Ionicons name="arrow-forward" size={16} color={ORANGE} />
+                </View>
+            </View>
+        </MotiView>
+    </Pressable>
+));
 
 const ScanHistoryCard = memo(({ scan, onPress }: { scan: Scan, onPress: (scan: Scan) => void }) => (
   <Pressable 
@@ -57,21 +110,23 @@ export default function LearnTab() {
   const contentWidth = isWeb ? Math.min(width - 40, 550) : width;
 
   const { profile, refreshProfile } = useProfile();
-  const { scans, loading, refreshScans } = useScans(20);
+  const { scans, loading: scansLoading, refreshScans } = useScans(20);
+  const { trends, loading: trendsLoading, refreshTrends } = useTrends();
   const [refreshing, setRefreshing] = useState(false);
 
   // Refresh profile when tab is focused
   useFocusEffect(
     useCallback(() => {
       refreshProfile();
-    }, [refreshProfile])
+      refreshTrends();
+    }, [refreshProfile, refreshTrends])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshScans(), refreshProfile()]);
+    await Promise.all([refreshScans(), refreshProfile(), refreshTrends()]);
     setRefreshing(false);
-  }, [refreshScans, refreshProfile]);
+  }, [refreshScans, refreshProfile, refreshTrends]);
 
   const handleScanPress = (scan: Scan) => {
     router.push({
@@ -87,6 +142,8 @@ export default function LearnTab() {
     });
   };
 
+  const loading = scansLoading || trendsLoading;
+
   if (loading && !refreshing) {
     return <BingwaLoader label="Accessing Knowledge Vault..." />;
   }
@@ -101,14 +158,15 @@ export default function LearnTab() {
         }
       >
         
-        {/* Header - Unified with Profile Avatar */}
+        {/* Modern Header */}
         <View className="px-8 py-8 flex-row justify-between items-center">
             <View className="flex-1">
+                <View className="flex-row items-center mb-1">
+                    <Ionicons name="sparkles" size={14} color={ORANGE} className="mr-2" />
+                    <Text className="text-orange-500 font-poppins-bold text-[10px] uppercase tracking-[3px]">Knowledge Hub</Text>
+                </View>
                 <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl">
-                    Knowledge <Text style={{ color: ORANGE }}>Vault</Text>
-                </Text>
-                <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] font-poppins-bold uppercase tracking-[4px] mt-1 opacity-50">
-                    AI Learning Center
+                    Bingwa <Text style={{ color: ORANGE }}>Brain</Text>
                 </Text>
             </View>
 
@@ -118,40 +176,104 @@ export default function LearnTab() {
         <View className="items-center px-6">
           <View style={{ width: contentWidth }}>
             
-            {/* AI Assistant Direct Access */}
+            {/* AI Assistant Direct Access - Interactive Design */}
             <TouchableOpacity 
               onPress={() => router.push('/ai-assistant')}
               activeOpacity={0.9}
               className="mb-10"
             >
               <MotiView 
-                from={{ opacity: 0, translateY: 20 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                className="overflow-hidden rounded-[40px] border border-orange-100 dark:border-white/5 shadow-2xl shadow-orange-900/5"
+                from={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative overflow-hidden rounded-[48px] border border-orange-200 dark:border-white/5 shadow-2xl shadow-orange-900/10"
               >
                 <LinearGradient
                   colors={[ORANGE, '#E76F51']}
                   start={{ x: 0, y: 0 }} 
-                  end={{ x: 1, y: 0 }}
-                  className="p-8 flex-row items-center"
+                  end={{ x: 1, y: 1 }}
+                  className="p-10"
                 >
-                  <View className="w-14 h-14 rounded-2xl bg-white/20 items-center justify-center mr-6 border border-white/20">
-                    <Ionicons name="chatbubbles" size={28} color="white" />
+                  <View className="flex-row items-center mb-6">
+                    <View className="w-16 h-16 rounded-[24px] bg-white items-center justify-center mr-6 shadow-xl shadow-orange-900/20">
+                        <MotiView
+                            animate={{ 
+                                scale: [1, 1.1, 1],
+                                rotate: ['0deg', '10deg', '-10deg', '0deg']
+                            }}
+                            transition={{
+                                loop: true,
+                                duration: 4000,
+                                type: 'timing'
+                            }}
+                        >
+                            <Ionicons name="chatbubbles" size={32} color={ORANGE} />
+                        </MotiView>
+                    </View>
+                    <View className="flex-1">
+                        <Text className="text-white/70 font-poppins-bold text-[10px] uppercase tracking-[4px] mb-1">AI Consultation</Text>
+                        <Text className="text-white font-poppins-black text-2xl">Ask Anything</Text>
+                    </View>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-white font-poppins-black text-xl mb-1">Consult Bingwa AI</Text>
-                    <Text className="text-white/70 font-poppins-regular text-xs leading-relaxed">Ask anything about your crops, treatments, or organic prevention.</Text>
+
+                  <View className="bg-white/20 backdrop-blur-md p-5 rounded-3xl border border-white/20">
+                    <Text className="text-white font-poppins-medium text-xs leading-relaxed italic">
+                      "Bingwa, what are the early signs of Maize Rust and how do I prevent it organically?"
+                    </Text>
+                  </View>
+
+                  <View className="absolute bottom-6 right-10 flex-row items-center">
+                    <Text className="text-white font-poppins-black text-[10px] uppercase tracking-widest mr-2">Start Chat</Text>
+                    <Ionicons name="arrow-forward-circle" size={24} color="white" />
                   </View>
                 </LinearGradient>
               </MotiView>
             </TouchableOpacity>
 
+            {/* Quick Insights Section */}
+            <View className="mb-12">
+                <View className="flex-row justify-between items-center mb-6 px-2">
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl">Quick Insights</Text>
+                    <TouchableOpacity>
+                        <Text className="text-orange-500 font-poppins-bold text-[10px] uppercase tracking-widest">See All</Text>
+                    </TouchableOpacity>
+                </View>
+                
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    className="overflow-visible"
+                    contentContainerStyle={{ paddingRight: 20 }}
+                >
+                    {FUN_FACTS.map((item, index) => (
+                        <InsightCard key={item.id} item={item} index={index} />
+                    ))}
+                </ScrollView>
+            </View>
+
+            {/* Trending Section */}
+            <View className="mb-12">
+                <View className="flex-row justify-between items-center mb-6 px-2">
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl">Global Trends</Text>
+                    <Ionicons name="trending-up" size={18} color={ORANGE} />
+                </View>
+
+                {trends.length > 0 ? (
+                  trends.map((item) => (
+                      <TrendCard key={item.id} item={item} />
+                  ))
+                ) : (
+                  <View className="p-8 items-center justify-center bg-white dark:bg-darkSurface rounded-[32px] border border-dashed border-orange-100">
+                    <Text className="text-textSecondary opacity-40 font-poppins-medium text-xs">No active global trends found.</Text>
+                  </View>
+                )}
+            </View>
+
             {/* Recent Diagnoses Section */}
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-6 px-2">
-                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl">Recent Diagnoses</Text>
+                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl">Vault History</Text>
                 <View className="bg-orange-50 dark:bg-orange-950/20 px-3 py-1 rounded-full border border-orange-100 dark:border-orange-900/20">
-                   <Text style={{ color: ORANGE }} className="text-[10px] font-poppins-bold uppercase tracking-widest">{scans.length} Total</Text>
+                   <Text style={{ color: ORANGE }} className="text-[10px] font-poppins-bold uppercase tracking-widest">{scans.length} Scans</Text>
                 </View>
               </View>
 
@@ -181,7 +303,7 @@ export default function LearnTab() {
               )}
             </View>
 
-            {/* Privacy Disclaimer (to match Permission screen feel) */}
+            {/* Privacy Disclaimer */}
             <View className="mb-20 mt-4 flex-row items-center justify-center opacity-40">
                 <Ionicons name="shield-checkmark" size={14} color={ORANGE} />
                 <Text style={{ color: ORANGE }} className="text-[10px] font-poppins-bold ml-2 uppercase tracking-widest">

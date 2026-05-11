@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Image, Platform, useWindowDim
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { StatCard, HistoryCard, HistoryEmptyState } from '../../components/HistoryComponents';
+import { StatCard, HistoryCard, HistoryEmptyState, ReceiptifyTeaser } from '../../components/HistoryComponents';
 import { CategoryChip } from '../../components/LearnComponents';
 import { useScans } from '../../hooks/useScans';
 import { useProfile } from '../../hooks/useProfile';
@@ -14,11 +14,12 @@ import { MotiView, AnimatePresence } from 'moti';
 import { HistoryCardSkeleton } from '../../components/Loader';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const FILTERS = ["All", "Healthy", "Diseased", "Maize", "Tomatoes"];
+const FILTERS = ["All", "Healthy", "Diseased"];
 
 export default function HistoryTab() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState("All");
+  const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -75,11 +76,20 @@ export default function HistoryTab() {
 
   const filteredData = scans.filter(item => {
     const isHealthy = item.severity === null || item.diseases?.name?.toLowerCase().includes('healthy');
-    if (activeFilter === "All") return true;
-    if (activeFilter === "Healthy") return isHealthy;
-    if (activeFilter === "Diseased") return !isHealthy;
-    return item.diseases?.crop === activeFilter;
+    
+    // Status Filter
+    let matchesStatus = true;
+    if (activeFilter === "Healthy") matchesStatus = isHealthy;
+    else if (activeFilter === "Diseased") matchesStatus = !isHealthy;
+
+    // Crop Filter
+    let matchesCrop = true;
+    if (selectedCrop) matchesCrop = item.diseases?.crop === selectedCrop;
+
+    return matchesStatus && matchesCrop;
   });
+
+  const availableCrops = Array.from(new Set(scans.map(s => s.diseases?.crop).filter(Boolean)));
 
   const selectedScansData = scans
     .filter(s => selectedIds.includes(s.id))
@@ -137,7 +147,7 @@ export default function HistoryTab() {
         <View className="px-6 py-6 flex-row justify-between items-center">
           <View className="flex-1">
             <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs uppercase tracking-widest">
-              {isSelectionMode ? `${selectedIds.length} Selected` : 'Scan Records'}
+              {isSelectionMode ? `${selectedIds.length} Selected` : 'Vault Records'}
             </Text>
             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl">
               {isSelectionMode ? 'Receipt-ify' : 'History'}
@@ -147,9 +157,9 @@ export default function HistoryTab() {
           <View className="flex-row items-center">
             <TouchableOpacity 
                 onPress={isSelectionMode ? cancelSelection : () => setIsSelectionMode(true)}
-                className={`mr-4 px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-50 border-red-100' : 'bg-accent/10 border-accent/20'}`}
+                className={`mr-4 px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-50 border-red-100' : 'bg-white dark:bg-darkSurface border-black/5'}`}
             >
-                <Text className={`font-poppins-bold text-xs uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-accent'}`}>
+                <Text className={`font-poppins-bold text-xs uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
                 {isSelectionMode ? 'Cancel' : 'Select'}
                 </Text>
             </TouchableOpacity>
@@ -161,6 +171,57 @@ export default function HistoryTab() {
         <View className="items-center px-6">
           <View style={{ width: contentWidth }}>
             
+            {/* Stats Summary - More Breathing Room & Alive */}
+            {!isSelectionMode && (
+              <View className="flex-row space-x-4 mb-10">
+                <StatCard label="Records" value={stats.total} icon="document-text" color="#3A86FF" delay={200} />
+                <StatCard label="Healthy" value={stats.healthy} icon="heart" color="#25D366" delay={300} />
+                <StatCard label="Issues" value={stats.diseased} icon="bug" color="#D64545" delay={400} />
+              </View>
+            )}
+
+            {/* Receiptify Discoverability */}
+            {!isSelectionMode && stats.total > 0 && (
+                <ReceiptifyTeaser onPress={() => setIsSelectionMode(true)} />
+            )}
+
+            {/* Filter Header & Sort */}
+            <View className="flex-row justify-between items-center mb-8 px-1">
+                <View className="flex-row">
+                    {FILTERS.map((filter) => (
+                        <TouchableOpacity 
+                            key={filter} 
+                            onPress={() => setActiveFilter(filter)}
+                            className="mr-6"
+                        >
+                            <Text className={`font-poppins-bold text-sm ${activeFilter === filter ? 'text-accent' : 'text-textSecondary opacity-30'}`}>
+                                {filter}
+                            </Text>
+                            {activeFilter === filter && (
+                                <MotiView 
+                                    transition={{ type: 'spring' }}
+                                    className="h-1.5 w-4 bg-accent rounded-full mt-1.5" 
+                                />
+                            )}
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                <TouchableOpacity 
+                    onPress={() => {
+                        // Simple toggle for now, could be a modal/dropdown
+                        if (selectedCrop) setSelectedCrop(null);
+                        else if (availableCrops.length > 0) setSelectedCrop(availableCrops[0] as string);
+                    }}
+                    className={`px-4 py-2.5 rounded-2xl border flex-row items-center ${selectedCrop ? 'bg-accent border-accent' : 'bg-white dark:bg-darkSurface border-black/5'}`}
+                >
+                    <Ionicons name="filter" size={14} color={selectedCrop ? "white" : "#25D366"} className="mr-2" />
+                    <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${selectedCrop ? 'text-white' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
+                        {selectedCrop || 'All Crops'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
             {/* Selection Prompt */}
             {isSelectionMode && selectedIds.length === 0 && (
               <MotiView 
@@ -179,35 +240,6 @@ export default function HistoryTab() {
                 </Text>
               </MotiView>
             )}
-
-            {/* Stats Summary */}
-            {!isSelectionMode && (
-              <View className="flex-row space-x-3 mb-8">
-                <StatCard label="Total Scans" value={stats.total} icon="scan" color="#3A86FF" delay={200} />
-                <StatCard label="Healthy" value={stats.healthy} icon="heart" color="#25D366" delay={300} />
-                <StatCard label="Diseases" value={stats.diseased} icon="alert-circle" color="#D64545" delay={400} />
-              </View>
-            )}
-
-            {/* Filters - Improved Spacing and Visibility */}
-            <View className="mb-10">
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
-                className="overflow-visible"
-                contentContainerStyle={{ paddingRight: 20 }}
-              >
-                {FILTERS.map((filter) => (
-                  <View key={filter} className="mr-3">
-                    <CategoryChip 
-                      label={filter} 
-                      active={activeFilter === filter} 
-                      onPress={() => setActiveFilter(filter)} 
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
 
             {/* Scan History List */}
             <View className="mb-24">
