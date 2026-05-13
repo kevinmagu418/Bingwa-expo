@@ -79,7 +79,7 @@ export default function AboutScreen() {
                 <Ionicons name="sparkles" size={40} color="#25D366" />
             </MotiView>
             
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl text-center">Bingwa Shambani</Text>
+            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl text-center">BingwaShambani</Text>
             <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-[4px] mb-6">Expert AI Assistance</Text>
             
             <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm text-center leading-6 opacity-70">

@@ -7,12 +7,14 @@ import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../hooks/useProfile';
+import { useTheme } from '../../context/ThemeContext';
 
 import { BingwaLoader } from '../../components/Loader';
 
 export default function ProfileTab() {
   const router = useRouter();
   const { profile, loading } = useProfile();
+  const { theme, isDark, setTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
 
   if (loading) {
@@ -71,7 +73,7 @@ export default function ProfileTab() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8F9FA]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         
         {/* Profile Header */}
@@ -81,7 +83,7 @@ export default function ProfileTab() {
             animate={{ opacity: 1, scale: 1 }}
             className="relative"
           >
-            <View className="w-32 h-32 rounded-[40px] bg-accent/10 items-center justify-center border-4 border-white shadow-2xl overflow-hidden">
+            <View className="w-32 h-32 rounded-[40px] bg-accent/10 items-center justify-center border-4 border-white dark:border-darkSurface shadow-2xl overflow-hidden">
                {profile?.avatar_url ? (
                  <Image source={{ uri: profile.avatar_url }} className="w-full h-full" />
                ) : (
@@ -89,62 +91,62 @@ export default function ProfileTab() {
                )}
             </View>
             <TouchableOpacity 
-              className="absolute bottom-0 right-0 w-10 h-10 bg-accent rounded-2xl items-center justify-center border-4 border-white shadow-lg"
+              className="absolute bottom-0 right-0 w-10 h-10 bg-accent rounded-2xl items-center justify-center border-4 border-white dark:border-darkSurface shadow-lg"
               onPress={() => router.push('/(profile)/profile')}
             >
               <Ionicons name="camera" size={18} color="white" />
             </TouchableOpacity>
           </MotiView>
 
-          <Text className="text-textPrimary font-poppins-black text-2xl mt-6">
+          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl mt-6">
             {profile?.full_name || 'Bingwa Farmer'}
           </Text>
-          <Text className="text-textSecondary font-poppins-regular text-sm opacity-60">
+          <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm opacity-60">
             {profile?.email || 'farmer@bingwa.com'}
           </Text>
 
           {/* Location Info */}
           <View className="flex-row items-center mt-2 opacity-60">
-            <Ionicons name="location-sharp" size={14} color="#8696A0" className="mr-1" />
-            <Text className="text-textSecondary font-poppins-bold text-xs">
+            <Ionicons name="location-sharp" size={14} color={isDark ? "#8696A0" : "#54656F"} className="mr-1" />
+            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-xs">
               {profile?.location ? `${profile.location}${profile.county ? `, ${profile.county}` : ''}` : 'Location not set'}
             </Text>
           </View>
 
           {/* New Profile Stats */}
-          <View className="flex-row justify-around w-full mt-8 bg-white p-6 rounded-[32px] border border-black/5 shadow-sm">
+          <View className="flex-row justify-around w-full mt-8 bg-white dark:bg-darkSurface p-6 rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm">
             <View className="items-center flex-1">
                 <Text className="text-accent font-poppins-black text-base text-center" numberOfLines={1}>
                   {profile?.farm_size ? profile.farm_size.split(' ')[0] : '-'}
                 </Text>
-                <Text className="text-textSecondary text-[10px] uppercase font-poppins-bold opacity-60">Size</Text>
+                <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] uppercase font-poppins-bold opacity-60">Size</Text>
             </View>
-            <View className="h-10 w-[1px] bg-gray-100" />
+            <View className="h-10 w-[1px] bg-gray-100 dark:bg-white/10" />
             <View className="items-center flex-1">
                 <Text className="text-accent font-poppins-black text-base text-center" numberOfLines={1}>
                   {profile?.primary_crops?.length || 0}
                 </Text>
-                <Text className="text-textSecondary text-[10px] uppercase font-poppins-bold opacity-60">Crops</Text>
+                <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] uppercase font-poppins-bold opacity-60">Crops</Text>
             </View>
-            <View className="h-10 w-[1px] bg-gray-100" />
+            <View className="h-10 w-[1px] bg-gray-100 dark:bg-white/10" />
             <View className="items-center flex-1">
                 <Text className="text-accent font-poppins-black text-base text-center" numberOfLines={1}>
                   {profile?.country || '-'}
                 </Text>
-                <Text className="text-textSecondary text-[10px] uppercase font-poppins-bold opacity-60">Country</Text>
+                <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] uppercase font-poppins-bold opacity-60">Country</Text>
             </View>
           </View>
 
           <TouchableOpacity 
-            className="mt-8 w-full h-20 bg-white rounded-[32px] border border-black/5 shadow-sm overflow-hidden flex-row items-center px-6"
+            className="mt-8 w-full h-20 bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden flex-row items-center px-6"
             onPress={() => router.push('/(modals)/payment-required')}
           >
             <View className="w-12 h-12 bg-accent/10 rounded-2xl items-center justify-center mr-4">
               <Ionicons name="flash" size={24} color="#25D366" />
             </View>
             <View className="flex-1">
-              <Text className="text-textPrimary font-poppins-black text-sm uppercase tracking-widest">Top Up Credits</Text>
-              <Text className="text-textSecondary font-poppins-bold text-[10px] opacity-60">
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-sm uppercase tracking-widest">Top Up Credits</Text>
+              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[10px] opacity-60">
                 You have {profile?.scan_credits || 0} scans remaining
               </Text>
             </View>
@@ -155,40 +157,74 @@ export default function ProfileTab() {
         </View>
 
         {/* Content Body */}
-        <View className="flex-1 bg-white rounded-t-[40px] px-8 pt-10 pb-20 shadow-2xl shadow-black/5 border-t border-black/5">
+        <View className="flex-1 bg-[#F8F9FA] dark:bg-darkMuted rounded-t-[40px] px-8 pt-10 pb-20 shadow-2xl shadow-black/5 border-t border-black/5 dark:border-white/5">
            
-           <Text className="text-textPrimary font-poppins-bold text-lg mb-6">Account Settings</Text>
+           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mb-6">Account Settings</Text>
            
            <View className="space-y-4">
               {menuItems.map((item) => (
                 <TouchableOpacity 
                   key={item.id}
                   onPress={item.onPress}
-                  className="flex-row items-center bg-[#F8F9FA] p-4 rounded-[24px] border border-black/5"
+                  className="flex-row items-center bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5"
                 >
                   <View style={{ backgroundColor: `${item.color}15` }} className="w-10 h-10 rounded-xl items-center justify-center mr-4">
                     <Ionicons name={item.icon as any} size={20} color={item.color} />
                   </View>
-                  <Text className="flex-1 text-textPrimary font-poppins-bold text-sm">{item.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color="#8696A0" />
+                  <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">{item.label}</Text>
+                  <Ionicons name="chevron-forward" size={18} color={isDark ? "#8696A0" : "#54656F"} />
                 </TouchableOpacity>
               ))}
            </View>
 
-           <Text className="text-textPrimary font-poppins-bold text-lg mt-10 mb-6">Preferences</Text>
+           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mt-10 mb-6">Preferences</Text>
 
            <View className="space-y-4">
-              <View className="flex-row items-center bg-[#F8F9FA] p-4 rounded-[24px] border border-black/5">
+              <View className="flex-row items-center bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5">
                 <View className="bg-purple-500/10 w-10 h-10 rounded-xl items-center justify-center mr-4">
                   <Ionicons name="notifications-outline" size={20} color="#8B5CF6" />
                 </View>
-                <Text className="flex-1 text-textPrimary font-poppins-bold text-sm">Notifications</Text>
+                <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Notifications</Text>
                 <Switch 
                   value={notifications} 
                   onValueChange={setNotifications} 
                   trackColor={{ false: '#D1D5DB', true: '#25D366' }}
                   thumbColor="#FFFFFF"
                 />
+              </View>
+
+              {/* Theme Toggle Component */}
+              <View className="flex-row items-center bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5">
+                <View className="bg-orange-500/10 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <Ionicons name={isDark ? "moon" : "sunny"} size={20} color="#F59E0B" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Appearance</Text>
+                  <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] font-poppins-regular opacity-60">
+                    Currently: {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                  </Text>
+                </View>
+                
+                <View className="flex-row bg-[#F8F9FA] dark:bg-darkBackground p-1 rounded-2xl border border-black/5 dark:border-white/5">
+                   <TouchableOpacity 
+                    onPress={() => setTheme('light')}
+                    className={`w-10 h-10 rounded-xl items-center justify-center ${theme === 'light' ? 'bg-white shadow-sm' : ''}`}
+                   >
+                     <Ionicons name="sunny-outline" size={18} color={theme === 'light' ? "#F59E0B" : "#8696A0"} />
+                   </TouchableOpacity>
+                   <TouchableOpacity 
+                    onPress={() => setTheme('dark')}
+                    className={`w-10 h-10 rounded-xl items-center justify-center ${theme === 'dark' ? 'bg-darkSurface shadow-sm' : ''}`}
+                   >
+                     <Ionicons name="moon-outline" size={18} color={theme === 'dark' ? "#3A86FF" : "#8696A0"} />
+                   </TouchableOpacity>
+                   <TouchableOpacity 
+                    onPress={() => setTheme('system')}
+                    className={`w-10 h-10 rounded-xl items-center justify-center ${theme === 'system' ? (isDark ? 'bg-darkSurface shadow-sm' : 'bg-white shadow-sm') : ''}`}
+                   >
+                     <Ionicons name="settings-outline" size={18} color="#8696A0" />
+                   </TouchableOpacity>
+                </View>
               </View>
            </View>
 
@@ -201,8 +237,8 @@ export default function ProfileTab() {
              <Text className="text-[#D64545] font-poppins-black text-sm uppercase tracking-widest">Logout</Text>
            </TouchableOpacity>
 
-           <Text className="text-center text-textSecondary font-poppins-regular text-[10px] mt-8 opacity-40 uppercase tracking-[4px]">
-             Bingwa Shambani v1.0.0
+           <Text className="text-center text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[10px] mt-8 opacity-40 uppercase tracking-[4px]">
+             BingwaShambani v1.0.0
            </Text>
         </View>
 

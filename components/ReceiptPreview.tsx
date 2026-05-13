@@ -139,7 +139,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
 
               <div class="footer">
                 <p style="font-size: 12px;">TOTAL ITEMS PROCESSED: ${selectedScans.length}</p>
-                <h2 class="footer-title">BINGWA SHAMBANI AI</h2>
+                <h2 class="footer-title">BINGWASHAMBANI AI</h2>
                 <p style="font-size: 12px;">DIGITAL CROP PROTECTION SERVICES</p>
               </div>
               
@@ -268,7 +268,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
                       <View className="mt-8 items-center">
                         <Text style={styles.monospaceFooter}>REPORT TOTAL: {selectedScans.length} SCANS</Text>
                         <Text style={[styles.monospaceFooter, { fontSize: 20, fontWeight: '700', marginTop: 10 }]}>
-                          BINGWA SHAMBANI
+                          BINGWASHAMBANI
                         </Text>
                       </View>
 

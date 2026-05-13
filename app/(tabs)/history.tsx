@@ -13,12 +13,14 @@ import { cleanArrayString } from '../../utils/formatters';
 import { MotiView, AnimatePresence } from 'moti';
 import { HistoryCardSkeleton } from '../../components/Loader';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../../context/ThemeContext';
 
-const FILTERS = ["All", "Healthy", "Diseased"];
+const FILTERS = ["Healthy", "Diseased"];
 
 export default function HistoryTab() {
   const router = useRouter();
-  const [activeFilter, setActiveFilter] = useState("All");
+  const { isDark } = useTheme();
+  const [activeFilter, setActiveFilter] = useState("Healthy");
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -94,7 +96,6 @@ export default function HistoryTab() {
   const selectedScansData = scans
     .filter(s => selectedIds.includes(s.id))
     .map(s => {
-      // Safely extract recommendations whether it's an array or an object
       const rec = Array.isArray(s.recommendations) ? (s.recommendations[0] || {}) : (s.recommendations || {});
 
       const specificOrg = cleanArrayString(rec.organic_advice);
@@ -134,7 +135,7 @@ export default function HistoryTab() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8F9FA] dark:bg-darkBackground" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']}>
       <ScrollView 
         className="flex-1" 
         showsVerticalScrollIndicator={false}
@@ -146,7 +147,7 @@ export default function HistoryTab() {
         {/* Header */}
         <View className="px-6 py-6 flex-row justify-between items-center">
           <View className="flex-1">
-            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs uppercase tracking-widest">
+            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs uppercase tracking-widest opacity-60">
               {isSelectionMode ? `${selectedIds.length} Selected` : 'Vault Records'}
             </Text>
             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl">
@@ -157,36 +158,59 @@ export default function HistoryTab() {
           <View className="flex-row items-center">
             <TouchableOpacity 
                 onPress={isSelectionMode ? cancelSelection : () => setIsSelectionMode(true)}
-                className={`mr-4 px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-50 border-red-100' : 'bg-white dark:bg-darkSurface border-black/5'}`}
+                className={`mr-4 px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-500/10 border-red-500/20' : 'bg-black/5 dark:bg-white/5 border-transparent'}`}
             >
-                <Text className={`font-poppins-bold text-xs uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
+                <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
                 {isSelectionMode ? 'Cancel' : 'Select'}
                 </Text>
             </TouchableOpacity>
 
-            <BingwaAvatar size={48} borderWidth={2} />
+            <BingwaAvatar size={48} borderWidth={2} borderColor={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
           </View>
         </View>
 
         <View className="items-center px-6">
           <View style={{ width: contentWidth }}>
             
-            {/* Stats Summary - More Breathing Room & Alive */}
+            {/* Stats Summary - Compact & Premium */}
             {!isSelectionMode && (
-              <View className="flex-row space-x-4 mb-10">
-                <StatCard label="Records" value={stats.total} icon="document-text" color="#3A86FF" delay={200} />
-                <StatCard label="Healthy" value={stats.healthy} icon="heart" color="#25D366" delay={300} />
-                <StatCard label="Issues" value={stats.diseased} icon="bug" color="#D64545" delay={400} />
+              <View className="flex-row justify-between mb-8">
+                <View className="flex-1 bg-black/5 dark:bg-white/5 p-4 rounded-3xl mr-3 items-center border border-black/5 dark:border-white/5">
+                    <Text className="text-accent font-poppins-black text-lg mb-0.5">{stats.total}</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[8px] uppercase tracking-widest">Total</Text>
+                </View>
+                <View className="flex-1 bg-black/5 dark:bg-white/5 p-4 rounded-3xl mr-3 items-center border border-black/5 dark:border-white/5">
+                    <Text className="text-[#25D366] font-poppins-black text-lg mb-0.5">{stats.healthy}</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[8px] uppercase tracking-widest">Healthy</Text>
+                </View>
+                <View className="flex-1 bg-black/5 dark:bg-white/5 p-4 rounded-3xl items-center border border-black/5 dark:border-white/5">
+                    <Text className="text-[#D64545] font-poppins-black text-lg mb-0.5">{stats.diseased}</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[8px] uppercase tracking-widest">Issues</Text>
+                </View>
               </View>
             )}
 
-            {/* Receiptify Discoverability */}
+            {/* Receiptify Teaser */}
             {!isSelectionMode && stats.total > 0 && (
-                <ReceiptifyTeaser onPress={() => setIsSelectionMode(true)} />
+              <TouchableOpacity onPress={() => setIsSelectionMode(true)} className="mb-8">
+                <LinearGradient 
+                  colors={isDark ? ['#1F2C34', '#121B22'] : ['#FFFFFF', '#F8F9FA']}
+                  className="flex-row items-center p-5 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm"
+                >
+                  <View className="w-10 h-10 bg-accent/20 rounded-xl items-center justify-center mr-4">
+                    <Ionicons name="receipt" size={20} color="#25D366" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Receipt-ify Records</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[10px]">Create professional reports from scans</Text>
+                  </View>
+                  <Ionicons name="arrow-forward" size={16} color={isDark ? "white" : "#111B21"} />
+                </LinearGradient>
+              </TouchableOpacity>
             )}
 
-            {/* Filter Header & Sort */}
-            <View className="flex-row justify-between items-center mb-8 px-1">
+            {/* Filter Header */}
+            <View className="flex-row justify-between items-center mb-6 px-1">
                 <View className="flex-row">
                     {FILTERS.map((filter) => (
                         <TouchableOpacity 
@@ -194,58 +218,21 @@ export default function HistoryTab() {
                             onPress={() => setActiveFilter(filter)}
                             className="mr-6"
                         >
-                            <Text className={`font-poppins-bold text-sm ${activeFilter === filter ? 'text-accent' : 'text-textSecondary opacity-30'}`}>
+                            <Text className={`font-poppins-bold text-xs uppercase tracking-widest ${activeFilter === filter ? 'text-accent' : 'text-textSecondary dark:text-darkTextSecondary opacity-40'}`}>
                                 {filter}
                             </Text>
                             {activeFilter === filter && (
-                                <MotiView 
-                                    transition={{ type: 'spring' }}
-                                    className="h-1.5 w-4 bg-accent rounded-full mt-1.5" 
-                                />
+                                <View className="h-1 w-full bg-accent rounded-full mt-1.5" />
                             )}
                         </TouchableOpacity>
                     ))}
                 </View>
-
-                <TouchableOpacity 
-                    onPress={() => {
-                        // Simple toggle for now, could be a modal/dropdown
-                        if (selectedCrop) setSelectedCrop(null);
-                        else if (availableCrops.length > 0) setSelectedCrop(availableCrops[0] as string);
-                    }}
-                    className={`px-4 py-2.5 rounded-2xl border flex-row items-center ${selectedCrop ? 'bg-accent border-accent' : 'bg-white dark:bg-darkSurface border-black/5'}`}
-                >
-                    <Ionicons name="filter" size={14} color={selectedCrop ? "white" : "#25D366"} className="mr-2" />
-                    <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${selectedCrop ? 'text-white' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
-                        {selectedCrop || 'All Crops'}
-                    </Text>
-                </TouchableOpacity>
             </View>
-
-            {/* Selection Prompt */}
-            {isSelectionMode && selectedIds.length === 0 && (
-              <MotiView 
-                from={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-accent/5 p-6 rounded-[32px] border border-accent/10 mb-8 items-center"
-              >
-                <View className="w-12 h-12 bg-accent/20 rounded-2xl items-center justify-center mb-3">
-                  <Ionicons name="checkmark-circle" size={24} color="#25D366" />
-                </View>
-                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm text-center">
-                  Select scans to Receipt-ify
-                </Text>
-                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[10px] text-center opacity-60 mt-1">
-                  Tap your scan cards to include them in your report
-                </Text>
-              </MotiView>
-            )}
 
             {/* Scan History List */}
             <View className="mb-24">
               {loading ? (
                 <>
-                  <HistoryCardSkeleton />
                   <HistoryCardSkeleton />
                   <HistoryCardSkeleton />
                 </>
@@ -271,46 +258,9 @@ export default function HistoryTab() {
                 <HistoryEmptyState onScan={() => router.push('/(tabs)/scan')} />
               )}
             </View>
-
           </View>
         </View>
-
       </ScrollView>
-
-      {/* Floating Action Button for Receiptify */}
-      <AnimatePresence>
-        {selectedIds.length > 0 && (
-          <MotiView
-            from={{ opacity: 0, scale: 0.5, translateY: 50 }}
-            animate={{ opacity: 1, scale: 1, translateY: 0 }}
-            exit={{ opacity: 0, scale: 0.5, translateY: 50 }}
-            className="absolute bottom-10 left-6 right-6"
-          >
-            <TouchableOpacity 
-              onPress={() => setShowReceipt(true)}
-              className="h-16 rounded-[24px] overflow-hidden shadow-2xl shadow-accent/40"
-            >
-              <LinearGradient
-                colors={['#25D366', '#128C7E']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="flex-1 flex-row items-center justify-center"
-              >
-                <Ionicons name="receipt" size={24} color="white" className="mr-3" />
-                <Text className="text-white font-poppins-black text-sm uppercase tracking-widest">
-                  Receipt-ify ({selectedIds.length})
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </MotiView>
-        )}
-      </AnimatePresence>
-
-      <ReceiptPreview 
-        visible={showReceipt} 
-        onClose={() => setShowReceipt(false)} 
-        selectedScans={selectedScansData} 
-      />
     </SafeAreaView>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
@@ -11,10 +11,22 @@ import { StatusBar } from 'expo-status-bar';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
+import { useTheme } from '../context/ThemeContext';
 import { useProfile } from '../hooks/useProfile';
 import { BingwaAvatar } from '../components/BingwaAvatar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Refined Palette for Light Mode
+const LIGHT_PALETTE = {
+  background: '#FAFAFA',
+  surface: '#FFFFFF',
+  primary: '#1B4332',    // Deep Forest Green
+  secondary: '#74C69D',  // Soft Action Green
+  chipBg: '#EAF4F0',
+  textMain: '#111B21',   // Deep Charcoal
+  textBody: '#4A4A4A',   // Stone gray for body
+};
 
 interface Message {
   role: 'user' | 'assistant';
@@ -39,6 +51,8 @@ const QUICK_CHIPS = {
 export default function AIAssistantScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { isDark } = useTheme();
+  
   const { currentDiseaseId, initialMessage, imageUri, crop, disease, severity } = params;
 
   const { profile } = useProfile();
@@ -62,8 +76,6 @@ export default function AIAssistantScreen() {
   };
 
   useEffect(() => {
-    // Only set the welcome message once on mount — do NOT depend on language
-    // to avoid resetting chat history when the user toggles language
     if (messages.length === 0) {
       const welcomeMessage = language === 'en'
         ? "Hello! I'm Bingwa AI. I've combined my expert knowledge library with interactive chat to help you grow better. How can I assist you today?"
@@ -74,8 +86,7 @@ export default function AIAssistantScreen() {
         content: (initialMessage as string) || welcomeMessage
       }]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMessage]); // intentionally omit `language` — changing language should NOT reset chat
+  }, [initialMessage]);
 
   const toggleLanguage = () => {
     const newLang = language === 'en' ? 'sw' : 'en';
@@ -95,8 +106,6 @@ export default function AIAssistantScreen() {
     setIsLoading(true);
 
     try {
-      // Append a clear language instruction to the last user message so the LLM
-      // always responds in the correct language regardless of history
       const langInstruction = language === 'en'
         ? '\n\n[IMPORTANT: Respond strictly in English only.]'
         : '\n\n[MUHIMU: Jibu kwa Kiswahili tu. Do not use English.]';
@@ -152,7 +161,6 @@ export default function AIAssistantScreen() {
   const toggleRecording = async () => {
     try {
       if (audioRecorder.isRecording) {
-        // STOP RECORDING
         await audioRecorder.stop();
         
         const now = Date.now();
@@ -164,7 +172,6 @@ export default function AIAssistantScreen() {
         const uri = audioRecorder.uri;
         if (!uri) return;
 
-        // Minimum duration check
         if (duration < 1000) {
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           return;
@@ -214,7 +221,6 @@ export default function AIAssistantScreen() {
         }
         setIsTranscribing(false);
       } else {
-        // START RECORDING
         const status = await AudioModule.requestRecordingPermissionsAsync();
         if (status.granted) {
           await audioRecorder.prepareToRecordAsync();
@@ -237,36 +243,54 @@ export default function AIAssistantScreen() {
   }, [messages]);
 
   return (
-    <View className="flex-1 bg-darkBackground">
-      <StatusBar style="light" />
-      <LinearGradient colors={['#0B141A', '#121B22']} className="flex-1">
+    <View className="flex-1" style={{ backgroundColor: isDark ? '#0B141A' : LIGHT_PALETTE.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <LinearGradient 
+        colors={isDark ? ['#0B141A', '#121B22'] : [LIGHT_PALETTE.background, LIGHT_PALETTE.background]} 
+        className="flex-1"
+      >
         <SafeAreaView className="flex-1">
           {/* Header */}
-          <View className="px-6 py-4 flex-row items-center justify-between border-b border-white/5">
-            <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-white/5 rounded-xl items-center justify-center">
-              <Ionicons name="chevron-back" size={24} color="white" />
+          <View className={`px-6 py-4 flex-row items-center justify-between border-b ${
+            isDark ? 'border-white/5' : 'border-black/5'
+          }`}>
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              className={`w-10 h-10 rounded-xl items-center justify-center ${
+                isDark ? 'bg-white/5' : 'bg-black/5'
+              }`}
+            >
+              <Ionicons name="chevron-back" size={24} color={isDark ? "white" : LIGHT_PALETTE.primary} />
             </TouchableOpacity>
             
             <View className="items-center">
-              <Text className="text-white font-poppins-bold text-lg">Knowledge Hub</Text>
+              <Text className={`font-poppins-black text-lg ${
+                isDark ? 'text-white' : LIGHT_PALETTE.textMain
+              }`}>Knowledge Hub</Text>
               <View className="flex-row items-center">
-                <View className="w-1.5 h-1.5 rounded-full bg-accent mr-2" />
-                <Text className="text-accent font-poppins-black text-[10px] uppercase tracking-widest">Powered by Bingwa AI</Text>
+                <View className={`w-1.5 h-1.5 rounded-full mr-2 ${isDark ? 'bg-accent' : 'bg-[#1B4332]'}`} />
+                <Text className={`font-poppins-black text-[10px] uppercase tracking-widest ${
+                  isDark ? 'text-accent' : 'text-[#1B4332]'
+                }`}>Powered by Bingwa AI</Text>
               </View>
             </View>
 
             <View className="flex-row items-center">
                 <TouchableOpacity 
                     onPress={toggleLanguage}
-                    className="px-3 h-10 bg-white/5 rounded-xl items-center justify-center flex-row border border-white/10 mr-3"
+                    className={`px-3 h-10 rounded-xl items-center justify-center flex-row border ${
+                      isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/5'
+                    } mr-3`}
                 >
-                    <Ionicons name="language" size={16} color="white" className="mr-2" />
-                    <Text className="text-white font-poppins-bold text-[10px] uppercase">
+                    <Ionicons name="language" size={16} color={isDark ? "white" : LIGHT_PALETTE.primary} className="mr-2" />
+                    <Text className={`font-poppins-bold text-[10px] uppercase ${
+                      isDark ? 'text-white' : LIGHT_PALETTE.textMain
+                    }`}>
                         {language === 'en' ? 'EN' : 'SW'}
                     </Text>
                 </TouchableOpacity>
 
-                <BingwaAvatar size={40} borderWidth={1} borderColor="rgba(255,255,255,0.2)" />
+                <BingwaAvatar size={40} borderWidth={1} borderColor={isDark ? "rgba(255,255,255,0.2)" : "rgba(27, 67, 50, 0.2)"} />
             </View>
           </View>
 
@@ -279,52 +303,91 @@ export default function AIAssistantScreen() {
           >
             {/* Image Context awareness */}
             {imageUri && (
-              <MotiView from={{ opacity: 0, translateY: -10 }} animate={{ opacity: 1, translateY: 0 }} className="mb-8 bg-white/5 p-4 rounded-3xl border border-white/10 flex-row items-center">
+              <MotiView 
+                from={{ opacity: 0, translateY: -10 }} 
+                animate={{ opacity: 1, translateY: 0 }} 
+                className="mb-8 bg-black/5 dark:bg-white/5 p-4 rounded-3xl border border-black/5 dark:border-white/10 flex-row items-center"
+              >
                 <Image source={{ uri: imageUri as string }} className="w-12 h-12 rounded-xl mr-4" />
                 <View className="flex-1">
                   <Text className="text-accent font-poppins-black text-[9px] uppercase tracking-widest mb-0.5">
                     {language === 'en' ? 'Studying' : 'Kusoma'}
                   </Text>
-                  <Text className="text-white font-poppins-bold text-sm">{crop} - {disease}</Text>
+                  <Text className="text-textPrimary dark:text-white font-poppins-bold text-sm">{crop} - {disease}</Text>
                 </View>
-                <View className="bg-white/10 p-2 rounded-full">
+                <View className="bg-accent/10 p-2 rounded-full">
                   <Ionicons name="book-outline" size={16} color="#25D366" />
                 </View>
               </MotiView>
             )}
 
-            {messages.map((msg, index) => (
-              <MotiView 
-                key={index} 
-                from={{ opacity: 0, scale: 0.9, translateX: msg.role === 'user' ? 20 : -20 }}
-                animate={{ opacity: 1, scale: 1, translateX: 0 }}
-                className={`mb-6 max-w-[85%] ${msg.role === 'user' ? 'self-end' : 'self-start'}`}
-              >
-                <View className={`p-5 rounded-3xl ${msg.role === 'user' ? 'bg-accent rounded-tr-none' : 'bg-white/10 rounded-tl-none'}`}>
-                   {msg.role === 'assistant' && (
-                     <View className="flex-row items-center mb-2 opacity-50">
-                        <Ionicons name="sparkles" size={12} color="white" className="mr-1" />
-                        <Text className="text-white font-poppins-bold text-[10px] uppercase">
-                          {language === 'en' ? 'Bingwa Expert Advice' : 'Ushauri wa Bingwa'}
-                        </Text>
-                     </View>
-                   )}
-                  <Text className={`font-poppins-regular text-[14px] leading-[22px] ${msg.role === 'user' ? 'text-white' : 'text-white/90'}`}>
-                    {msg.content}
+            {messages.map((msg, index) => {
+              const isUser = msg.role === 'user';
+              return (
+                <MotiView 
+                  key={index} 
+                  from={{ opacity: 0, scale: 0.9, translateX: isUser ? 20 : -20 }}
+                  animate={{ opacity: 1, scale: 1, translateX: 0 }}
+                  className={`mb-6 max-w-[88%] ${isUser ? 'self-end' : 'self-start'}`}
+                >
+                  <View className={`flex-row ${isUser ? 'justify-end' : 'justify-start'}`}>
+                    {!isUser && (
+                      <View className="mr-2 self-end mb-4">
+                        <View className={`w-8 h-8 rounded-full items-center justify-center shadow-sm ${
+                          isDark ? 'bg-white/10' : 'bg-[#EAF4F0]'
+                        }`}>
+                          <Ionicons name="sparkles" size={14} color={isDark ? "#25D366" : LIGHT_PALETTE.primary} />
+                        </View>
+                      </View>
+                    )}
+                    
+                    <View 
+                      className={`p-4 rounded-3xl ${
+                        isUser 
+                          ? (isDark ? 'bg-accent rounded-tr-none' : 'bg-[#1B4332] rounded-tr-none') 
+                          : (isDark ? 'bg-white/10 rounded-tl-none' : 'bg-white rounded-tl-none')
+                      }`}
+                      style={!isDark && !isUser ? {
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.05,
+                        shadowRadius: 10,
+                        elevation: 2,
+                      } : {}}
+                    >
+                      {!isUser && (
+                        <View className="flex-row items-center mb-1.5">
+                          <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${
+                            isDark ? 'text-accent' : LIGHT_PALETTE.primary
+                          }`}>
+                            {language === 'en' ? 'Bingwa Expert Advice' : 'Ushauri wa Bingwa'}
+                          </Text>
+                        </View>
+                      )}
+                      <Text className={`font-poppins-regular text-[14px] leading-[22px] ${
+                        isUser 
+                          ? 'text-white' 
+                          : isDark ? 'text-white/90' : LIGHT_PALETTE.textBody
+                      }`}>
+                        {msg.content}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className={`text-[9px] mt-2 font-poppins-regular ${
+                    isUser ? 'text-right' : 'text-left ml-10'
+                  } ${isDark ? 'text-white/20' : 'text-textSecondary opacity-40'}`}>
+                    {isUser 
+                      ? (language === 'en' ? 'Farmer' : 'Mkulima') 
+                      : (language === 'en' ? 'Expert System' : 'Mfumo wa Kitaalamu')}
                   </Text>
-                </View>
-                <Text className="text-white/20 text-[9px] mt-2 font-poppins-regular self-end">
-                   {msg.role === 'user' 
-                    ? (language === 'en' ? 'Farmer' : 'Mkulima') 
-                    : (language === 'en' ? 'Expert System' : 'Mfumo wa Kitaalamu')}
-                </Text>
-              </MotiView>
-            ))}
+                </MotiView>
+              );
+            })}
 
             {(isLoading || isTranscribing) && (
-              <View className="self-start flex-row items-center bg-white/5 p-4 rounded-2xl">
+              <View className={`self-start flex-row items-center p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-white shadow-sm border border-black/5'}`}>
                 <ActivityIndicator size="small" color="#25D366" />
-                <Text className="text-white/40 text-xs font-poppins-regular ml-3">
+                <Text className={`text-xs font-poppins-regular ml-3 ${isDark ? 'text-white/40' : 'text-textSecondary opacity-60'}`}>
                   {isTranscribing 
                     ? (language === 'en' ? 'Transcribing your voice...' : 'Kunukuu sauti yako...')
                     : (language === 'en' ? 'Synthesising expert knowledge...' : 'Kukusanya maarifa ya kitaalamu...')}
@@ -336,7 +399,9 @@ export default function AIAssistantScreen() {
           {/* Quick chips */}
           <View className="pb-4">
              <View className="px-6 mb-2">
-                <Text className="text-white/30 font-poppins-bold text-[9px] uppercase tracking-widest">
+                <Text className={`font-poppins-black text-[10px] uppercase tracking-widest ${
+                  isDark ? 'text-white/30' : 'text-textSecondary opacity-40'
+                }`}>
                   {language === 'en' ? 'Recommended Topics' : 'Mada Zinazopendekezwa'}
                 </Text>
              </View>
@@ -345,9 +410,20 @@ export default function AIAssistantScreen() {
                 <TouchableOpacity 
                   key={idx} 
                   onPress={() => handleSend(chip.value)} 
-                  className="mr-3 bg-white/5 px-5 py-3 rounded-2xl border border-white/10"
+                  className={`mr-3 px-5 py-3 rounded-2xl border ${
+                    isDark ? 'bg-white/5 border-white/10' : 'bg-[#EAF4F0] border-transparent'
+                  }`}
+                  style={!isDark ? {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 5,
+                    elevation: 1,
+                  } : {}}
                 >
-                  <Text className="text-white/60 font-poppins-bold text-[10px] uppercase tracking-widest">{chip.label}</Text>
+                  <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${
+                    isDark ? 'text-white/60' : LIGHT_PALETTE.primary
+                  }`}>{chip.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -355,12 +431,18 @@ export default function AIAssistantScreen() {
 
           {/* Footer Input */}
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-            <View className="p-6 bg-[#0B141A] border-t border-white/5 flex-row items-center">
-              <View className="flex-1 flex-row items-end bg-white/5 rounded-[28px] px-2 py-1 border border-white/10">
+            <View className={`p-6 border-t ${
+              isDark ? 'bg-[#0B141A] border-white/5' : 'bg-white border-black/5'
+            } flex-row items-center`}>
+              <View className={`flex-1 flex-row items-end rounded-[28px] px-2 py-1 border ${
+                isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-black/5'
+              }`}>
                 <TextInput
-                  className="flex-1 px-4 py-3.5 font-poppins-regular text-white text-[14px] max-h-32"
+                  className={`flex-1 px-4 py-3.5 font-poppins-regular text-[14px] max-h-32 ${
+                    isDark ? 'text-white' : LIGHT_PALETTE.textMain
+                  }`}
                   placeholder={language === 'en' ? "Ask for more learning details..." : "Uliza maelezo zaidi ya kujifunza..."}
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"}
                   value={input}
                   onChangeText={setInput}
                   multiline
@@ -378,7 +460,9 @@ export default function AIAssistantScreen() {
               {input.trim() ? (
                 <TouchableOpacity 
                   onPress={() => handleSend()} 
-                  className="ml-4 w-14 h-14 bg-accent rounded-full items-center justify-center shadow-lg shadow-accent/20"
+                  className={`ml-4 w-14 h-14 rounded-full items-center justify-center shadow-lg ${
+                    isDark ? 'bg-accent shadow-accent/20' : 'bg-[#74C69D] shadow-[#74C69D]/20'
+                  }`}
                 >
                   <Ionicons name="send" size={24} color="white" />
                 </TouchableOpacity>
@@ -395,9 +479,11 @@ export default function AIAssistantScreen() {
             from={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }} 
-            className="absolute inset-0 bg-[#0B141A]/98 items-center justify-center z-[999]"
+            className={`absolute inset-0 items-center justify-center z-[999] ${
+              isDark ? 'bg-[#0B141A]/98' : 'bg-white/98'
+            }`}
           >
-             <StatusBar style="light" />
+             <StatusBar style={isDark ? "light" : "dark"} />
              
              {/* Dynamic Waveform Simulation */}
              <View className="flex-row items-center justify-center h-20 mb-12">
@@ -421,12 +507,18 @@ export default function AIAssistantScreen() {
              </View>
 
              <View className="items-center mb-16">
-                <Text className="text-white font-poppins-black text-4xl mb-2 tracking-tighter">
+                <Text className={`font-poppins-black text-4xl mb-2 tracking-tighter ${
+                  isDark ? 'text-white' : LIGHT_PALETTE.textMain
+                }`}>
                   {formatDuration(recorderState.durationMillis)}
                 </Text>
-                <View className="flex-row items-center bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+                <View className={`flex-row items-center px-4 py-1.5 rounded-full border ${
+                  isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/5'
+                }`}>
                    <View className="w-2 h-2 rounded-full bg-red-500 mr-2" />
-                   <Text className="text-white/60 font-poppins-bold text-[10px] uppercase tracking-widest">
+                   <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${
+                     isDark ? 'text-white/60' : 'text-textSecondary'
+                   }`}>
                      {language === 'en' ? 'Live Audio' : 'Sauti ya Moja kwa Moja'}
                    </Text>
                 </View>
@@ -449,16 +541,22 @@ export default function AIAssistantScreen() {
              </TouchableOpacity>
 
              <View className="absolute bottom-20 items-center">
-                <Text className="text-white/40 font-poppins-regular text-xs mb-6 px-12 text-center leading-5">
+                <Text className={`font-poppins-regular text-xs mb-6 px-12 text-center leading-5 ${
+                  isDark ? 'text-white/40' : 'text-textSecondary opacity-60'
+                }`}>
                   {language === 'en' 
                     ? 'Bingwa AI is listening to your agricultural query. Speak clearly for best results.' 
                     : 'Bingwa AI inasikiliza swali lako la kilimo. Ongea wazi kwa matokeo bora.'}
                 </Text>
                 <TouchableOpacity 
                   onPress={toggleRecording}
-                  className="bg-white/5 px-8 py-4 rounded-3xl border border-white/10"
+                  className={`px-8 py-4 rounded-3xl border ${
+                    isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/5'
+                  }`}
                 >
-                  <Text className="text-white font-poppins-bold text-xs uppercase tracking-widest">
+                  <Text className={`font-poppins-bold text-xs uppercase tracking-widest ${
+                    isDark ? 'text-white' : LIGHT_PALETTE.textMain
+                  }`}>
                     {language === 'en' ? 'Finish Speaking' : 'Maliza Kuongea'}
                   </Text>
                 </TouchableOpacity>

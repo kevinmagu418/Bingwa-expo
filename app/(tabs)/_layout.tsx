@@ -1,17 +1,28 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function TabsLayout() {
+  const { isDark } = useTheme();
+
   return (
     <Tabs screenOptions={{
-      tabBarActiveTintColor: "#5F8F63", // background color from theme
-      tabBarInactiveTintColor: "#2F4F2F", // textSecondary color from theme
+      tabBarActiveTintColor: "#25D366", // WhatsApp Green / accent
+      tabBarInactiveTintColor: isDark ? "#8696A0" : "#54656F",
       tabBarStyle: {
-        backgroundColor: "#EEF5EE", // muted color from theme
+        backgroundColor: isDark ? "#0B141A" : "#FFFFFF",
         borderTopWidth: 1,
-        borderTopColor: "#7FAF86", // surface color from theme for border
+        borderTopColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+        elevation: 0,
+        height: 60,
+        paddingBottom: 10,
+        paddingTop: 5,
       },
       headerShown: false,
+      tabBarLabelStyle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 10,
+      }
     }}>
       <Tabs.Screen
         name="scan"

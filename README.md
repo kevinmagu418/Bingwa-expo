@@ -1,6 +1,6 @@
-# Bingwa Shambani AI 🌿🤖
+# BingwaShambani AI 🌿🤖
 
-**Bingwa Shambani** (Swahili for "Field Expert") is a premium, AI-powered mobile application designed to empower Kenyan farmers with real-time crop disease diagnostics, localized agricultural advice, and professional reporting—even in areas with limited internet connectivity.
+**BingwaShambani** (Swahili for "Field Expert") is a premium, AI-powered mobile application designed to empower Kenyan farmers with real-time crop disease diagnostics, localized agricultural advice, and professional reporting—even in areas with limited internet connectivity.
 
 Built with **Expo** and **Supabase**, Bingwa combines cutting-edge AI (Groq Whisper & Llama 3) with a "local-first" architecture to ensure that every farmer has an expert in their pocket, 24/7.
 

@@ -72,7 +72,7 @@ Message:
 "${message}"
 
 ---
-This is an automated notification from Bingwa Shambani Bot.
+This is an automated notification from BingwaShambani Bot.
         `,
       });
       console.log('Email sent successfully');

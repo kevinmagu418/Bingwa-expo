@@ -109,7 +109,7 @@ serve(async (req) => {
 
     const systemPrompt = `${langRule}
 
-You are "Bingwa AI", the brain behind the "Bingwa Shambani" app, a world-class agricultural consultant for Kenyan farmers.
+You are "Bingwa AI", the brain behind the "BingwaShambani" app, a world-class agricultural consultant for Kenyan farmers.
 
 APP KNOWLEDGE BASE:
 - TABS: The app has 4 main tabs:

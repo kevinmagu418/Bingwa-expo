@@ -97,7 +97,7 @@ export const OfflineMessage = ({ onRetry }: OfflineMessageProps) => {
               transition={{ delay: 1000 }}
               className="text-white font-poppins-bold text-center mt-8 text-[10px] uppercase tracking-[4px]"
             >
-              Bingwa Shambani • Kenya
+              BingwaShambani • Kenya
             </MotiText>
           </MotiView>
         </View>

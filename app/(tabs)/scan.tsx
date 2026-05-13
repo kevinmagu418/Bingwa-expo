@@ -3,18 +3,21 @@ import { View, Text, ScrollView, Alert, Image, TouchableOpacity, RefreshControl 
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditsCard, ScanCard, RecentScanItem } from '../../components/ScanDashboardComponents';
+import { BingwaAICard } from '../../components/BingwaAICard';
 import { useCameraPermissions } from 'expo-camera';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
+import { useTheme } from '../../context/ThemeContext';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
 
 import { BingwaLoader } from '../../components/Loader';
 
 export default function ScanDashboard() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const { profile, loading: profileLoading, refreshProfile } = useProfile();
   const { scans, loading: scansLoading, refreshScans } = useScans(5); // Last 5 scans
@@ -62,7 +65,7 @@ export default function ScanDashboard() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8F9FA] dark:bg-darkBackground">
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground">
       <ScrollView 
         className="flex-1 px-6" 
         showsVerticalScrollIndicator={false}
@@ -82,13 +85,13 @@ export default function ScanDashboard() {
                 Bingwa Farmer 
               </Text>
               {profile?.full_name && (
-                <Text className="text-[#128C7E] font-poppins-black text-2xl ml-2">
+                <Text className="text-accent font-poppins-black text-2xl ml-2">
                   {profile.full_name.split(' ')[0]}
                 </Text>
               )}
             </View>
           </View>
-          <BingwaAvatar size={56} borderWidth={2} />
+          <BingwaAvatar size={56} borderWidth={2} borderColor={isDark ? "rgba(255,255,255,0.1)" : "rgba(37, 211, 102, 0.1)"} />
         </View>
 
         {/* Credits */}
@@ -138,7 +141,7 @@ export default function ScanDashboard() {
                     <Ionicons name="leaf-outline" size={32} color="#25D366" opacity={0.5} />
                 </View>
                 <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm text-center mb-1">No Scans Recorded</Text>
-                <Text className="text-textSecondary font-poppins-regular text-[11px] text-center opacity-60 mb-6">
+                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[11px] text-center opacity-60 mb-6">
                     Start your first crop diagnosis to see results here.
                 </Text>
                 <TouchableOpacity 
@@ -153,33 +156,7 @@ export default function ScanDashboard() {
         </View>
 
         {/* AI Assistant Banner */}
-        <TouchableOpacity 
-          onPress={() => router.push('/ai-assistant')}
-          activeOpacity={0.9}
-        >
-          <MotiView 
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: 700 }}
-            className="mb-10 overflow-hidden rounded-[32px] border border-white/10 shadow-lg"
-          >
-            <LinearGradient
-              colors={['#0B141A', '#121B22']}
-              className="p-8 flex-row items-center"
-            >
-              <View className="w-16 h-16 rounded-3xl bg-accent items-center justify-center mr-6 shadow-2xl shadow-accent/20">
-                <Ionicons name="sparkles" size={32} color="white" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-poppins-black text-xl mb-1">Bingwa AI</Text>
-                <Text className="text-white/40 font-poppins-regular text-xs">Chat for deep agricultural insights</Text>
-              </View>
-              <View className="bg-white/5 p-3 rounded-2xl">
-                <Ionicons name="chevron-forward" size={20} color="white" />
-              </View>
-            </LinearGradient>
-          </MotiView>
-        </TouchableOpacity>
+        <BingwaAICard />
 
       </ScrollView>
     </SafeAreaView>

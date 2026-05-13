@@ -68,7 +68,7 @@ export default function PaymentRequiredModal() {
 
   // Automatic Success Detection & Polling
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setTimeout>;
 
     if (isWaiting && !isSuccess) {
       // Polling fallback every 5 seconds
