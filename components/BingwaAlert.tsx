@@ -48,6 +48,8 @@ export const BingwaAlert = () => {
 
   const isError = alertConfig.type === 'error';
 
+  if (!alertConfig.visible) return null;
+
   return (
     <Modal
       transparent

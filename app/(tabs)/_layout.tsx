@@ -6,25 +6,25 @@ export default function TabsLayout() {
   const { isDark } = useTheme();
 
   return (
-    <Tabs screenOptions={{
-      tabBarActiveTintColor: "#25D366", // WhatsApp Green / accent
-      tabBarInactiveTintColor: isDark ? "#8696A0" : "#54656F",
-      tabBarStyle: {
-        backgroundColor: isDark ? "#0B141A" : "#FFFFFF",
-        borderTopWidth: 1,
-        borderTopColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-        elevation: 10,
-        height: 65,
-        paddingBottom: 12,
-        paddingTop: 8,
-        zIndex: 1000,
-      },
-      headerShown: false,
-      tabBarLabelStyle: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 10,
-      }
-    }}>
+    <Tabs 
+      initialRouteName="scan"
+      screenOptions={{
+        tabBarActiveTintColor: "#25D366",
+        tabBarInactiveTintColor: isDark ? "#8696A0" : "#54656F",
+        tabBarStyle: {
+          backgroundColor: isDark ? "#0B141A" : "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+          height: 65,
+        },
+        headerShown: false,
+        tabBarHideOnKeyboard: true,
+        tabBarLabelStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 10,
+        }
+      }}
+    >
       <Tabs.Screen
         name="scan"
         options={{ 

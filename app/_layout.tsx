@@ -26,6 +26,8 @@ import { BingwaAlert } from "../components/BingwaAlert";
 import { useNetwork } from "../hooks/useNetwork";
 import { OfflineMessage, OfflineBanner } from "../components/OfflineUI";
 
+import { SafeAreaProvider } from "react-native-safe-area-context";
+
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
@@ -195,25 +197,28 @@ function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <FeedbackProvider>
-            {!isOnline && session && <OfflineBanner />}
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="(modals)/payment-required" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-              <Stack.Screen name="(modals)/error" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-            </Stack>
-            <BingwaAlert />
-          </FeedbackProvider>
-        </GestureHandlerRootView>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <FeedbackProvider>
+              {!isOnline && session && <OfflineBanner />}
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+                <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
+                <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+                <Stack.Screen name="(modals)/payment-required" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                <Stack.Screen name="(modals)/error" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+              </Stack>
+              <BingwaAlert />
+            </FeedbackProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
 export default RootLayout;
+
