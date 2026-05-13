@@ -65,9 +65,10 @@ export default function ScanDashboard() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground">
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']}>
       <ScrollView 
         className="flex-1 px-6" 
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#25D366" />
