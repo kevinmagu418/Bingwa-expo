@@ -135,9 +135,10 @@ export default function HistoryTab() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']} pointerEvents="box-none">
       <ScrollView 
         className="flex-1" 
+        pointerEvents="auto"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#25D366" />

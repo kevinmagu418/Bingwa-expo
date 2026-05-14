@@ -73,8 +73,8 @@ export default function ProfileTab() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']} pointerEvents="box-none">
+      <ScrollView className="flex-1" pointerEvents="auto" showsVerticalScrollIndicator={false}>
         
         {/* Profile Header */}
         <View className="items-center pt-8 pb-10 px-6">

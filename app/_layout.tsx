@@ -207,10 +207,11 @@ function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
                 <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
-                <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+                <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
                 <Stack.Screen name="(modals)/payment-required" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                 <Stack.Screen name="(modals)/error" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
               </Stack>
+              {/* Only render alert when visible to prevent invisible modal overlays */}
               <BingwaAlert />
             </FeedbackProvider>
           </ThemeProvider>

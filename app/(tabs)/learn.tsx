@@ -138,8 +138,8 @@ export default function LearnTab() {
   if (scansLoading || spotlightLoading) return <BingwaLoader label="Accessing Knowledge Vault..." />;
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']}>
-      <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ORANGE} />}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']} pointerEvents="box-none">
+      <ScrollView className="flex-1 px-6 pt-4" pointerEvents="auto" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ORANGE} />}>
         
         {/* Header */}
         <View className="flex-row justify-between items-center py-4 mb-6">
