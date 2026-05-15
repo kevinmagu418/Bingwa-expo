@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatCard, HistoryCard, HistoryEmptyState, ReceiptifyTeaser } from '../../components/HistoryComponents';
 import { CategoryChip } from '../../components/LearnComponents';
 import { useScans } from '../../hooks/useScans';
+import { useReports } from '../../hooks/useReports';
 import { useProfile } from '../../hooks/useProfile';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { ReceiptPreview } from '../../components/ReceiptPreview';
@@ -30,7 +31,9 @@ export default function HistoryTab() {
   const [showReceipt, setShowReceipt] = useState(false);
 
   const { width } = useWindowDimensions();
-  const { scans, loading, refreshScans } = useScans();
+  const { scans, loading: scansLoading, refreshScans } = useScans();
+  const { reports, loading: reportsLoading, refreshReports } = useReports();
+  const loading = scansLoading || reportsLoading;
   const { profile, refreshProfile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -43,9 +46,9 @@ export default function HistoryTab() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshScans(), refreshProfile()]);
+    await Promise.all([refreshScans(), refreshReports(), refreshProfile()]);
     setRefreshing(false);
-  }, [refreshScans, refreshProfile]);
+  }, [refreshScans, refreshReports, refreshProfile]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => 
@@ -254,57 +257,67 @@ export default function HistoryTab() {
             )}
 
             {/* 3. Recent Reports Archive */}
-            {!isSelectionMode && scans.length > 0 && (
+            {!isSelectionMode && (scans.length > 0 || reports.length > 0) && (
               <View className="mb-12">
                 <View className="flex-row justify-between items-center mb-6 px-1">
                   <View className="flex-row items-center">
                     <View className="w-1.5 h-6 bg-blue-500 rounded-full mr-3" />
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl tracking-tight">Recent Reports</Text>
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl tracking-tight">
+                      {reports.length > 0 ? 'Official Reports' : 'Recent Reports'}
+                    </Text>
                   </View>
-                  <TouchableOpacity>
-                    <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-[2px]">Show All</Text>
-                  </TouchableOpacity>
+                  {reports.length > 0 && (
+                    <TouchableOpacity>
+                      <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-[2px]">Show All</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible py-2">
-                  {scans.slice(0, 5).map((s, i) => {
-                    const diagnosisName = s.diseases?.name || 'Processing...';
-                    const isHealthy = diagnosisName.toLowerCase().includes('healthy');
+                  {(reports.length > 0 ? reports.slice(0, 5) : scans.slice(0, 5)).map((item: any, i) => {
+                    // Logic to handle both Reports and Scans
+                    const isReport = 'data' in item;
+                    const displayId = isReport ? `RPT-${item.id.slice(0, 6)}` : `TMP-${item.id.slice(0, 6)}`;
+                    const displayTitle = isReport ? `${item.data.length} Scans Report` : (item.diseases?.name || 'Processing...');
+                    const displayCrop = isReport ? item.data[0]?.crop : item.diseases?.crop;
+                    const displayImage = isReport ? item.data[0]?.image_url : item.image_url;
+                    const displayDate = new Date(item.created_at).toLocaleDateString();
+                    const isHealthy = isReport ? false : displayTitle.toLowerCase().includes('healthy');
                     
                     return (
                       <TouchableOpacity 
-                        key={s.id} 
-                        onPress={() => handlePress(s)}
+                        key={item.id} 
+                        onPress={() => isReport ? null : handlePress(item)}
                         activeOpacity={0.9}
                         className="mr-6 bg-white dark:bg-darkSurface rounded-[48px] border border-black/5 dark:border-white/5 shadow-2xl w-64 overflow-hidden"
                       >
                         <View className="h-36 w-full relative">
-                          <Image source={{ uri: s.image_url }} className="w-full h-full" contentFit="cover" />
+                          <Image source={{ uri: displayImage }} className="w-full h-full" contentFit="cover" />
                           <LinearGradient colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']} className="absolute inset-0" />
                           <View className="absolute top-5 left-5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-2xl border border-white/20">
-                            <Text className="text-white font-poppins-black text-[9px] uppercase tracking-widest">RPT-{s.id.slice(0, 6).toUpperCase()}</Text>
+                            <Text className="text-white font-poppins-black text-[9px] uppercase tracking-widest">{displayId.toUpperCase()}</Text>
                           </View>
                         </View>
 
                         <View className="p-6">
                           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-base mb-1 tracking-tight" numberOfLines={1}>
-                            {diagnosisName}
+                            {displayTitle}
                           </Text>
                           <View className="flex-row items-center mb-5 opacity-40">
                              <Ionicons name="calendar-clear" size={10} color={isDark ? 'white' : 'black'} />
                              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-medium text-[10px] ml-1.5">
-                                {s.diseases?.crop} • {new Date(s.created_at).toLocaleDateString()}
+                                {displayCrop} • {displayDate}
                              </Text>
                           </View>
                           
                           <View className="flex-row items-center justify-between">
                             <View className={`px-4 py-1.5 rounded-xl ${isHealthy ? 'bg-accent/10' : 'bg-red-500/10'}`}>
                               <Text className={`font-poppins-black text-[9px] uppercase tracking-widest ${isHealthy ? 'text-accent' : 'text-red-500'}`}>
-                                {isHealthy ? 'Certified' : 'Alert'}
+                                {isReport ? 'Certified' : (isHealthy ? 'Certified' : 'Alert')}
                               </Text>
                             </View>
                             <View className="w-10 h-10 bg-black/5 dark:bg-white/5 rounded-2xl items-center justify-center border border-black/5">
-                              <Ionicons name="download" size={18} color={isDark ? "white" : "#111B21"} />
+                              <Ionicons name={isReport ? "eye" : "download"} size={18} color={isDark ? "white" : "#111B21"} />
                             </View>
                           </View>
                         </View>

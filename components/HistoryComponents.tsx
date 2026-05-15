@@ -75,61 +75,62 @@ export const HistoryCard = ({
       animate={{ opacity: 1, scale: 1 }}
       className="mb-4"
     >
-      <Pressable 
+    <Pressable 
         onPress={onPress}
         onLongPress={onLongPress}
-        className={`bg-white dark:bg-darkSurface rounded-[28px] flex-row items-stretch border shadow-md overflow-hidden min-h-[110px] ${
+        className={`bg-white dark:bg-darkSurface rounded-[32px] flex-row items-center border shadow-sm overflow-hidden h-[120px] ${
           isSelected ? 'border-accent bg-accent/5' : 'border-black/5 dark:border-white/5'
         }`}
       >
-        <View className="relative w-[110px] h-full">
+        {/* Image Container - Fixed Width, Full Height of Parent */}
+        <View className="relative w-[120px] h-full overflow-hidden bg-gray-100 dark:bg-white/5">
           <Image 
             source={{ uri: item.image }} 
-            style={{ width: '100%', height: '100%' }} 
+            className="w-full h-full"
             contentFit="cover"
-            transition={200}
+            transition={300}
           />
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.6)']} className="absolute inset-0" />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.5)']} className="absolute inset-0" />
+          
           <View className="absolute bottom-2 left-2 right-2 flex-row justify-center">
-            {isHealthy ? (
-              <View className="bg-accent/90 backdrop-blur-md px-2 py-1 rounded-[10px]">
-                <Text className="text-white font-poppins-black text-[8px] uppercase tracking-[2px]">Healthy</Text>
-              </View>
-            ) : (
-              <View className="bg-red-500/90 backdrop-blur-md px-2 py-1 rounded-[10px]">
-                <Text className="text-white font-poppins-black text-[8px] uppercase tracking-[2px]">Diseased</Text>
-              </View>
-            )}
+            <View className={`${isHealthy ? 'bg-accent' : 'bg-red-500'} px-2 py-1 rounded-[8px]`}>
+              <Text className="text-white font-poppins-black text-[7px] uppercase tracking-[1.5px]">
+                {isHealthy ? 'Healthy' : 'Diseased'}
+              </Text>
+            </View>
           </View>
         </View>
 
-        <View className="flex-1 p-4 justify-center">
-          <View className="flex-row justify-between items-start mb-1">
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-base leading-tight" numberOfLines={1}>
-              {item.crop}
+        {/* Content Container - Flex-1 to take remaining space */}
+        <View className="flex-1 p-4 h-full justify-between">
+          <View>
+            <View className="flex-row justify-between items-start">
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-sm uppercase tracking-tight" numberOfLines={1}>
+                {item.crop}
+              </Text>
+              {isSelectionMode && (
+                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
+                  isSelected ? 'bg-accent border-accent' : 'border-black/10 dark:border-white/20'
+                }`}>
+                  {isSelected && <Ionicons name="checkmark" size={12} color="white" />}
+                </View>
+              )}
+            </View>
+            
+            <Text className={`font-poppins-medium text-[11px] mt-1 leading-tight ${isHealthy ? 'text-accent' : 'text-textSecondary dark:text-darkTextSecondary'}`} numberOfLines={2}>
+              {item.result}
             </Text>
-            {isSelectionMode && (
-              <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
-                isSelected ? 'bg-accent border-accent' : 'border-black/10 dark:border-white/20'
-              }`}>
-                {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
-              </View>
-            )}
           </View>
           
-          <Text className={`font-poppins-bold text-xs mb-2 leading-tight ${isHealthy ? 'text-accent' : 'text-textSecondary dark:text-darkTextSecondary'}`} numberOfLines={2}>
-            {item.result}
-          </Text>
-          
-          <View className="flex-row items-center justify-between mt-auto">
+          <View className="flex-row items-center justify-between mt-2">
             <View className="flex-row items-center opacity-40">
-              <Ionicons name="calendar" size={10} color={isDark ? "white" : "black"} />
-              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[9px] ml-1.5 uppercase tracking-widest">{item.date}</Text>
+              <Ionicons name="time-outline" size={10} color={isDark ? "white" : "black"} />
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[8px] ml-1.5 uppercase tracking-[2px]">{item.date}</Text>
             </View>
             
             {!isSelectionMode && (
-              <View className="w-7 h-7 rounded-full bg-black/5 dark:bg-white/5 items-center justify-center">
-                <Ionicons name="arrow-forward" size={12} color={isDark ? "white" : "black"} />
+              <View className="w-8 h-8 rounded-2xl bg-black/5 dark:bg-white/5 items-center justify-center border border-black/5">
+                <Ionicons name="chevron-forward" size={14} color={isDark ? "white" : "black"} />
               </View>
             )}
           </View>

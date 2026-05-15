@@ -51,7 +51,7 @@ const COMMUNITY_WISDOM = [
         title: 'Natural Pest Management',
         description: 'Discover how using neem oil and companion planting can naturally keep aphids away from your cabbage crops without chemical intervention.',
         category: 'Organic Farming',
-        image_url: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=600&auto=format&fit=crop',
+        image: require('../../assets/community/pest-management.jpg'),
         tips: ['Use neem oil every 2 weeks', 'Interplant with marigolds', 'Attract ladybugs'],
         points: 150,
         color: '#4ADE80',
@@ -62,7 +62,7 @@ const COMMUNITY_WISDOM = [
         title: 'Optimal Soil Health',
         description: 'Understand the power of composting and crop rotation to maintain soil pH levels, ensuring your maize yield remains consistently high each harvest.',
         category: 'Soil Science',
-        image_url: 'https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?q=80&w=600&auto=format&fit=crop',
+        image: require('../../assets/community/soil-health.jpg'),
         tips: ['Rotate crops annually', 'Test soil pH levels', 'Add compost before planting'],
         points: 200,
         color: '#FACC15',
@@ -73,7 +73,7 @@ const COMMUNITY_WISDOM = [
         title: 'Water-Wise Irrigation',
         description: 'Learn simple techniques to optimize your water usage during dry spells, focusing on root-depth irrigation rather than broad surface watering.',
         category: 'Water Management',
-        image_url: 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=600&auto=format&fit=crop',
+        image: require('../../assets/community/irrigation.jpg'),
         tips: ['Water early in the morning', 'Use drip pipes', 'Mulch around the base'],
         points: 175,
         color: '#38BDF8',
@@ -105,7 +105,7 @@ const CommunityWisdomCard = memo(({ entry, index, onMaster }: { entry: typeof CO
                 >
                     {/* Visual Header with Gradient Overlay */}
                     <View className="h-56 w-full relative">
-                        <Image source={{ uri: entry.image_url }} className="w-full h-full" contentFit="cover" />
+                        <Image source={entry.image} className="w-full h-full" contentFit="cover" />
                         <LinearGradient 
                             colors={['transparent', 'rgba(0,0,0,0.7)']} 
                             className="absolute inset-0"

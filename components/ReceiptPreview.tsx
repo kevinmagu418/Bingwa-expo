@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
+import { useReports } from '../hooks/useReports';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ interface ReceiptPreviewProps {
 export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose, selectedScans }) => {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [generatedUri, setGeneratedUri] = React.useState<string | null>(null);
+  const { saveReport } = useReports();
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -172,6 +174,13 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
       
       const { uri } = await Print.printToFileAsync({ html });
       setGeneratedUri(uri);
+
+      // Auto-save the report to Supabase/Vault
+      try {
+        await saveReport(selectedScans);
+      } catch (saveErr) {
+        console.warn("Failed to save report to cloud, stored locally:", saveErr);
+      }
       
       if ((Platform.OS as string) !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
