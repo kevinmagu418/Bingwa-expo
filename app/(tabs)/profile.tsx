@@ -11,6 +11,7 @@ import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
 import { useTheme } from '../../context/ThemeContext';
 import { BingwaLoader } from '../../components/Loader';
+import { TabFooter } from '../../components/TabFooter';
 
 export default function ProfileTab() {
   const router = useRouter();
@@ -172,64 +173,69 @@ export default function ProfileTab() {
           </View>
 
           {/* Elegant Account Details List */}
-          <View className="w-full mt-6 px-6">
-             <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 shadow-2xl">
-                <View className="flex-row items-center justify-between mb-8">
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">Account Profile</Text>
-                    <Ionicons name="shield-checkmark" size={20} color="#25D366" />
-                </View>
-                
+          <View className="w-full mt-10">
+             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mb-4 ml-2">Account Profile</Text>
+             <View className="bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
                 {[
-                    { label: 'Member Since', value: profile?.created_at ? new Date(profile.created_at as any).getFullYear() : '2026' },
-                    { label: 'Primary Crops', value: profile?.primary_crops?.join(', ') || 'Not specified' },
-                    { label: 'Account Status', value: (profile?.scan_credits ?? 0) > 0 ? 'Active Farmer' : 'Limited' }
+                    { label: 'Member Since', value: profile?.created_at ? new Date(profile.created_at as any).getFullYear() : '2026', icon: 'calendar-outline', color: '#8B5CF6' },
+                    { label: 'Primary Crops', value: profile?.primary_crops?.join(', ') || 'Not specified', icon: 'leaf-outline', color: '#25D366' },
+                    { label: 'Account Status', value: (profile?.scan_credits ?? 0) > 0 ? 'Active Farmer' : 'Limited', icon: 'shield-checkmark-outline', color: '#F59E0B' }
                 ].map((row, i) => (
-                    <View key={i} className="flex-row items-center justify-between py-4 border-b border-black/5 dark:border-white/5 last:border-0 last:pb-0">
-                        <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm">{row.label}</Text>
-                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm max-w-[50%] text-right">{row.value}</Text>
+                    <View key={i} className={`flex-row items-center justify-between p-5 ${i !== 2 ? 'border-b border-black/5 dark:border-white/5' : ''}`}>
+                        <View className="flex-row items-center">
+                            <View style={{ backgroundColor: `${row.color}15` }} className="w-10 h-10 rounded-xl items-center justify-center mr-4">
+                                <Ionicons name={row.icon as any} size={20} color={row.color} />
+                            </View>
+                            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-sm">{row.label}</Text>
+                        </View>
+                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm max-w-[50%] text-right" numberOfLines={1}>{row.value}</Text>
                     </View>
                 ))}
              </View>
           </View>
         </View>
 
-        <View className="flex-1 bg-[#F8F9FA] dark:bg-darkMuted rounded-t-[40px] px-8 pt-10 pb-20 shadow-2xl shadow-black/5 border-t border-black/5 dark:border-white/5">
-           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mb-6">Account Settings</Text>
-           <View className="space-y-4">
-              {menuItems.map((item) => (
-                <TouchableOpacity key={item.id} onPress={item.onPress} className="flex-row items-center bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5">
-                  <View style={{ backgroundColor: `${item.color}15` }} className="w-10 h-10 rounded-xl items-center justify-center mr-4"><Ionicons name={item.icon as any} size={20} color={item.color} /></View>
+        <View className="px-6 pb-6">
+           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mt-2 mb-4 ml-2">Settings</Text>
+           <View className="bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+              {menuItems.map((item, index) => (
+                <TouchableOpacity key={item.id} onPress={item.onPress} className={`flex-row items-center p-5 ${index !== menuItems.length - 1 ? 'border-b border-black/5 dark:border-white/5' : ''} active:bg-black/5 dark:active:bg-white/5`}>
+                  <View style={{ backgroundColor: `${item.color}15` }} className="w-10 h-10 rounded-xl items-center justify-center mr-4">
+                    <Ionicons name={item.icon as any} size={20} color={item.color} />
+                  </View>
                   <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">{item.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={isDark ? "#8696A0" : "#54656F"} />
+                  <Ionicons name="chevron-forward" size={18} color={isDark ? "#8696A0" : "#D1D5DB"} />
                 </TouchableOpacity>
               ))}
            </View>
 
-           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mt-10 mb-6">Preferences</Text>
-           <View className="space-y-4">
-              <View className="flex-row items-center bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5">
+           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mt-10 mb-4 ml-2">Preferences</Text>
+           <View className="bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+              <View className="flex-row items-center p-5 border-b border-black/5 dark:border-white/5">
                 <View className="bg-purple-500/10 w-10 h-10 rounded-xl items-center justify-center mr-4"><Ionicons name="notifications-outline" size={20} color="#8B5CF6" /></View>
                 <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Notifications</Text>
-                <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: '#D1D5DB', true: '#25D366' }} thumbColor="#FFFFFF" />
+                <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: '#E5E7EB', true: '#25D366' }} thumbColor="#FFFFFF" ios_backgroundColor="#E5E7EB" />
               </View>
-              <View className="flex-row items-center bg-white dark:bg-darkSurface p-4 rounded-[24px] border border-black/5 dark:border-white/5">
+              <View className="flex-row items-center p-5">
                 <View className="bg-orange-500/10 w-10 h-10 rounded-xl items-center justify-center mr-4"><Ionicons name={isDark ? "moon" : "sunny"} size={20} color="#F59E0B" /></View>
                 <View className="flex-1">
                   <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Appearance</Text>
                   <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] font-poppins-regular opacity-60">Currently: {theme.charAt(0).toUpperCase() + theme.slice(1)}</Text>
                 </View>
                 <View className="flex-row bg-[#F8F9FA] dark:bg-darkBackground p-1 rounded-2xl border border-black/5 dark:border-white/5">
-                   <TouchableOpacity onPress={() => setTheme('light')} className={`w-10 h-10 rounded-xl items-center justify-center ${theme === 'light' ? 'bg-white shadow-sm' : ''}`}><Ionicons name="sunny-outline" size={18} color={theme === 'light' ? "#F59E0B" : "#8696A0"} /></TouchableOpacity>
-                   <TouchableOpacity onPress={() => setTheme('dark')} className={`w-10 h-10 rounded-xl items-center justify-center ${theme === 'dark' ? 'bg-darkSurface shadow-sm' : ''}`}><Ionicons name="moon-outline" size={18} color={theme === 'dark' ? "#3A86FF" : "#8696A0"} /></TouchableOpacity>
-                   <TouchableOpacity onPress={() => setTheme('system')} className={`w-10 h-10 rounded-xl items-center justify-center ${theme === 'system' ? (isDark ? 'bg-darkSurface shadow-sm' : 'bg-white shadow-sm') : ''}`}><Ionicons name="settings-outline" size={18} color="#8696A0" /></TouchableOpacity>
+                   <TouchableOpacity onPress={() => setTheme('light')} className={`w-9 h-9 rounded-xl items-center justify-center ${theme === 'light' ? 'bg-white shadow-sm' : ''}`}><Ionicons name="sunny-outline" size={16} color={theme === 'light' ? "#F59E0B" : "#8696A0"} /></TouchableOpacity>
+                   <TouchableOpacity onPress={() => setTheme('dark')} className={`w-9 h-9 rounded-xl items-center justify-center ${theme === 'dark' ? 'bg-darkSurface shadow-sm' : ''}`}><Ionicons name="moon-outline" size={16} color={theme === 'dark' ? "#3A86FF" : "#8696A0"} /></TouchableOpacity>
+                   <TouchableOpacity onPress={() => setTheme('system')} className={`w-9 h-9 rounded-xl items-center justify-center ${theme === 'system' ? (isDark ? 'bg-darkSurface shadow-sm' : 'bg-white shadow-sm') : ''}`}><Ionicons name="settings-outline" size={16} color="#8696A0" /></TouchableOpacity>
                 </View>
               </View>
            </View>
-           <TouchableOpacity onPress={handleLogout} className="mt-12 h-16 rounded-[24px] border border-red-500/20 items-center justify-center flex-row active:bg-red-50">
-             <Ionicons name="log-out-outline" size={20} color="#D64545" className="mr-2" />
-             <Text className="text-[#D64545] font-poppins-black text-sm uppercase tracking-widest">Logout</Text>
+
+           <TouchableOpacity onPress={handleLogout} className="mt-12 h-14 rounded-full border border-red-500/20 bg-red-50/50 dark:bg-red-500/10 items-center justify-center flex-row active:bg-red-50 dark:active:bg-red-500/20">
+             <Ionicons name="log-out-outline" size={20} color="#EF4444" className="mr-2" />
+             <Text className="text-red-500 font-poppins-bold text-sm tracking-wide">Log Out</Text>
            </TouchableOpacity>
         </View>
+        <TabFooter />
       </ScrollView>
     </SafeAreaView>
   );

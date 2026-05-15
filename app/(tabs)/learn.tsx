@@ -15,6 +15,7 @@ import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { BingwaLoader } from '../../components/Loader';
 import { BingwaAICard } from '../../components/BingwaAICard';
 import { InteractiveVault } from '../../components/InteractiveVault';
+import { TabFooter } from '../../components/TabFooter';
 
 const ORANGE = "#F4A261";
 const SAGE = "#2D6A4F";
@@ -267,13 +268,15 @@ export default function LearnTab() {
             ))}
         </View>
 
-        <View className="mb-20">
+        <View className="mb-8">
             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg mb-4 px-1">Interactive Vault</Text>
             <InteractiveVault scans={scans} onSelect={handleScanPress} />
             <TouchableOpacity onPress={() => router.push('/(tabs)/history')} className="mt-2 py-4 items-center">
                 <Text className="text-accent font-poppins-bold text-xs uppercase tracking-widest">View Full Archive</Text>
             </TouchableOpacity>
         </View>
+
+        <TabFooter />
 
       </ScrollView>
     </SafeAreaView>

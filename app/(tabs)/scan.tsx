@@ -14,6 +14,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
 
 import { BingwaLoader } from '../../components/Loader';
+import { TabFooter } from '../../components/TabFooter';
+
+
 
 export default function ScanDashboard() {
   const router = useRouter();
@@ -158,8 +161,12 @@ export default function ScanDashboard() {
           </ScrollView>
         </View>
 
+
+
         {/* AI Assistant Banner */}
         <BingwaAICard />
+
+        <TabFooter />
 
       </ScrollView>
     </SafeAreaView>

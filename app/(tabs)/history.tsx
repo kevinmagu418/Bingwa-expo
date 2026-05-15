@@ -16,6 +16,7 @@ import { LinearTransition } from 'react-native-reanimated';
 import { HistoryCardSkeleton } from '../../components/Loader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
+import { TabFooter } from '../../components/TabFooter';
 
 const FILTERS = ["Healthy", "Diseased"];
 
@@ -339,7 +340,7 @@ export default function HistoryTab() {
             </View>
 
             {/* Scan History List */}
-            <View className="mb-24">
+            <View className="mb-8">
               {loading ? (
                 <>
                   <HistoryCardSkeleton />
@@ -367,6 +368,7 @@ export default function HistoryTab() {
                 <HistoryEmptyState onScan={() => router.push('/(tabs)/scan')} />
               )}
             </View>
+            <TabFooter />
           </View>
         </View>
       </ScrollView>

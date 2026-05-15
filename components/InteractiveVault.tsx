@@ -110,6 +110,8 @@ const VaultCard = ({ scan, index, total, isExpanded, isAutoSelected, isElevated,
       ],
       zIndex,
       position: 'absolute',
+      top: '50%',
+      left: '50%',
       opacity: withTiming(opacity, { duration: 400 })
     };
   });
