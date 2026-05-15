@@ -90,47 +90,54 @@ export const RecentScanItem = ({ item, index }: { item: any, index: number }) =>
     from={{ opacity: 0, scale: 0.9, translateX: 20 }}
     animate={{ opacity: 1, scale: 1, translateX: 0 }}
     transition={{ type: 'spring', delay: 400 + index * 100 }}
-    className="mr-5 w-48"
+    className="w-64"
   >
-    <View className="h-64 rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-lg relative">
+    <View className="h-80 rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-lg relative">
       <Image 
         source={item.image} 
-        style={{ width: '100%', height: 160 }} 
+        style={{ width: '100%', height: 200 }} 
         contentFit="cover"
         transition={300}
         cachePolicy="disk"
       />
       
       {/* Severity badge on image */}
-      <View className={`absolute top-3 right-3 px-2 py-1 rounded-full backdrop-blur-md border ${
+      <View className={`absolute top-4 left-4 px-3 py-1.5 rounded-full backdrop-blur-md border flex-row items-center ${
         item.severity === 'high' ? 'bg-red-500/20 border-red-500/30' : 
         item.severity === 'medium' ? 'bg-orange-500/20 border-orange-500/30' : 'bg-accent/20 border-accent/30'
       }`}>
-         <View className={`w-1.5 h-1.5 rounded-full ${
+         <View className={`w-2 h-2 rounded-full mr-2 ${
             item.severity === 'high' ? 'bg-red-500' : 
             item.severity === 'medium' ? 'bg-orange-500' : 'bg-accent'
          }`} />
+         <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${
+            item.severity === 'high' ? 'text-red-500' : 
+            item.severity === 'medium' ? 'text-orange-500' : 'text-accent'
+         }`}>
+           {item.severity || 'Normal'}
+         </Text>
       </View>
 
-      <View className="p-4 flex-1 justify-between">
+      <View className="p-5 flex-1 justify-between">
         <View>
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-sm leading-tight mb-1" numberOfLines={1}>
+            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg leading-tight mb-1" numberOfLines={1}>
             {item.disease}
             </Text>
-            <View className="flex-row items-center opacity-50">
-                <Ionicons name="calendar-outline" size={10} color="#8696A0" className="mr-1" />
-                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[9px]">
+            <View className="flex-row items-center opacity-60">
+                <Ionicons name="calendar-outline" size={12} color="#8696A0" className="mr-1" />
+                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[11px]">
                 {item.date}
                 </Text>
             </View>
         </View>
 
-        <View className="flex-row items-center justify-between mt-2">
-            <View className="bg-accent/10 px-2 py-1 rounded-lg">
-                <Text className="text-accent font-poppins-bold text-[9px] uppercase">{item.confidence}% Match</Text>
+        <View className="flex-row items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+            <View>
+              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[9px] uppercase tracking-wider mb-0.5">Confidence</Text>
+              <Text className="text-accent font-poppins-black text-sm">{item.confidence}%</Text>
             </View>
-            <TouchableOpacity className="w-7 h-7 bg-gray-100 dark:bg-white/10 rounded-full items-center justify-center">
-                <Ionicons name="chevron-forward" size={14} color="#25D366" />
+            <TouchableOpacity className="w-10 h-10 bg-accent rounded-full items-center justify-center shadow-md shadow-accent/20">
+                <Ionicons name="chevron-forward" size={18} color="white" />
             </TouchableOpacity>
         </View>
       </View>

@@ -120,6 +120,7 @@ export default function ScanDashboard() {
               scans.map((item: any, index: number) => (
                 <TouchableOpacity 
                   key={item.id} 
+                  className="mr-6"
                   onPress={() => router.push({
                     pathname: '/(scan)/result',
                     params: { scanId: item.id, imageUri: item.image_url }

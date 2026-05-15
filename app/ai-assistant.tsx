@@ -294,143 +294,147 @@ export default function AIAssistantScreen() {
             </View>
           </View>
 
-          {/* Chat Content */}
-          <ScrollView 
-            ref={scrollViewRef} 
-            className="flex-1 px-6" 
-            contentContainerStyle={{ paddingVertical: 24 }}
-            showsVerticalScrollIndicator={false}
+          {/* Chat Content, Quick chips, and Footer Input wrapped to handle keyboard */}
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
           >
-            {/* Image Context awareness */}
-            {imageUri && (
-              <MotiView 
-                from={{ opacity: 0, translateY: -10 }} 
-                animate={{ opacity: 1, translateY: 0 }} 
-                className="mb-8 bg-black/5 dark:bg-white/5 p-4 rounded-3xl border border-black/5 dark:border-white/10 flex-row items-center"
-              >
-                <Image source={{ uri: imageUri as string }} className="w-12 h-12 rounded-xl mr-4" />
-                <View className="flex-1">
-                  <Text className="text-accent font-poppins-black text-[9px] uppercase tracking-widest mb-0.5">
-                    {language === 'en' ? 'Studying' : 'Kusoma'}
-                  </Text>
-                  <Text className="text-textPrimary dark:text-white font-poppins-bold text-sm">{crop} - {disease}</Text>
-                </View>
-                <View className="bg-accent/10 p-2 rounded-full">
-                  <Ionicons name="book-outline" size={16} color="#25D366" />
-                </View>
-              </MotiView>
-            )}
-
-            {messages.map((msg, index) => {
-              const isUser = msg.role === 'user';
-              return (
+            <ScrollView 
+              ref={scrollViewRef} 
+              className="flex-1 px-6" 
+              contentContainerStyle={{ paddingVertical: 24 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Image Context awareness */}
+              {imageUri && (
                 <MotiView 
-                  key={index} 
-                  from={{ opacity: 0, scale: 0.9, translateX: isUser ? 20 : -20 }}
-                  animate={{ opacity: 1, scale: 1, translateX: 0 }}
-                  className={`mb-6 max-w-[88%] ${isUser ? 'self-end' : 'self-start'}`}
+                  from={{ opacity: 0, translateY: -10 }} 
+                  animate={{ opacity: 1, translateY: 0 }} 
+                  className="mb-8 bg-black/5 dark:bg-white/5 p-4 rounded-3xl border border-black/5 dark:border-white/10 flex-row items-center"
                 >
-                  <View className={`flex-row ${isUser ? 'justify-end' : 'justify-start'}`}>
-                    {!isUser && (
-                      <View className="mr-2 self-end mb-4">
-                        <View className={`w-8 h-8 rounded-full items-center justify-center shadow-sm ${
-                          isDark ? 'bg-white/10' : 'bg-[#EAF4F0]'
-                        }`}>
-                          <Ionicons name="sparkles" size={14} color={isDark ? "#25D366" : LIGHT_PALETTE.primary} />
-                        </View>
-                      </View>
-                    )}
-                    
-                    <View 
-                      className={`p-4 rounded-3xl ${
-                        isUser 
-                          ? (isDark ? 'bg-accent rounded-tr-none' : 'bg-[#1B4332] rounded-tr-none') 
-                          : (isDark ? 'bg-white/10 rounded-tl-none' : 'bg-white rounded-tl-none')
-                      }`}
-                      style={!isDark && !isUser ? {
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.05,
-                        shadowRadius: 10,
-                        elevation: 2,
-                      } : {}}
-                    >
+                  <Image source={{ uri: imageUri as string }} className="w-12 h-12 rounded-xl mr-4" />
+                  <View className="flex-1">
+                    <Text className="text-accent font-poppins-black text-[9px] uppercase tracking-widest mb-0.5">
+                      {language === 'en' ? 'Studying' : 'Kusoma'}
+                    </Text>
+                    <Text className="text-textPrimary dark:text-white font-poppins-bold text-sm">{crop} - {disease}</Text>
+                  </View>
+                  <View className="bg-accent/10 p-2 rounded-full">
+                    <Ionicons name="book-outline" size={16} color="#25D366" />
+                  </View>
+                </MotiView>
+              )}
+
+              {messages.map((msg, index) => {
+                const isUser = msg.role === 'user';
+                return (
+                  <MotiView 
+                    key={index} 
+                    from={{ opacity: 0, scale: 0.9, translateX: isUser ? 20 : -20 }}
+                    animate={{ opacity: 1, scale: 1, translateX: 0 }}
+                    className={`mb-6 max-w-[88%] ${isUser ? 'self-end' : 'self-start'}`}
+                  >
+                    <View className={`flex-row ${isUser ? 'justify-end' : 'justify-start'}`}>
                       {!isUser && (
-                        <View className="flex-row items-center mb-1.5">
-                          <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${
-                            isDark ? 'text-accent' : LIGHT_PALETTE.primary
+                        <View className="mr-2 self-end mb-4">
+                          <View className={`w-8 h-8 rounded-full items-center justify-center shadow-sm ${
+                            isDark ? 'bg-white/10' : 'bg-[#EAF4F0]'
                           }`}>
-                            {language === 'en' ? 'Bingwa Expert Advice' : 'Ushauri wa Bingwa'}
-                          </Text>
+                            <Ionicons name="sparkles" size={14} color={isDark ? "#25D366" : LIGHT_PALETTE.primary} />
+                          </View>
                         </View>
                       )}
-                      <Text className={`font-poppins-regular text-[14px] leading-[22px] ${
-                        isUser 
-                          ? 'text-white' 
-                          : isDark ? 'text-white/90' : LIGHT_PALETTE.textBody
-                      }`}>
-                        {msg.content}
-                      </Text>
+                      
+                      <View 
+                        className={`p-4 rounded-3xl ${
+                          isUser 
+                            ? (isDark ? 'bg-accent rounded-tr-none' : 'bg-[#1B4332] rounded-tr-none') 
+                            : (isDark ? 'bg-white/10 rounded-tl-none' : 'bg-white rounded-tl-none')
+                        }`}
+                        style={!isDark && !isUser ? {
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.05,
+                          shadowRadius: 10,
+                          elevation: 2,
+                        } : {}}
+                      >
+                        {!isUser && (
+                          <View className="flex-row items-center mb-1.5">
+                            <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${
+                              isDark ? 'text-accent' : LIGHT_PALETTE.primary
+                            }`}>
+                              {language === 'en' ? 'Bingwa Expert Advice' : 'Ushauri wa Bingwa'}
+                            </Text>
+                          </View>
+                        )}
+                        <Text className={`font-poppins-regular text-[14px] leading-[22px] ${
+                          isUser 
+                            ? 'text-white' 
+                            : isDark ? 'text-white/90' : LIGHT_PALETTE.textBody
+                        }`}>
+                          {msg.content}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                  <Text className={`text-[9px] mt-2 font-poppins-regular ${
-                    isUser ? 'text-right' : 'text-left ml-10'
-                  } ${isDark ? 'text-white/20' : 'text-textSecondary opacity-40'}`}>
-                    {isUser 
-                      ? (language === 'en' ? 'Farmer' : 'Mkulima') 
-                      : (language === 'en' ? 'Expert System' : 'Mfumo wa Kitaalamu')}
+                    <Text className={`text-[9px] mt-2 font-poppins-regular ${
+                      isUser ? 'text-right' : 'text-left ml-10'
+                    } ${isDark ? 'text-white/20' : 'text-textSecondary opacity-40'}`}>
+                      {isUser 
+                        ? (language === 'en' ? 'Farmer' : 'Mkulima') 
+                        : (language === 'en' ? 'Expert System' : 'Mfumo wa Kitaalamu')}
+                    </Text>
+                  </MotiView>
+                );
+              })}
+
+              {(isLoading || isTranscribing) && (
+                <View className={`self-start flex-row items-center p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-white shadow-sm border border-black/5'}`}>
+                  <ActivityIndicator size="small" color="#25D366" />
+                  <Text className={`text-xs font-poppins-regular ml-3 ${isDark ? 'text-white/40' : 'text-textSecondary opacity-60'}`}>
+                    {isTranscribing 
+                      ? (language === 'en' ? 'Transcribing your voice...' : 'Kunukuu sauti yako...')
+                      : (language === 'en' ? 'Synthesising expert knowledge...' : 'Kukusanya maarifa ya kitaalamu...')}
                   </Text>
-                </MotiView>
-              );
-            })}
-
-            {(isLoading || isTranscribing) && (
-              <View className={`self-start flex-row items-center p-4 rounded-2xl ${isDark ? 'bg-white/5' : 'bg-white shadow-sm border border-black/5'}`}>
-                <ActivityIndicator size="small" color="#25D366" />
-                <Text className={`text-xs font-poppins-regular ml-3 ${isDark ? 'text-white/40' : 'text-textSecondary opacity-60'}`}>
-                  {isTranscribing 
-                    ? (language === 'en' ? 'Transcribing your voice...' : 'Kunukuu sauti yako...')
-                    : (language === 'en' ? 'Synthesising expert knowledge...' : 'Kukusanya maarifa ya kitaalamu...')}
-                </Text>
-              </View>
-            )}
-          </ScrollView>
-
-          {/* Quick chips */}
-          <View className="pb-4">
-             <View className="px-6 mb-2">
-                <Text className={`font-poppins-black text-[10px] uppercase tracking-widest ${
-                  isDark ? 'text-white/30' : 'text-textSecondary opacity-40'
-                }`}>
-                  {language === 'en' ? 'Recommended Topics' : 'Mada Zinazopendekezwa'}
-                </Text>
-             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 40 }}>
-              {QUICK_CHIPS[language].map((chip, idx) => (
-                <TouchableOpacity 
-                  key={idx} 
-                  onPress={() => handleSend(chip.value)} 
-                  className={`mr-3 px-5 py-3 rounded-2xl border ${
-                    isDark ? 'bg-white/5 border-white/10' : 'bg-[#EAF4F0] border-transparent'
-                  }`}
-                  style={!isDark ? {
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 5,
-                    elevation: 1,
-                  } : {}}
-                >
-                  <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${
-                    isDark ? 'text-white/60' : LIGHT_PALETTE.primary
-                  }`}>{chip.label}</Text>
-                </TouchableOpacity>
-              ))}
+                </View>
+              )}
             </ScrollView>
-          </View>
 
-          {/* Footer Input */}
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+            {/* Quick chips */}
+            <View className="pb-4">
+              <View className="px-6 mb-2">
+                  <Text className={`font-poppins-black text-[10px] uppercase tracking-widest ${
+                    isDark ? 'text-white/30' : 'text-textSecondary opacity-40'
+                  }`}>
+                    {language === 'en' ? 'Recommended Topics' : 'Mada Zinazopendekezwa'}
+                  </Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 40 }}>
+                {QUICK_CHIPS[language].map((chip, idx) => (
+                  <TouchableOpacity 
+                    key={idx} 
+                    onPress={() => handleSend(chip.value)} 
+                    className={`mr-3 px-5 py-3 rounded-2xl border ${
+                      isDark ? 'bg-white/5 border-white/10' : 'bg-[#EAF4F0] border-transparent'
+                    }`}
+                    style={!isDark ? {
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 5,
+                      elevation: 1,
+                    } : {}}
+                  >
+                    <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${
+                      isDark ? 'text-white/60' : LIGHT_PALETTE.primary
+                    }`}>{chip.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Footer Input */}
             <View className={`p-6 border-t ${
               isDark ? 'bg-[#0B141A] border-white/5' : 'bg-white border-black/5'
             } flex-row items-center`}>

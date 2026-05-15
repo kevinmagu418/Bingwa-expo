@@ -1,9 +1,12 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function TabsLayout() {
   const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs 
@@ -15,7 +18,10 @@ export default function TabsLayout() {
           backgroundColor: isDark ? "#0B141A" : "#FFFFFF",
           borderTopWidth: 1,
           borderTopColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-          height: 65,
+          // Dynamically adjust height and padding based on safe area insets
+          height: Platform.OS === 'ios' ? 85 + insets.bottom : 70 + Math.max(insets.bottom, 20),
+          paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 20),
+          paddingTop: 10,
           elevation: 10,
           zIndex: 1000,
         },

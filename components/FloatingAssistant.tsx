@@ -228,56 +228,60 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
               </TouchableOpacity>
             </LinearGradient>
 
-            {/* Content */}
-            <ScrollView ref={scrollViewRef} className="flex-1 p-5" showsVerticalScrollIndicator={false}>
-              
-              {/* Image Thumbnail Awareness */}
-              {imageContext && (
-                <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 bg-gray-50 dark:bg-white/5 p-3 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 flex-row items-center">
-                  <Image source={{ uri: imageContext.uri }} className="w-14 h-14 rounded-xl mr-3" />
-                  <View className="flex-1">
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase opacity-60">Scanning this leaf...</Text>
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xs">{imageContext.crop} - {imageContext.disease}</Text>
-                  </View>
-                  <View className="bg-accent/10 p-2 rounded-full">
-                    <Ionicons name="eye" size={16} color="#25D366" />
-                  </View>
-                </MotiView>
-              )}
+            {/* Content, Chips, and Footer wrapped to handle keyboard */}
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+              style={{ flex: 1 }}
+            >
+              {/* Content */}
+              <ScrollView ref={scrollViewRef} className="flex-1 p-5" showsVerticalScrollIndicator={false}>
+                
+                {/* Image Thumbnail Awareness */}
+                {imageContext && (
+                  <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 bg-gray-50 dark:bg-white/5 p-3 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 flex-row items-center">
+                    <Image source={{ uri: imageContext.uri }} className="w-14 h-14 rounded-xl mr-3" />
+                    <View className="flex-1">
+                      <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase opacity-60">Scanning this leaf...</Text>
+                      <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xs">{imageContext.crop} - {imageContext.disease}</Text>
+                    </View>
+                    <View className="bg-accent/10 p-2 rounded-full">
+                      <Ionicons name="eye" size={16} color="#25D366" />
+                    </View>
+                  </MotiView>
+                )}
 
-              {messages.map((msg, index) => (
-                <View key={index} className={`mb-4 max-w-[85%] ${msg.role === 'user' ? 'self-end' : 'self-start'}`}>
-                  <View className={`p-4 rounded-[24px] ${msg.role === 'user' ? 'bg-accent rounded-tr-none' : 'bg-[#F0F2F5] dark:bg-white/5 rounded-tl-none'}`}>
-                    <Text className={`font-poppins-regular text-[13px] leading-[20px] ${msg.role === 'user' ? 'text-white' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
-                      {msg.content}
+                {messages.map((msg, index) => (
+                  <View key={index} className={`mb-4 max-w-[85%] ${msg.role === 'user' ? 'self-end' : 'self-start'}`}>
+                    <View className={`p-4 rounded-[24px] ${msg.role === 'user' ? 'bg-accent rounded-tr-none' : 'bg-[#F0F2F5] dark:bg-white/5 rounded-tl-none'}`}>
+                      <Text className={`font-poppins-regular text-[13px] leading-[20px] ${msg.role === 'user' ? 'text-white' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
+                        {msg.content}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+
+                {(isLoading || isTranscribing) && (
+                  <View className="self-start bg-[#F0F2F5] dark:bg-white/5 p-4 rounded-[24px] rounded-tl-none flex-row items-center">
+                    <ActivityIndicator size="small" color="#25D366" />
+                    <Text className="text-textSecondary text-[11px] font-poppins-regular ml-3">
+                      {isTranscribing ? 'Bingwa is listening...' : 'Bingwa is typing...'}
                     </Text>
                   </View>
-                </View>
-              ))}
-
-              {(isLoading || isTranscribing) && (
-                <View className="self-start bg-[#F0F2F5] dark:bg-white/5 p-4 rounded-[24px] rounded-tl-none flex-row items-center">
-                  <ActivityIndicator size="small" color="#25D366" />
-                  <Text className="text-textSecondary text-[11px] font-poppins-regular ml-3">
-                    {isTranscribing ? 'Bingwa is listening...' : 'Bingwa is typing...'}
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-
-            {/* Contextual Chips */}
-            {!isLoading && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 mb-3" contentContainerStyle={{ paddingRight: 40 }}>
-                {QUICK_CHIPS.map((chip, idx) => (
-                  <TouchableOpacity key={idx} onPress={() => handleSend(chip.value)} className="mr-2 bg-gray-100 dark:bg-white/10 px-4 py-2.5 rounded-full border border-black/5">
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase opacity-70">{chip.label}</Text>
-                  </TouchableOpacity>
-                ))}
+                )}
               </ScrollView>
-            )}
 
-            {/* Footer Input & Voice */}
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
+              {/* Contextual Chips */}
+              {!isLoading && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 mb-3" contentContainerStyle={{ paddingRight: 40 }}>
+                  {QUICK_CHIPS.map((chip, idx) => (
+                    <TouchableOpacity key={idx} onPress={() => handleSend(chip.value)} className="mr-2 bg-gray-100 dark:bg-white/10 px-4 py-2.5 rounded-full border border-black/5">
+                      <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase opacity-70">{chip.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              {/* Footer Input & Voice */}
               <View className="p-4 bg-white dark:bg-darkSurface border-t border-black/5 flex-row items-center">
                 <View className="flex-1 flex-row items-end bg-[#F0F2F5] dark:bg-white/5 rounded-[22px] px-2 py-1">
                   <TextInput

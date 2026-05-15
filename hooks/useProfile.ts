@@ -16,6 +16,7 @@ export interface Profile {
   location?: string;
   county?: string;
   country?: string;
+  created_at?: string;
 }
 
 const PROFILE_CACHE_KEY = 'bingwa_profile_cache';
