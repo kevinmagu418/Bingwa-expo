@@ -106,10 +106,61 @@ export default function ProfileTab() {
             </Text>
           </View>
 
+          {/* Revamped Farm & Account Details */}
+          <View className="w-full mt-8 px-6">
+            <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 shadow-xl relative overflow-hidden">
+               {/* Decorative background blur */}
+               <View className="absolute -top-10 -right-10 w-32 h-32 bg-accent/5 rounded-full blur-2xl" />
+
+               <View className="flex-row items-center justify-between mb-6">
+                 <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">Farm Profile</Text>
+                 <View className="bg-accent/10 px-3 py-1.5 rounded-full">
+                   <Text className="text-accent font-poppins-bold text-[9px] uppercase tracking-widest">Verified</Text>
+                 </View>
+               </View>
+               
+               <View className="flex-row justify-between mb-6">
+                 <View className="flex-1 items-center bg-black/5 dark:bg-white/5 p-5 rounded-[28px] mr-2 border border-black/5 dark:border-white/5">
+                    <Ionicons name="map-outline" size={24} color="#25D366" className="mb-2" />
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">{profile?.farm_size || '0'} Ac</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[9px] uppercase tracking-widest mt-1 opacity-50">Total Area</Text>
+                 </View>
+                 <View className="flex-1 items-center bg-black/5 dark:bg-white/5 p-5 rounded-[28px] ml-2 border border-black/5 dark:border-white/5">
+                    <Ionicons name="leaf-outline" size={24} color="#3B82F6" className="mb-2" />
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">{profile?.primary_crops?.length || 0}</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[9px] uppercase tracking-widest mt-1 opacity-50">Crop Types</Text>
+                 </View>
+               </View>
+
+               <View className="mt-2">
+                 <View className="flex-row justify-between items-center py-3 border-b border-black/5 dark:border-white/5">
+                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs">Primary Crops</Text>
+                   <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm max-w-[60%] text-right" numberOfLines={1}>
+                     {profile?.primary_crops?.join(', ') || 'None specified'}
+                   </Text>
+                 </View>
+                 <View className="flex-row justify-between items-center py-3 border-b border-black/5 dark:border-white/5">
+                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs">Member Since</Text>
+                   <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">
+                     {profile?.created_at ? new Date(profile.created_at as string).getFullYear() : '2026'}
+                   </Text>
+                 </View>
+                 <View className="flex-row justify-between items-center py-3">
+                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs">Account Status</Text>
+                   <View className={`px-3 py-1 rounded-full ${(profile?.scan_credits ?? 0) > 0 ? 'bg-accent/10' : 'bg-red-500/10'}`}>
+                     <Text className={`font-poppins-bold text-[9px] uppercase tracking-widest ${(profile?.scan_credits ?? 0) > 0 ? 'text-accent' : 'text-red-500'}`}>
+                       {(profile?.scan_credits ?? 0) > 0 ? 'Active Farmer' : 'Limited'}
+                     </Text>
+                   </View>
+                 </View>
+               </View>
+            </View>
+          </View>
+
           {/* Modernized Analytics Dashboard */}
           {stats && (
-            <View className="w-full mt-8 px-6">
-              <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 shadow-2xl">
+            <View className="w-full mt-6 px-6">
+              <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 shadow-xl">
                 <View className="flex-row items-center justify-between mb-6">
                     <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">AI Performance</Text>
                     <View className="bg-accent/10 px-4 py-1.5 rounded-full">
@@ -150,49 +201,6 @@ export default function ProfileTab() {
               </View>
             </View>
           )}
-
-          {/* Modern Profile Stats Grid */}
-          <View className="flex-row justify-between w-full mt-6 px-6">
-            <LinearGradient
-                colors={['#25D366', '#128C7E']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="flex-1 mr-2 p-6 rounded-[32px] items-center shadow-lg"
-            >
-                <Text className="text-white font-poppins-black text-2xl">{profile?.farm_size || '0'}</Text>
-                <Text className="text-white/80 text-[10px] uppercase font-poppins-bold tracking-wider mt-1">Total Acres</Text>
-            </LinearGradient>
-            
-            <LinearGradient
-                colors={isDark ? ['#1B4332', '#0B141A'] : ['#ffffff', '#f8f9fa']}
-                className="flex-1 ml-2 p-6 rounded-[32px] items-center shadow-sm border border-black/5 dark:border-white/10"
-            >
-                <Text className="text-accent font-poppins-black text-2xl">{profile?.primary_crops?.length || 0}</Text>
-                <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] uppercase font-poppins-bold tracking-wider mt-1">Crops Managed</Text>
-            </LinearGradient>
-          </View>
-
-          {/* Elegant Account Details List */}
-          <View className="w-full mt-10">
-             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mb-4 ml-2">Account Profile</Text>
-             <View className="bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
-                {[
-                    { label: 'Member Since', value: profile?.created_at ? new Date(profile.created_at as any).getFullYear() : '2026', icon: 'calendar-outline', color: '#8B5CF6' },
-                    { label: 'Primary Crops', value: profile?.primary_crops?.join(', ') || 'Not specified', icon: 'leaf-outline', color: '#25D366' },
-                    { label: 'Account Status', value: (profile?.scan_credits ?? 0) > 0 ? 'Active Farmer' : 'Limited', icon: 'shield-checkmark-outline', color: '#F59E0B' }
-                ].map((row, i) => (
-                    <View key={i} className={`flex-row items-center justify-between p-5 ${i !== 2 ? 'border-b border-black/5 dark:border-white/5' : ''}`}>
-                        <View className="flex-row items-center">
-                            <View style={{ backgroundColor: `${row.color}15` }} className="w-10 h-10 rounded-xl items-center justify-center mr-4">
-                                <Ionicons name={row.icon as any} size={20} color={row.color} />
-                            </View>
-                            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-sm">{row.label}</Text>
-                        </View>
-                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm max-w-[50%] text-right" numberOfLines={1}>{row.value}</Text>
-                    </View>
-                ))}
-             </View>
-          </View>
         </View>
 
         <View className="px-6 pb-6">

@@ -53,7 +53,6 @@ export const ReceiptifyTeaser = ({ onPress }: { onPress: () => void }) => {
     );
 };
 
-// --- History Card ---
 export const HistoryCard = ({ 
   item, 
   onPress, 
@@ -69,65 +68,72 @@ export const HistoryCard = ({
 }) => {
   const { isDark } = useTheme();
   const isHealthy = item.status === 'Healthy';
-  const severityColor = isHealthy ? '#25D366' : 
-                   item.severity === 'High' ? '#D64545' : 
-                   item.severity === 'Moderate' ? '#F4A261' : '#2A9D8F';
 
   return (
     <MotiView
       from={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mb-3"
+      className="mb-4"
     >
       <Pressable 
         onPress={onPress}
         onLongPress={onLongPress}
-        className={`bg-white dark:bg-darkSurface p-3 rounded-3xl flex-row items-center border shadow-sm ${
+        className={`bg-white dark:bg-darkSurface rounded-[28px] flex-row items-stretch border shadow-md overflow-hidden min-h-[110px] ${
           isSelected ? 'border-accent bg-accent/5' : 'border-black/5 dark:border-white/5'
         }`}
       >
-        {isSelectionMode && (
-          <View className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-3 ${
-            isSelected ? 'bg-accent border-accent' : 'border-black/10 dark:border-white/20'
-          }`}>
-            {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+        <View className="relative w-[110px] h-full">
+          <Image 
+            source={{ uri: item.image }} 
+            style={{ width: '100%', height: '100%' }} 
+            contentFit="cover"
+            transition={200}
+          />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.6)']} className="absolute inset-0" />
+          <View className="absolute bottom-2 left-2 right-2 flex-row justify-center">
+            {isHealthy ? (
+              <View className="bg-accent/90 backdrop-blur-md px-2 py-1 rounded-[10px]">
+                <Text className="text-white font-poppins-black text-[8px] uppercase tracking-[2px]">Healthy</Text>
+              </View>
+            ) : (
+              <View className="bg-red-500/90 backdrop-blur-md px-2 py-1 rounded-[10px]">
+                <Text className="text-white font-poppins-black text-[8px] uppercase tracking-[2px]">Diseased</Text>
+              </View>
+            )}
           </View>
-        )}
+        </View>
 
-        <Image 
-          source={{ uri: item.image }} 
-          style={{ width: 64, height: 64, borderRadius: 18, marginRight: 12 }}
-          contentFit="cover"
-          transition={200}
-        />
-        
-        <View className="flex-1">
-          <View className="flex-row justify-between items-center mb-1">
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm leading-tight">
+        <View className="flex-1 p-4 justify-center">
+          <View className="flex-row justify-between items-start mb-1">
+            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-base leading-tight" numberOfLines={1}>
               {item.crop}
             </Text>
-            <View 
-              className="px-2 py-0.5 rounded-full" 
-              style={{ backgroundColor: `${severityColor}15` }}
-            >
-              <Text style={{ color: severityColor }} className="text-[7px] font-poppins-black uppercase">
-                {isHealthy ? 'Healthy' : `${item.severity}`}
-              </Text>
-            </View>
+            {isSelectionMode && (
+              <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
+                isSelected ? 'bg-accent border-accent' : 'border-black/10 dark:border-white/20'
+              }`}>
+                {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+              </View>
+            )}
           </View>
           
-          <Text className={`font-poppins-bold text-[11px] mb-1 opacity-70 ${isHealthy ? 'text-accent' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
+          <Text className={`font-poppins-bold text-xs mb-2 leading-tight ${isHealthy ? 'text-accent' : 'text-textSecondary dark:text-darkTextSecondary'}`} numberOfLines={2}>
             {item.result}
           </Text>
           
-          <Text className="text-textSecondary dark:text-darkTextSecondary text-[9px] font-poppins-regular opacity-50">
-            {item.date}
-          </Text>
+          <View className="flex-row items-center justify-between mt-auto">
+            <View className="flex-row items-center opacity-40">
+              <Ionicons name="calendar" size={10} color={isDark ? "white" : "black"} />
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[9px] ml-1.5 uppercase tracking-widest">{item.date}</Text>
+            </View>
+            
+            {!isSelectionMode && (
+              <View className="w-7 h-7 rounded-full bg-black/5 dark:bg-white/5 items-center justify-center">
+                <Ionicons name="arrow-forward" size={12} color={isDark ? "white" : "black"} />
+              </View>
+            )}
+          </View>
         </View>
-        
-        {!isSelectionMode && (
-          <Ionicons name="chevron-forward" size={16} color={isDark ? "white" : "#111B21"} className="ml-2 opacity-20" />
-        )}
       </Pressable>
     </MotiView>
   );

@@ -37,7 +37,10 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
   }).toUpperCase();
 
   const handleShare = async () => {
-    if (!generatedUri) return;
+    if (!generatedUri || generatedUri === 'web-print-done') {
+      Alert.alert('Unavailable', 'Direct sharing is not supported on web. Please use the Print option to save as PDF.');
+      return;
+    }
     try {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(generatedUri, {
@@ -55,6 +58,10 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
   };
 
   const handlePrint = async () => {
+    if (generatedUri === 'web-print-done') {
+      generatePDF(); // Re-print on web
+      return;
+    }
     if (!generatedUri) return;
     try {
       await Print.printAsync({ uri: generatedUri });
@@ -152,6 +159,12 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
           </body>
         </html>
       `;
+
+      if (Platform.OS === 'web') {
+        await Print.printAsync({ html });
+        setGeneratedUri('web-print-done');
+        return;
+      }
 
       if ((Platform.OS as string) !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});

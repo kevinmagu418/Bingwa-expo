@@ -72,7 +72,7 @@ export default function ScanDashboard() {
       <ScrollView 
         className="flex-1 px-6" 
         pointerEvents="auto"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#25D366" />
@@ -106,7 +106,7 @@ export default function ScanDashboard() {
         <ScanCard onPress={handleScanPress} />
 
         {/* Recent Scans */}
-        <View className="mt-4 mb-8">
+        <View className="mt-4 mb-4">
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg">
               Recent Scans

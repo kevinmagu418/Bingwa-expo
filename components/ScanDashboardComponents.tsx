@@ -90,12 +90,12 @@ export const RecentScanItem = ({ item, index }: { item: any, index: number }) =>
     from={{ opacity: 0, scale: 0.9, translateX: 20 }}
     animate={{ opacity: 1, scale: 1, translateX: 0 }}
     transition={{ type: 'spring', delay: 400 + index * 100 }}
-    className="w-64"
+    className="w-[280px]"
   >
-    <View className="h-80 rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-lg relative">
+    <View className="h-[340px] rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-lg relative">
       <Image 
         source={item.image} 
-        style={{ width: '100%', height: 200 }} 
+        style={{ width: '100%', height: 210 }} 
         contentFit="cover"
         transition={300}
         cachePolicy="disk"

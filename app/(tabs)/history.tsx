@@ -77,7 +77,7 @@ export default function HistoryTab() {
   };
 
   const isWeb = Platform.OS === 'web';
-  const contentWidth = isWeb ? Math.min(width - 40, 550) : width;
+  const contentWidth = isWeb ? Math.min(width - 40, 550) : '100%';
 
   const filteredData = scans.filter(item => {
     const isHealthy = item.severity === null || item.diseases?.name?.toLowerCase().includes('healthy');
@@ -160,9 +160,19 @@ export default function HistoryTab() {
           </View>
 
           <View className="flex-row items-center">
+            {isSelectionMode && selectedIds.length > 0 && (
+              <TouchableOpacity 
+                onPress={() => setShowReceipt(true)}
+                className="mr-3 bg-accent px-5 py-2.5 rounded-2xl shadow-lg shadow-accent/30"
+              >
+                <Text className="text-white font-poppins-black text-[10px] uppercase tracking-[2px]">
+                  Create
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity 
                 onPress={isSelectionMode ? cancelSelection : () => setIsSelectionMode(true)}
-                className={`mr-4 px-4 py-2 rounded-2xl border ${isSelectionMode ? 'bg-red-500/10 border-red-500/20' : 'bg-black/5 dark:bg-white/5 border-transparent'}`}
+                className={`mr-4 px-4 py-2.5 rounded-2xl border ${isSelectionMode ? 'bg-red-500/10 border-red-500/20' : 'bg-black/5 dark:bg-white/5 border-transparent'}`}
             >
                 <Text className={`font-poppins-bold text-[10px] uppercase tracking-wider ${isSelectionMode ? 'text-red-500' : 'text-textPrimary dark:text-darkTextPrimary'}`}>
                 {isSelectionMode ? 'Cancel' : 'Export'}
@@ -207,48 +217,38 @@ export default function HistoryTab() {
                   <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl tracking-tight">Archive Guide</Text>
                 </View>
                 
-                <View className="bg-black/5 dark:bg-white/5 rounded-[48px] p-8 border border-black/5 dark:border-white/5 relative overflow-hidden">
-                  <LinearGradient colors={['rgba(37, 211, 102, 0.03)', 'transparent']} className="absolute inset-0" />
-                  
-                  <View className="flex-row justify-between items-start mb-8">
-                    <View className="flex-1 mr-4">
-                      <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg leading-tight mb-2">Master Receipt-ify</Text>
-                      <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-[11px] leading-4 opacity-60">
-                        Transform raw scans into professional agricultural documentation.
-                      </Text>
-                    </View>
-                    <View className="w-14 h-14 bg-white dark:bg-darkSurface rounded-3xl items-center justify-center shadow-xl border border-black/5 dark:border-white/5">
-                      <Ionicons name="ribbon" size={28} color="#F59E0B" />
-                    </View>
-                  </View>
-
-                  <View className="flex-row justify-between items-center mb-8 px-2">
-                    {[
-                      { icon: 'checkbox', label: 'Select', color: '#3B82F6' },
-                      { icon: 'flask', label: 'Analyze', color: '#A855F7' },
-                      { icon: 'cloud-download', label: 'Export', color: '#25D366' }
-                    ].map((step, i) => (
-                      <React.Fragment key={i}>
-                        <View className="items-center">
-                          <View className="w-12 h-12 rounded-2xl items-center justify-center mb-2 shadow-inner" style={{ backgroundColor: `${step.color}15` }}>
-                            <Ionicons name={step.icon as any} size={20} color={step.color} />
-                          </View>
-                          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[9px] uppercase tracking-widest">{step.label}</Text>
-                        </View>
-                        {i < 2 && (
-                          <Ionicons name="chevron-forward" size={14} color={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </View>
-                  
-                  <TouchableOpacity 
-                    onPress={() => setIsSelectionMode(true)}
-                    activeOpacity={0.8}
-                    className="bg-accent h-16 rounded-[28px] items-center justify-center shadow-2xl shadow-accent/40"
+                <View className="bg-white dark:bg-darkSurface rounded-[36px] overflow-hidden shadow-2xl shadow-accent/20 border border-accent/10">
+                  <LinearGradient
+                    colors={['#25D366', '#128C7E']}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    className="p-8"
                   >
-                    <Text className="text-white font-poppins-black text-xs uppercase tracking-[3px]">Generate Now</Text>
-                  </TouchableOpacity>
+                    <View className="absolute -right-10 -top-10 w-40 h-40 bg-white/20 rounded-full blur-3xl" />
+                    
+                    <View className="flex-row justify-between items-start mb-6">
+                      <View className="flex-1">
+                        <View className="bg-white/20 self-start px-3 py-1 rounded-full backdrop-blur-md mb-3 border border-white/20">
+                          <Text className="text-white font-poppins-black text-[9px] uppercase tracking-[2px]">Premium Feature</Text>
+                        </View>
+                        <Text className="text-white font-poppins-black text-2xl leading-tight">Master Receipt-ify</Text>
+                        <Text className="text-white/80 font-poppins-medium text-xs mt-1">
+                          Transform scans into printable ag-reports.
+                        </Text>
+                      </View>
+                      <View className="bg-white/20 w-14 h-14 rounded-2xl items-center justify-center backdrop-blur-md border border-white/30">
+                        <Ionicons name="document-text" size={24} color="white" />
+                      </View>
+                    </View>
+
+                    <TouchableOpacity 
+                      onPress={() => setIsSelectionMode(true)}
+                      activeOpacity={0.8}
+                      className="bg-white rounded-[20px] h-14 items-center justify-center shadow-lg flex-row"
+                    >
+                      <Text className="text-accent font-poppins-black text-xs uppercase tracking-[2px] mr-2">Generate Report</Text>
+                      <Ionicons name="arrow-forward" size={16} color="#25D366" />
+                    </TouchableOpacity>
+                  </LinearGradient>
                 </View>
               </View>
             )}
@@ -372,6 +372,13 @@ export default function HistoryTab() {
           </View>
         </View>
       </ScrollView>
+      
+      {/* Receiptify Modal */}
+      <ReceiptPreview
+        visible={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        selectedScans={selectedScansData as any}
+      />
     </SafeAreaView>
   );
 }

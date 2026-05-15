@@ -13,7 +13,7 @@ export const BingwaAICard = () => {
   return (
     <Pressable
       onPress={() => router.push('/ai-assistant')}
-      className="mb-10"
+      className="mb-4"
     >
       {({ pressed }) => (
         <MotiView

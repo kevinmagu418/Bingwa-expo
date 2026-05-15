@@ -19,9 +19,9 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           borderTopColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
           // Dynamically adjust height and padding based on safe area insets
-          height: Platform.OS === 'ios' ? 85 + insets.bottom : 70 + Math.max(insets.bottom, 20),
-          paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 20),
-          paddingTop: 10,
+          height: Platform.OS === 'ios' ? 88 : 70,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          paddingTop: 12,
           elevation: 10,
           zIndex: 1000,
         },
