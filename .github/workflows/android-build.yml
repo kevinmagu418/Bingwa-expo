@@ -23,7 +23,7 @@ jobs:
           cache-dependency-path: Bingwa-expo/package-lock.json
 
       - name: 🏗 Setup Expo
-        uses: expo/github-action/setup@v1
+        uses: expo/expo-github-action@v8
         with:
           expo-version: latest
           eas-version: latest
