@@ -6,19 +6,15 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
+import { useFeedback } from '../../context/FeedbackContext';
 
 const { width } = Dimensions.get('window');
-
-const CROPS = [
-  "Apple", "Bean", "Bellpepper", "Cassava", "Cherry", 
-  "Grape", "Maize", "Peach", "Potato", "Strawberry", "Tomato"
-];
-
-import * as Haptics from 'expo-haptics';
-import { Alert } from 'react-native';
+const CROPS = ["Maize", "Tomatoes", "Potatoes", "Beans", "Coffee", "Tea", "Other"];
 
 export default function CameraScreen() {
   const router = useRouter();
+  const { showError, showInfo } = useFeedback();
   const cameraRef = useRef<CameraView>(null);
   const [facing, setFacing] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
@@ -53,7 +49,7 @@ export default function CameraScreen() {
         }
       } catch (error) {
         console.error("Capture failed:", error);
-        Alert.alert("Camera Error", "Failed to capture image. Please try again.");
+        showError("Camera Error", "Failed to capture image. Please try again.");
       } finally {
         setIsCapturing(false);
       }
@@ -66,7 +62,7 @@ export default function CameraScreen() {
       
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'We need access to your gallery to pick an image.');
+        showError('Permission Denied', 'We need access to your gallery to pick an image.');
         return;
       }
 
@@ -84,7 +80,7 @@ export default function CameraScreen() {
       }
     } catch (e) {
       console.log("Gallery Error: ", e);
-      Alert.alert("Gallery Error", "Failed to open image gallery.");
+      showError("Gallery Error", "Failed to open image gallery.");
     }
   };
 
@@ -110,7 +106,7 @@ export default function CameraScreen() {
 
           <View className="flex-row space-x-4">
             <TouchableOpacity 
-              onPress={() => Alert.alert("Scanning Tips", "1. Ensure good natural lighting\n2. Hold camera 10-15cm from leaf\n3. Center the spot in the frame")}
+              onPress={() => showInfo("Scanning Tips", "1. Ensure good natural lighting\n2. Hold camera 10-15cm from leaf\n3. Center the spot in the frame")}
               className="w-10 h-10 rounded-2xl bg-accent items-center justify-center backdrop-blur-md"
             >
               <Ionicons name="help-circle" size={24} color="white" />

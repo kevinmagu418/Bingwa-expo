@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, Dimensions, Platform, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, Dimensions, Platform, ActivityIndicator, StyleSheet } from 'react-native';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import { useReports } from '../hooks/useReports';
+import { useFeedback } from '../context/FeedbackContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [generatedUri, setGeneratedUri] = React.useState<string | null>(null);
   const { saveReport } = useReports();
+  const { showError, showWarning, showInfo } = useFeedback();
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -40,7 +42,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
 
   const handleShare = async () => {
     if (!generatedUri || generatedUri === 'web-print-done') {
-      Alert.alert('Unavailable', 'Direct sharing is not supported on web. Please use the Print option to save as PDF.');
+      showInfo('Unavailable', 'Direct sharing is not supported on web. Please use the Print option to save as PDF.');
       return;
     }
     try {
@@ -51,11 +53,11 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
           dialogTitle: 'Bingwa Agro-Report',
         });
       } else {
-        Alert.alert('Sharing Unavailable', 'Sharing is not available on this device.');
+        showWarning('Sharing Unavailable', 'Sharing is not available on this device.');
       }
     } catch (error) {
       console.error('Sharing Error:', error);
-      Alert.alert('Error', 'Failed to share the report.');
+      showError('Error', 'Failed to share the report.');
     }
   };
 
@@ -69,7 +71,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
       await Print.printAsync({ uri: generatedUri });
     } catch (error) {
       console.error('Print Error:', error);
-      Alert.alert('Error', 'Failed to open print dialog.');
+      showError('Error', 'Failed to open print dialog.');
     }
   };
 
@@ -187,7 +189,7 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ visible, onClose
       }
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      Alert.alert('Error', 'Failed to generate PDF. Please try again.');
+      showError('Error', 'Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
     }

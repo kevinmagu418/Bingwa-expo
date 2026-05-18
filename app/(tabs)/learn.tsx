@@ -15,7 +15,6 @@ import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { BingwaLoader } from '../../components/Loader';
 import { BingwaAICard } from '../../components/BingwaAICard';
 import { InteractiveVault } from '../../components/InteractiveVault';
-import { TabFooter } from '../../components/TabFooter';
 
 const ORANGE = "#F4A261";
 const SAGE = "#2D6A4F";
@@ -238,7 +237,7 @@ export default function LearnTab() {
                 <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[10px] uppercase tracking-[3px] opacity-40">Knowledge Hub</Text>
                 <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl">Bingwa Brain</Text>
             </View>
-            <BingwaAvatar size={48} borderWidth={2} borderColor={ORANGE} />
+            <BingwaAvatar size={48} borderWidth={2} />
         </View>
 
         <BingwaAICard />
@@ -275,8 +274,6 @@ export default function LearnTab() {
                 <Text className="text-accent font-poppins-bold text-xs uppercase tracking-widest">View Full Archive</Text>
             </TouchableOpacity>
         </View>
-
-        <TabFooter />
 
       </ScrollView>
     </SafeAreaView>

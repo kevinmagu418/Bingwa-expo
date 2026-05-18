@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,7 +29,13 @@ export const FeaturedGuideCard = ({ item }: { item: any }) => (
     animate={{ opacity: 1, translateX: 0 }}
     className="mr-5 w-72 h-44 rounded-[32px] overflow-hidden shadow-xl shadow-black/10"
   >
-    <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="cover" />
+    <Image 
+      source={{ uri: item.image }} 
+      className="w-full h-full" 
+      contentFit="cover" 
+      cachePolicy="disk"
+      transition={300}
+    />
     <LinearGradient
       colors={['transparent', 'rgba(0,0,0,0.8)']}
       className="absolute inset-0 p-5 justify-end"
@@ -52,7 +59,13 @@ export const DiseaseCard = ({ item, onPress }: { item: any, onPress?: () => void
         animate={{ opacity: 1, translateY: 0 }}
         className="bg-white dark:bg-darkSurface p-4 rounded-[28px] mb-4 flex-row items-center border border-black/5 dark:border-white/5 shadow-sm active:scale-[0.98]"
       >
-        <Image source={{ uri: item.image }} className="w-20 h-20 rounded-2xl mr-4" />
+        <Image 
+          source={{ uri: item.image }} 
+          className="w-20 h-20 rounded-2xl mr-4" 
+          contentFit="cover"
+          cachePolicy="disk"
+          transition={200}
+        />
         <View className="flex-1">
           <View className="flex-row justify-between items-start mb-1">
             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm flex-1 mr-2" numberOfLines={1}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useProfile } from '../../hooks/useProfile';
 import AuthInput from '../../components/AuthInput';
+import { useFeedback } from '../../context/FeedbackContext';
 
 import { BingwaLoader } from '../../components/Loader';
 
@@ -17,6 +18,7 @@ const CROPS = ["Maize", "Tomatoes", "Potatoes", "Beans", "Coffee", "Tea", "Other
 export default function ProfileScreen() {
   const router = useRouter();
   const { profile, loading: profileLoading, updateProfile, refreshProfile, uploadAvatar } = useProfile();
+  const { showSuccess, showError } = useFeedback();
   
   const [fullName, setFullName] = useState('');
   const [location, setLocation] = useState('');
@@ -46,7 +48,7 @@ export default function ProfileScreen() {
 
   const handleUpdate = async () => {
     if (!fullName.trim()) {
-      Alert.alert("Error", "Full name cannot be empty");
+      showError("Error", "Full name cannot be empty");
       return;
     }
 
@@ -62,10 +64,10 @@ export default function ProfileScreen() {
     setUpdating(false);
 
     if (result?.success) {
-      Alert.alert("Success", "Profile updated successfully");
+      showSuccess("Success", "Profile updated successfully");
       router.back();
     } else {
-      Alert.alert("Error", result?.error || "Failed to update profile");
+      showError("Error", result?.error || "Failed to update profile");
     }
   };
 
@@ -82,7 +84,7 @@ export default function ProfileScreen() {
         handleUploadAvatar(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      showError('Error', 'Failed to pick image');
     }
   };
 
@@ -92,12 +94,12 @@ export default function ProfileScreen() {
       const result = await uploadAvatar(uri);
       if (result.success) {
         await refreshProfile();
-        Alert.alert("Success", "Avatar updated successfully");
+        showSuccess("Success", "Avatar updated successfully");
       } else {
         throw new Error(result.error);
       }
     } catch (error: any) {
-      Alert.alert("Error", error.message);
+      showError("Error", error.message);
     } finally {
       setUploading(false);
     }

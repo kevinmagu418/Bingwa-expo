@@ -19,7 +19,7 @@ interface BingwaAvatarProps {
 export const BingwaAvatar: React.FC<BingwaAvatarProps> = ({ 
   size = 40, 
   borderWidth = 2, 
-  borderColor = '#FFFFFF',
+  borderColor = '#F4A261',
   onPress,
   style,
   colors = ['#25D366', '#128C7E']

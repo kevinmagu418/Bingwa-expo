@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,9 +8,11 @@ import { MotiView } from 'moti';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
 import PasswordStrength from '../../components/PasswordStrength';
+import { useFeedback } from '../../context/FeedbackContext';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const { showError, showAlert } = useFeedback();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,17 +20,17 @@ export default function ResetPasswordScreen() {
 
   async function handleResetPassword() {
     if (!password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showError('Error', 'Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showError('Error', 'Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-        Alert.alert('Error', 'Password must be at least 8 characters for better security');
+        showError('Error', 'Password must be at least 8 characters for better security');
         return;
     }
 
@@ -39,14 +41,19 @@ export default function ResetPasswordScreen() {
       });
 
       if (error) {
-        Alert.alert('Update Failed', error.message);
+        showError('Update Failed', error.message);
       } else {
-        Alert.alert('Success', 'Your password has been updated! You can now log in with your new password.', [
-          { text: 'OK', onPress: () => router.replace('/(auth)/login') }
-        ]);
+        showAlert({ 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Your password has been updated! You can now log in with your new password.', 
+          buttons: [
+            { text: 'OK', onPress: () => router.replace('/(auth)/login') }
+          ]
+        });
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      showError('Error', err.message);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -81,7 +82,9 @@ export default function DiseaseInfoScreen() {
             <Image 
               source={{ uri: disease.image_url }} 
               className="w-full h-full" 
-              resizeMode="cover" 
+              contentFit="cover" 
+              cachePolicy="disk"
+              transition={300}
             />
           ) : (
             <View className="w-full h-full bg-accent/10 items-center justify-center">
@@ -123,7 +126,7 @@ export default function DiseaseInfoScreen() {
                 <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
 
-            <BingwaAvatar size={48} borderWidth={2} borderColor="rgba(255,255,255,0.3)" />
+            <BingwaAvatar size={48} borderWidth={2} />
           </MotiView>
         </View>
 

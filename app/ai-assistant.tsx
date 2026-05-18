@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image, Alert, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
@@ -290,7 +290,7 @@ export default function AIAssistantScreen() {
                     </Text>
                 </TouchableOpacity>
 
-                <BingwaAvatar size={40} borderWidth={1} borderColor={isDark ? "rgba(255,255,255,0.2)" : "rgba(27, 67, 50, 0.2)"} />
+                <BingwaAvatar size={40} borderWidth={2} />
             </View>
           </View>
 

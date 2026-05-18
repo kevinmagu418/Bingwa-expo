@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,15 +8,17 @@ import { MotiView } from 'moti';
 import * as Linking from 'expo-linking';
 import { supabase } from '../../lib/supabase';
 import AuthInput from '../../components/AuthInput';
+import { useFeedback } from '../../context/FeedbackContext';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { showSuccess, showError, showInfo } = useFeedback();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function resetPassword() {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
+      showError('Error', 'Please enter your email address');
       return;
     }
 
@@ -29,13 +31,13 @@ export default function ForgotPasswordScreen() {
       });
 
       if (error) {
-        Alert.alert('Error', error.message);
+        showError('Error', error.message);
       } else {
-        Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
+        showSuccess('Email Sent', 'Check your inbox for a password reset link.');
         router.back();
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      showError('Error', err.message);
     } finally {
       setLoading(false);
     }

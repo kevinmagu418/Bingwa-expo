@@ -22,6 +22,8 @@ interface FeedbackContextType {
   showAlert: (config: Omit<AlertConfig, 'visible'>) => void;
   showSuccess: (title: string, message: string) => void;
   showError: (title: string, message: string) => void;
+  showWarning: (title: string, message: string) => void;
+  showInfo: (title: string, message: string) => void;
   hideAlert: () => void;
   alertConfig: AlertConfig;
 }
@@ -63,8 +65,16 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     showAlert({ type: 'error', title, message });
   }, [showAlert]);
 
+  const showWarning = useCallback((title: string, message: string) => {
+    showAlert({ type: 'warning', title, message });
+  }, [showAlert]);
+
+  const showInfo = useCallback((title: string, message: string) => {
+    showAlert({ type: 'info', title, message });
+  }, [showAlert]);
+
   return (
-    <FeedbackContext.Provider value={{ showAlert, showSuccess, showError, hideAlert, alertConfig }}>
+    <FeedbackContext.Provider value={{ showAlert, showSuccess, showError, showWarning, showInfo, hideAlert, alertConfig }}>
       {children}
     </FeedbackContext.Provider>
   );

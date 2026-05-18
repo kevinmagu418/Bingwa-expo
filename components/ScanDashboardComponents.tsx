@@ -85,62 +85,71 @@ export const ScanCard = ({ onPress }: { onPress: () => void }) => (
   </Pressable>
 );
 
-export const RecentScanItem = ({ item, index }: { item: any, index: number }) => (
-  <MotiView
-    from={{ opacity: 0, scale: 0.9, translateX: 20 }}
-    animate={{ opacity: 1, scale: 1, translateX: 0 }}
-    transition={{ type: 'spring', delay: 400 + index * 100 }}
-    className="w-[280px]"
-  >
-    <View className="h-[340px] rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-lg relative">
-      <Image 
-        source={item.image} 
-        style={{ width: '100%', height: 210 }} 
-        contentFit="cover"
-        transition={300}
-        cachePolicy="disk"
-      />
-      
-      {/* Severity badge on image */}
-      <View className={`absolute top-4 left-4 px-3 py-1.5 rounded-full backdrop-blur-md border flex-row items-center ${
-        item.severity === 'high' ? 'bg-red-500/20 border-red-500/30' : 
-        item.severity === 'medium' ? 'bg-orange-500/20 border-orange-500/30' : 'bg-accent/20 border-accent/30'
-      }`}>
-         <View className={`w-2 h-2 rounded-full mr-2 ${
-            item.severity === 'high' ? 'bg-red-500' : 
-            item.severity === 'medium' ? 'bg-orange-500' : 'bg-accent'
-         }`} />
-         <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${
-            item.severity === 'high' ? 'text-red-500' : 
-            item.severity === 'medium' ? 'text-orange-500' : 'text-accent'
-         }`}>
-           {item.severity || 'Normal'}
-         </Text>
-      </View>
+export const RecentScanItem = ({ item, index }: { item: any, index: number }) => {
+  const getSeverityTheme = (severity: string) => {
+    switch (severity?.toLowerCase()) {
+      case 'high': return { color: '#EF4444', bg: 'bg-red-500/10', border: 'border-red-500/20' };
+      case 'medium': return { color: '#F4A261', bg: 'bg-orange-500/10', border: 'border-orange-500/20' };
+      default: return { color: '#25D366', bg: 'bg-accent/10', border: 'border-accent/20' };
+    }
+  };
 
-      <View className="p-5 flex-1 justify-between">
-        <View>
-            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg leading-tight mb-1" numberOfLines={1}>
-            {item.disease}
-            </Text>
-            <View className="flex-row items-center opacity-60">
-                <Ionicons name="calendar-outline" size={12} color="#8696A0" className="mr-1" />
-                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[11px]">
-                {item.date}
-                </Text>
-            </View>
+  const theme = getSeverityTheme(item.severity);
+
+  return (
+    <MotiView
+      from={{ opacity: 0, scale: 0.9, translateX: 20 }}
+      animate={{ opacity: 1, scale: 1, translateX: 0 }}
+      transition={{ type: 'spring', delay: 400 + index * 100 }}
+      className="w-[220px]"
+    >
+      <View className={`h-[280px] rounded-[32px] bg-white dark:bg-darkSurface overflow-hidden border border-black/5 dark:border-white/5 shadow-xl relative`}>
+        {/* Severity Color Strip at Top */}
+        <View style={{ height: 4, backgroundColor: theme.color }} className="w-full absolute top-0 z-10" />
+
+        <Image 
+          source={item.image} 
+          style={{ width: '100%', height: 150 }} 
+          contentFit="cover"
+          transition={300}
+          cachePolicy="disk"
+        />
+        
+        {/* Severity badge on image */}
+        <View className={`absolute top-4 left-4 px-2.5 py-1 rounded-full backdrop-blur-md border ${theme.bg} ${theme.border} flex-row items-center`}>
+           <View className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: theme.color }} />
+           <Text className="font-poppins-black text-[8px] uppercase tracking-widest" style={{ color: theme.color }}>
+             {item.severity || 'Normal'}
+           </Text>
         </View>
 
-        <View className="flex-row items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
-            <View>
-              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-[9px] uppercase tracking-wider mb-0.5">Confidence</Text>
-              <Text className="text-accent font-poppins-black text-sm">{item.confidence}%</Text>
-            </View>
-            <TouchableOpacity className="w-10 h-10 bg-accent rounded-full items-center justify-center shadow-md shadow-accent/20">
-                <Ionicons name="chevron-forward" size={18} color="white" />
-            </TouchableOpacity>
+        <View className="p-4 flex-1 justify-between">
+          <View>
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-sm leading-tight mb-1" numberOfLines={1}>
+                {item.disease}
+              </Text>
+              <View className="flex-row items-center opacity-40">
+                  <Ionicons name="calendar-outline" size={10} color="#8696A0" className="mr-1" />
+                  <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[9px] uppercase tracking-widest">
+                    {item.date}
+                  </Text>
+              </View>
+          </View>
+
+          <View className="flex-row items-center justify-between pt-3 border-t border-black/5 dark:border-white/5">
+              <View>
+                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-black text-[7px] uppercase tracking-[2px] mb-0.5 opacity-40">Precision</Text>
+                <View className="flex-row items-baseline">
+                  <Text className="text-[#F4A261] font-poppins-black text-base">{item.confidence}</Text>
+                  <Text className="text-[#F4A261] font-poppins-black text-[10px] ml-0.5">%</Text>
+                </View>
+              </View>
+              <TouchableOpacity className="w-9 h-9 bg-[#F4A261] rounded-2xl items-center justify-center shadow-lg shadow-orange-500/20">
+                  <Ionicons name="chevron-forward" size={16} color="white" />
+              </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  </MotiView>
-);
+    </MotiView>
+  );
+};

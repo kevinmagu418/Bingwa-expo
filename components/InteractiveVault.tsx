@@ -146,6 +146,8 @@ const VaultCard = ({ scan, index, total, isExpanded, isAutoSelected, isElevated,
                 source={{ uri: scan.image_url || 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=600&auto=format&fit=crop' }} 
                 className="w-full h-32 rounded-[32px] mt-10 mb-4 border-2 border-white/10" 
                 contentFit="cover" 
+                cachePolicy="disk"
+                transition={300}
             />
             
             <View className="px-2 items-center">

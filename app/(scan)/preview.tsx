@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,12 +8,13 @@ import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '../../hooks/useProfile';
 import { BingwaLoader } from '../../components/Loader';
+import { useFeedback } from '../../context/FeedbackContext';
 
 import * as Haptics from 'expo-haptics';
-import { Alert } from 'react-native';
 
 export default function PreviewScreen() {
   const router = useRouter();
+  const { showError } = useFeedback();
   const { imageUri, cropType } = useLocalSearchParams();
   const [isValidating, setIsValidating] = useState(false);
 
@@ -46,7 +48,7 @@ export default function PreviewScreen() {
         }, 800);
     } catch (error) {
         setIsValidating(false);
-        Alert.alert("Analysis Error", "Something went wrong while preparing the image. Please try again.");
+        showError("Analysis Error", "Something went wrong while preparing the image. Please try again.");
     }
   };
 
@@ -66,8 +68,9 @@ export default function PreviewScreen() {
       <Image 
         source={{ uri: imageUri as string }} 
         className="absolute inset-0 w-full h-full opacity-60" 
-        resizeMode="cover" 
+        contentFit="cover" 
         blurRadius={10}
+        cachePolicy="disk"
       />
       
       <SafeAreaView className="flex-1 justify-between">
@@ -81,7 +84,8 @@ export default function PreviewScreen() {
                 <Image 
                     source={{ uri: imageUri as string }} 
                     className="w-full h-full" 
-                    resizeMode="cover" 
+                    contentFit="cover" 
+                    cachePolicy="disk"
                 />
                 
                 {/* Crop Badge */}

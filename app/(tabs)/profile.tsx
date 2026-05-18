@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Switch, Alert, Platform, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Switch, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,14 +10,17 @@ import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
 import { useTheme } from '../../context/ThemeContext';
+import { BingwaAvatar } from '../../components/BingwaAvatar';
 import { BingwaLoader } from '../../components/Loader';
 import { TabFooter } from '../../components/TabFooter';
+import { useFeedback } from '../../context/FeedbackContext';
 
 export default function ProfileTab() {
   const router = useRouter();
   const { profile, loading } = useProfile();
   const { scans } = useScans();
   const { theme, isDark, setTheme } = useTheme();
+  const { showError, showAlert } = useFeedback();
   const [notifications, setNotifications] = useState(true);
 
   if (loading) {
@@ -31,7 +34,7 @@ export default function ProfileTab() {
         if (error) throw error;
         router.replace('/(auth)/login');
       } catch (error: any) {
-        Alert.alert("Error", error.message);
+        showError("Error", error.message);
       }
     };
 
@@ -40,14 +43,15 @@ export default function ProfileTab() {
         performLogout();
       }
     } else {
-      Alert.alert(
-        "Logout",
-        "Are you sure you want to log out?",
-        [
+      showAlert({
+        type: 'warning',
+        title: "Logout",
+        message: "Are you sure you want to log out?",
+        buttons: [
           { text: "Cancel", style: "cancel" },
           { text: "Logout", style: "destructive", onPress: performLogout }
         ]
-      );
+      });
     }
   };
 
@@ -86,161 +90,234 @@ export default function ProfileTab() {
     <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']} pointerEvents="box-none">
       <ScrollView className="flex-1" pointerEvents="auto" showsVerticalScrollIndicator={false}>
         
-        <View className="items-center pt-8 pb-10 px-6">
-          <MotiView from={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} className="relative">
-            <View className="w-32 h-32 rounded-[40px] bg-accent/10 items-center justify-center border-4 border-white dark:border-darkSurface shadow-2xl overflow-hidden">
-               {profile?.avatar_url ? <Image source={{ uri: profile.avatar_url }} className="w-full h-full" /> : <Ionicons name="person" size={50} color="#25D366" />}
+        <View className="items-center pt-10 pb-12 px-8">
+          {/* Main Profile Header */}
+          <MotiView 
+            from={{ opacity: 0, scale: 0.8 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            className="relative items-center mb-8"
+          >
+            <View className="relative">
+               <BingwaAvatar size={120} borderWidth={4} />
+               <TouchableOpacity 
+                 onPress={() => router.push('/(profile)/profile')}
+                 className="absolute bottom-0 right-0 w-12 h-12 bg-accent rounded-3xl items-center justify-center border-4 border-white dark:border-darkBackground shadow-xl active:scale-90"
+               >
+                 <Ionicons name="camera" size={20} color="white" />
+               </TouchableOpacity>
             </View>
-            <TouchableOpacity className="absolute bottom-0 right-0 w-10 h-10 bg-accent rounded-2xl items-center justify-center border-4 border-white dark:border-darkSurface shadow-lg" onPress={() => router.push('/(profile)/profile')}>
-              <Ionicons name="camera" size={18} color="white" />
-            </TouchableOpacity>
+            
+            <View className="items-center mt-6">
+              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl tracking-tight">
+                {profile?.full_name?.split(' ')[0] || 'Farmer'} 
+                <Text className="text-accent"> {profile?.full_name?.split(' ')[1] || 'Bingwa'}</Text>
+              </Text>
+              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs opacity-50 mt-1">
+                {profile?.email || 'farmer@bingwa.com'}
+              </Text>
+            </View>
           </MotiView>
 
-          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl mt-6">{profile?.full_name || 'Bingwa Farmer'}</Text>
-          <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm opacity-60">{profile?.email || 'farmer@bingwa.com'}</Text>
-          
-          <View className="flex-row items-center mt-2 opacity-60">
-            <Ionicons name="location-sharp" size={14} color={isDark ? "#8696A0" : "#54656F"} className="mr-1" />
-            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-xs">
-              {profile?.location ? `${profile.location}${profile.county ? `, ${profile.county}` : ''}` : 'Location not set'}
-            </Text>
-          </View>
-
-          {/* Revamped Farm & Account Details */}
-          <View className="w-full mt-8 px-6">
-            <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 shadow-xl relative overflow-hidden">
-               {/* Decorative background blur */}
-               <View className="absolute -top-10 -right-10 w-32 h-32 bg-accent/5 rounded-full blur-2xl" />
-
-               <View className="flex-row items-center justify-between mb-6">
-                 <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">Farm Profile</Text>
-                 <View className="bg-accent/10 px-3 py-1.5 rounded-full">
-                   <Text className="text-accent font-poppins-bold text-[9px] uppercase tracking-widest">Verified</Text>
-                 </View>
-               </View>
-               
-               <View className="flex-row justify-between mb-6">
-                 <View className="flex-1 items-center bg-black/5 dark:bg-white/5 p-5 rounded-[28px] mr-2 border border-black/5 dark:border-white/5">
-                    <Ionicons name="map-outline" size={24} color="#25D366" className="mb-2" />
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">{profile?.farm_size || '0'} Ac</Text>
-                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[9px] uppercase tracking-widest mt-1 opacity-50">Total Area</Text>
-                 </View>
-                 <View className="flex-1 items-center bg-black/5 dark:bg-white/5 p-5 rounded-[28px] ml-2 border border-black/5 dark:border-white/5">
-                    <Ionicons name="leaf-outline" size={24} color="#3B82F6" className="mb-2" />
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl">{profile?.primary_crops?.length || 0}</Text>
-                    <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[9px] uppercase tracking-widest mt-1 opacity-50">Crop Types</Text>
-                 </View>
-               </View>
-
-               <View className="mt-2">
-                 <View className="flex-row justify-between items-center py-3 border-b border-black/5 dark:border-white/5">
-                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs">Primary Crops</Text>
-                   <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm max-w-[60%] text-right" numberOfLines={1}>
-                     {profile?.primary_crops?.join(', ') || 'None specified'}
-                   </Text>
-                 </View>
-                 <View className="flex-row justify-between items-center py-3 border-b border-black/5 dark:border-white/5">
-                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs">Member Since</Text>
-                   <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">
-                     {profile?.created_at ? new Date(profile.created_at as string).getFullYear() : '2026'}
-                   </Text>
-                 </View>
-                 <View className="flex-row justify-between items-center py-3">
-                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs">Account Status</Text>
-                   <View className={`px-3 py-1 rounded-full ${(profile?.scan_credits ?? 0) > 0 ? 'bg-accent/10' : 'bg-red-500/10'}`}>
-                     <Text className={`font-poppins-bold text-[9px] uppercase tracking-widest ${(profile?.scan_credits ?? 0) > 0 ? 'text-accent' : 'text-red-500'}`}>
-                       {(profile?.scan_credits ?? 0) > 0 ? 'Active Farmer' : 'Limited'}
-                     </Text>
-                   </View>
-                 </View>
-               </View>
-            </View>
-          </View>
-
-          {/* Modernized Analytics Dashboard */}
-          {stats && (
-            <View className="w-full mt-6 px-6">
-              <View className="bg-white dark:bg-darkSurface p-8 rounded-[40px] border border-black/5 dark:border-white/5 shadow-xl">
-                <View className="flex-row items-center justify-between mb-6">
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">AI Performance</Text>
-                    <View className="bg-accent/10 px-4 py-1.5 rounded-full">
-                        <Text className="text-accent font-poppins-bold text-[10px] uppercase tracking-wider">Live Metrics</Text>
-                    </View>
+          {/* New Vibrant Farm Intelligence Card */}
+          <View className="w-full mb-8">
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              className="bg-[#121B22] dark:bg-darkSurface rounded-[48px] overflow-hidden shadow-2xl relative"
+            >
+              <LinearGradient
+                colors={['rgba(244, 162, 97, 0.15)', 'transparent']}
+                className="absolute inset-0"
+                start={{ x: 1, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              />
+              
+              <View className="p-8">
+                <View className="flex-row items-center justify-between mb-8">
+                  <View>
+                    <Text className="text-orange-400 font-poppins-black text-[10px] uppercase tracking-[4px]">Farm Intelligence</Text>
+                    <Text className="text-white font-poppins-black text-xl mt-1">Status Overview</Text>
+                  </View>
+                  <View className="bg-orange-400/20 px-4 py-1.5 rounded-full border border-orange-400/20">
+                    <Text className="text-orange-400 font-poppins-black text-[9px] uppercase tracking-widest">Premium Log</Text>
+                  </View>
                 </View>
 
-                {/* Custom Severity Bar */}
-                <View className="h-6 w-full rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden flex-row">
-                    <View style={{ flex: stats.counts.low, backgroundColor: '#25D366' }} />
-                    <View style={{ flex: stats.counts.medium, backgroundColor: '#F59E0B' }} />
-                    <View style={{ flex: stats.counts.high, backgroundColor: '#EF4444' }} />
+                {/* Creative Acreage Display */}
+                <View className="flex-row items-center justify-between mb-8">
+                  <View className="flex-1 flex-row items-center">
+                    <View className="w-20 h-20 bg-orange-400 rounded-3xl items-center justify-center shadow-lg shadow-orange-400/30">
+                       <Ionicons name="map" size={32} color="white" />
+                    </View>
+                    <View className="ml-5">
+                      <Text className="text-white font-poppins-black text-4xl leading-none">{profile?.farm_size || '0'}</Text>
+                      <Text className="text-white/40 font-poppins-bold text-[10px] uppercase tracking-[2px] mt-1">Total Acres</Text>
+                    </View>
+                  </View>
+                  
+                  <View className="h-12 w-[1px] bg-white/10 mx-4" />
+
+                  <View className="flex-1 items-end">
+                    <Text className="text-orange-400 font-poppins-black text-4xl leading-none">{profile?.primary_crops?.length || 0}</Text>
+                    <Text className="text-white/40 font-poppins-bold text-[10px] uppercase tracking-[2px] mt-1 text-right">Varieties</Text>
+                  </View>
                 </View>
 
-                <View className="flex-row justify-between mt-4">
-                    {[
-                        { label: 'Low', color: '#25D366', val: stats.counts.low },
-                        { label: 'Medium', color: '#F59E0B', val: stats.counts.medium },
-                        { label: 'High', color: '#EF4444', val: stats.counts.high }
-                    ].map((item) => (
-                        <View key={item.label} className="items-center">
-                            <View className="w-3 h-3 rounded-full mb-2" style={{ backgroundColor: item.color }} />
-                            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">{item.val}</Text>
-                            <Text className="text-textSecondary text-[9px] uppercase font-poppins-regular">{item.label}</Text>
-                        </View>
-                    ))}
+                {/* Crop Tags */}
+                <View className="flex-row flex-wrap mb-4">
+                  {profile?.primary_crops?.map((crop, idx) => (
+                    <View key={idx} className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl mr-2 mb-2">
+                      <Text className="text-white/80 font-poppins-bold text-[10px] uppercase tracking-wider">{crop}</Text>
+                    </View>
+                  )) || (
+                    <Text className="text-white/30 font-poppins-medium text-xs">No crops registered yet.</Text>
+                  )}
                 </View>
 
-                <View className="mt-8 pt-6 border-t border-black/5 dark:border-white/5 flex-row items-end justify-between">
-                    <View>
-                        <Text className="text-textSecondary text-[11px] font-poppins-regular mb-1 uppercase tracking-widest">Confidence Score</Text>
-                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl">{(stats.avgConfidence * 100).toFixed(1)}%</Text>
-                    </View>
-                    <View className="bg-accent/10 p-4 rounded-2xl">
-                        <Ionicons name="trending-up" size={24} color="#25D366" />
-                    </View>
+                {/* Detailed Stats Row */}
+                <View className="mt-4 pt-6 border-t border-white/5 flex-row justify-between">
+                  <View>
+                    <Text className="text-white/30 font-poppins-bold text-[8px] uppercase tracking-[3px] mb-1">Location</Text>
+                    <Text className="text-white font-poppins-bold text-xs" numberOfLines={1}>
+                      {profile?.location ? `${profile.location}, ${profile.county || ''}` : 'Not Set'}
+                    </Text>
+                  </View>
+                  <View className="items-end">
+                    <Text className="text-white/30 font-poppins-bold text-[8px] uppercase tracking-[3px] mb-1">Member ID</Text>
+                    <Text className="text-white font-poppins-bold text-xs">#BNG-{profile?.id?.slice(0, 5).toUpperCase()}</Text>
+                  </View>
                 </View>
               </View>
+            </MotiView>
+          </View>
+
+          {/* Refined AI Performance Dashboard */}
+          {stats && (
+            <View className="w-full mb-10">
+              <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 200 }}
+                className="bg-white dark:bg-darkSurface p-8 rounded-[48px] border border-black/5 dark:border-white/5 shadow-xl"
+              >
+                <View className="flex-row items-center justify-between mb-8">
+                    <View>
+                        <Text className="text-accent font-poppins-black text-[10px] uppercase tracking-[4px]">Data Analytics</Text>
+                        <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl mt-1">AI Performance</Text>
+                    </View>
+                    <View className="bg-accent/10 px-4 py-1.5 rounded-full border border-accent/10">
+                        <Text className="text-accent font-poppins-black text-[9px] uppercase tracking-widest">Live</Text>
+                    </View>
+                </View>
+
+                {/* Custom Severity Bar - More Modern */}
+                <View className="mb-8">
+                    <View className="h-4 w-full rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden flex-row">
+                        <View style={{ flex: stats.counts.low || 1, backgroundColor: '#25D366' }} />
+                        <View style={{ flex: stats.counts.medium || 1, backgroundColor: '#F4A261' }} />
+                        <View style={{ flex: stats.counts.high || 1, backgroundColor: '#EF4444' }} />
+                    </View>
+                    <View className="flex-row justify-between mt-4">
+                        {[
+                            { label: 'Stable', color: '#25D366', val: stats.counts.low },
+                            { label: 'Warning', color: '#F4A261', val: stats.counts.medium },
+                            { label: 'Critical', color: '#EF4444', val: stats.counts.high }
+                        ].map((item) => (
+                            <View key={item.label} className="items-center">
+                                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-lg">{item.val}</Text>
+                                <View className="flex-row items-center">
+                                    <View className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: item.color }} />
+                                    <Text className="text-textSecondary text-[8px] uppercase font-poppins-bold tracking-widest opacity-40">{item.label}</Text>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+
+                <View className="pt-8 border-t border-black/5 dark:border-white/5 flex-row items-center justify-between">
+                    <View>
+                        <Text className="text-textSecondary dark:text-darkTextSecondary text-[9px] font-poppins-black mb-1 uppercase tracking-[3px] opacity-40">Precision Index</Text>
+                        <View className="flex-row items-baseline">
+                            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-4xl">{(stats.avgConfidence * 100).toFixed(0)}</Text>
+                            <Text className="text-accent font-poppins-black text-xl ml-1">%</Text>
+                        </View>
+                    </View>
+                    <View className="bg-accent w-16 h-16 rounded-3xl items-center justify-center shadow-lg shadow-accent/30">
+                        <Ionicons name="stats-chart" size={28} color="white" />
+                    </View>
+                </View>
+              </MotiView>
             </View>
           )}
         </View>
 
-        <View className="px-6 pb-6">
-           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mt-2 mb-4 ml-2">Settings</Text>
-           <View className="bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
-              {menuItems.map((item, index) => (
-                <TouchableOpacity key={item.id} onPress={item.onPress} className={`flex-row items-center p-5 ${index !== menuItems.length - 1 ? 'border-b border-black/5 dark:border-white/5' : ''} active:bg-black/5 dark:active:bg-white/5`}>
-                  <View style={{ backgroundColor: `${item.color}15` }} className="w-10 h-10 rounded-xl items-center justify-center mr-4">
-                    <Ionicons name={item.icon as any} size={20} color={item.color} />
+        <View className="px-8 pb-12">
+           <View className="mb-10">
+             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl mb-6 ml-2">Core Settings</Text>
+             <View className="bg-white dark:bg-darkSurface rounded-[40px] border border-black/5 dark:border-white/5 shadow-xl overflow-hidden">
+                {menuItems.map((item, index) => (
+                  <TouchableOpacity key={item.id} onPress={item.onPress} className={`flex-row items-center p-6 ${index !== menuItems.length - 1 ? 'border-b border-black/5 dark:border-white/5' : ''} active:bg-black/5 dark:active:bg-white/5`}>
+                    <View style={{ backgroundColor: `${item.color}15` }} className="w-12 h-12 rounded-2xl items-center justify-center mr-5">
+                      <Ionicons name={item.icon as any} size={22} color={item.color} />
+                    </View>
+                    <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm tracking-tight">{item.label}</Text>
+                    <View className="bg-black/5 dark:bg-white/5 p-2 rounded-xl">
+                      <Ionicons name="chevron-forward" size={16} color={isDark ? "#8696A0" : "#D1D5DB"} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+             </View>
+           </View>
+
+           <View className="mb-10">
+             <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl mb-6 ml-2">App Experience</Text>
+             <View className="bg-white dark:bg-darkSurface rounded-[40px] border border-black/5 dark:border-white/5 shadow-xl overflow-hidden">
+                <View className="flex-row items-center p-6 border-b border-black/5 dark:border-white/5">
+                  <View className="bg-purple-500/10 w-12 h-12 rounded-2xl items-center justify-center mr-5">
+                    <Ionicons name="notifications" size={22} color="#8B5CF6" />
                   </View>
-                  <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">{item.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={isDark ? "#8696A0" : "#D1D5DB"} />
-                </TouchableOpacity>
-              ))}
+                  <View className="flex-1">
+                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Notifications</Text>
+                    <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] font-poppins-medium opacity-40">System alerts & scan updates</Text>
+                  </View>
+                  <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: '#E5E7EB', true: '#25D366' }} thumbColor="#FFFFFF" ios_backgroundColor="#E5E7EB" />
+                </View>
+
+                <View className="p-6">
+                  <View className="flex-row items-center mb-6">
+                    <View className="bg-orange-500/10 w-12 h-12 rounded-2xl items-center justify-center mr-5">
+                      <Ionicons name={isDark ? "moon" : "sunny"} size={22} color="#F59E0B" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Theme Mode</Text>
+                      <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] font-poppins-medium opacity-40">Currently: {theme.charAt(0).toUpperCase() + theme.slice(1)}</Text>
+                    </View>
+                  </View>
+                  
+                  <View className="flex-row bg-gray-50 dark:bg-black/20 p-2 rounded-[28px] border border-black/5 dark:border-white/5">
+                     <TouchableOpacity onPress={() => setTheme('light')} className={`flex-1 h-12 rounded-[20px] items-center justify-center flex-row ${theme === 'light' ? 'bg-white shadow-md shadow-black/5' : ''}`}>
+                        <Ionicons name="sunny" size={16} color={theme === 'light' ? "#F59E0B" : "#8696A0"} />
+                        {theme === 'light' && <Text className="ml-2 font-poppins-bold text-[10px] text-orange-500">Light</Text>}
+                     </TouchableOpacity>
+                     <TouchableOpacity onPress={() => setTheme('dark')} className={`flex-1 h-12 rounded-[20px] items-center justify-center flex-row ${theme === 'dark' ? 'bg-darkSurface shadow-md shadow-white/5' : ''}`}>
+                        <Ionicons name="moon" size={16} color={theme === 'dark' ? "#3A86FF" : "#8696A0"} />
+                        {theme === 'dark' && <Text className="ml-2 font-poppins-bold text-[10px] text-blue-400">Dark</Text>}
+                     </TouchableOpacity>
+                     <TouchableOpacity onPress={() => setTheme('system')} className={`flex-1 h-12 rounded-[20px] items-center justify-center flex-row ${theme === 'system' ? (isDark ? 'bg-darkSurface shadow-md' : 'bg-white shadow-md') : ''}`}>
+                        <Ionicons name="settings-outline" size={16} color="#8696A0" />
+                        {theme === 'system' && <Text className="ml-2 font-poppins-bold text-[10px] text-gray-500">Auto</Text>}
+                     </TouchableOpacity>
+                  </View>
+                </View>
+             </View>
            </View>
 
-           <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-lg mt-10 mb-4 ml-2">Preferences</Text>
-           <View className="bg-white dark:bg-darkSurface rounded-[32px] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
-              <View className="flex-row items-center p-5 border-b border-black/5 dark:border-white/5">
-                <View className="bg-purple-500/10 w-10 h-10 rounded-xl items-center justify-center mr-4"><Ionicons name="notifications-outline" size={20} color="#8B5CF6" /></View>
-                <Text className="flex-1 text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Notifications</Text>
-                <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: '#E5E7EB', true: '#25D366' }} thumbColor="#FFFFFF" ios_backgroundColor="#E5E7EB" />
-              </View>
-              <View className="flex-row items-center p-5">
-                <View className="bg-orange-500/10 w-10 h-10 rounded-xl items-center justify-center mr-4"><Ionicons name={isDark ? "moon" : "sunny"} size={20} color="#F59E0B" /></View>
-                <View className="flex-1">
-                  <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Appearance</Text>
-                  <Text className="text-textSecondary dark:text-darkTextSecondary text-[10px] font-poppins-regular opacity-60">Currently: {theme.charAt(0).toUpperCase() + theme.slice(1)}</Text>
-                </View>
-                <View className="flex-row bg-[#F8F9FA] dark:bg-darkBackground p-1 rounded-2xl border border-black/5 dark:border-white/5">
-                   <TouchableOpacity onPress={() => setTheme('light')} className={`w-9 h-9 rounded-xl items-center justify-center ${theme === 'light' ? 'bg-white shadow-sm' : ''}`}><Ionicons name="sunny-outline" size={16} color={theme === 'light' ? "#F59E0B" : "#8696A0"} /></TouchableOpacity>
-                   <TouchableOpacity onPress={() => setTheme('dark')} className={`w-9 h-9 rounded-xl items-center justify-center ${theme === 'dark' ? 'bg-darkSurface shadow-sm' : ''}`}><Ionicons name="moon-outline" size={16} color={theme === 'dark' ? "#3A86FF" : "#8696A0"} /></TouchableOpacity>
-                   <TouchableOpacity onPress={() => setTheme('system')} className={`w-9 h-9 rounded-xl items-center justify-center ${theme === 'system' ? (isDark ? 'bg-darkSurface shadow-sm' : 'bg-white shadow-sm') : ''}`}><Ionicons name="settings-outline" size={16} color="#8696A0" /></TouchableOpacity>
-                </View>
-              </View>
-           </View>
-
-           <TouchableOpacity onPress={handleLogout} className="mt-12 h-14 rounded-full border border-red-500/20 bg-red-50/50 dark:bg-red-500/10 items-center justify-center flex-row active:bg-red-50 dark:active:bg-red-500/20">
-             <Ionicons name="log-out-outline" size={20} color="#EF4444" className="mr-2" />
-             <Text className="text-red-500 font-poppins-bold text-sm tracking-wide">Log Out</Text>
+           <TouchableOpacity 
+             onPress={handleLogout} 
+             className="h-16 rounded-[28px] bg-red-500/10 items-center justify-center flex-row active:bg-red-500/20 border border-red-500/10"
+           >
+             <Ionicons name="log-out" size={22} color="#EF4444" className="mr-3" />
+             <Text className="text-red-500 font-poppins-black text-xs uppercase tracking-[3px]">Secure Sign Out</Text>
            </TouchableOpacity>
         </View>
         <TabFooter />

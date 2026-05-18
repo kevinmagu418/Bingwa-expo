@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MotiView, MotiText } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFeedback } from '../../context/FeedbackContext';
 
 const LOADING_STEPS = [
   "Analyzing leaf structure...",
@@ -13,10 +14,10 @@ const LOADING_STEPS = [
 ];
 
 import { processImageScan } from '../../services/api';
-import { Alert } from 'react-native';
 
 export default function ProcessingScreen() {
   const router = useRouter();
+  const { showAlert } = useFeedback();
   const { imageUri, cropType } = useLocalSearchParams();
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -45,11 +46,12 @@ export default function ProcessingScreen() {
       }
     } catch (error: any) {
       console.error("Scan processing error:", error);
-      Alert.alert(
-        "Analysis Failed",
-        "We couldn't process your scan. Please check your connection and try again.",
-        [{ text: "OK", onPress: () => router.back() }]
-      );
+      showAlert({
+        type: 'error',
+        title: "Analysis Failed",
+        message: "We couldn't process your scan. Please check your connection and try again.",
+        buttons: [{ text: "OK", onPress: () => router.back() }]
+      });
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,9 +7,11 @@ import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import * as Haptics from 'expo-haptics';
+import { useFeedback } from '../../context/FeedbackContext';
 
 export default function AboutScreen() {
   const router = useRouter();
+  const { showSuccess, showError } = useFeedback();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [ticketMessage, setTicketMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +46,11 @@ export default function AboutScreen() {
       if (error) throw error;
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Success", "Your support ticket has been submitted. We will get back to you soon!");
+      showSuccess("Success", "Your support ticket has been submitted. We will get back to you soon!");
       setIsModalVisible(false);
       setTicketMessage('');
     } catch (error: any) {
-      Alert.alert("Error", "Could not submit ticket. Please check your internet connection.");
+      showError("Error", "Could not submit ticket. Please check your internet connection.");
       console.error(error);
     } finally {
       setIsSubmitting(false);

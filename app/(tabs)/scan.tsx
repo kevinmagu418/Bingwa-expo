@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, Alert, Image, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditsCard, ScanCard, RecentScanItem } from '../../components/ScanDashboardComponents';
@@ -12,9 +12,9 @@ import { useProfile } from '../../hooks/useProfile';
 import { useScans } from '../../hooks/useScans';
 import { useTheme } from '../../context/ThemeContext';
 import { BingwaAvatar } from '../../components/BingwaAvatar';
+import { useFeedback } from '../../context/FeedbackContext';
 
 import { BingwaLoader } from '../../components/Loader';
-import { TabFooter } from '../../components/TabFooter';
 
 
 
@@ -24,6 +24,7 @@ export default function ScanDashboard() {
   const [permission, requestPermission] = useCameraPermissions();
   const { profile, loading: profileLoading, refreshProfile } = useProfile();
   const { scans, loading: scansLoading, refreshScans } = useScans(5); // Last 5 scans
+  const { showAlert } = useFeedback();
   const [refreshing, setRefreshing] = useState(false);
 
   // Refresh data when screen is focused
@@ -53,14 +54,15 @@ export default function ScanDashboard() {
     if (!permission?.granted) {
       const { granted } = await requestPermission();
       if (!granted) {
-        Alert.alert(
-          "Permission Required",
-          "We need camera access to scan your crops.",
-          [
+        showAlert({
+          type: 'warning',
+          title: "Permission Required",
+          message: "We need camera access to scan your crops.",
+          buttons: [
             { text: "Cancel", style: "cancel" },
             { text: "Settings", onPress: () => router.push('/(onboarding)/permissions') }
           ]
-        );
+        });
         return;
       }
     }
@@ -96,7 +98,7 @@ export default function ScanDashboard() {
               )}
             </View>
           </View>
-          <BingwaAvatar size={56} borderWidth={2} borderColor={isDark ? "rgba(255,255,255,0.1)" : "rgba(37, 211, 102, 0.1)"} />
+          <BingwaAvatar size={56} borderWidth={2} />
         </View>
 
         {/* Credits */}
@@ -165,8 +167,6 @@ export default function ScanDashboard() {
 
         {/* AI Assistant Banner */}
         <BingwaAICard />
-
-        <TabFooter />
 
       </ScrollView>
     </SafeAreaView>

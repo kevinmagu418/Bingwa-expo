@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -72,8 +73,8 @@ export default function ResultScreen() {
 
   if (!scanResult) {
       return (
-          <View className="flex-1 items-center justify-center bg-[#FFF9F5] dark:bg-darkBackground">
-              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold">Diagnosis not found.</Text>
+          <View className="flex-1 items-center justify-center bg-[#FFF9F5]">
+              <Text className="text-textPrimary font-poppins-bold">Diagnosis not found.</Text>
               <TouchableOpacity onPress={handleDone} className="mt-4 px-8 py-3 bg-orange-500 rounded-2xl">
                   <Text className="text-white font-poppins-bold">Go Back</Text>
               </TouchableOpacity>
@@ -168,7 +169,7 @@ export default function ResultScreen() {
   const currentContent = activeTab === 'organic' ? organicContent : activeTab === 'chemical' ? chemicalContent : preventionContent;
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FFF9F5] dark:bg-darkBackground" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#FFF9F5]" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         
         {/* Modern Header Image */}
@@ -176,7 +177,9 @@ export default function ResultScreen() {
           <Image 
             source={{ uri: imageUri as string || scanResult.image_url }} 
             className="w-full h-full" 
-            resizeMode="cover" 
+            contentFit="cover" 
+            cachePolicy="disk"
+            transition={300}
           />
           <LinearGradient
             colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']}
@@ -195,7 +198,7 @@ export default function ResultScreen() {
                  </View>
                </View>
 
-               <View className={`px-5 py-3 rounded-full border border-white/20 backdrop-blur-md ${theme.bg.replace('bg-', 'bg-')}`}>
+               <View className={`px-5 py-3 rounded-full border border-white/20 backdrop-blur-md ${theme.bg}`}>
                  <View className="flex-row items-center">
                     <View className={`w-2 h-2 rounded-full ${theme.dot} mr-2`} />
                     <Text className={`font-poppins-bold text-[10px] uppercase tracking-widest ${theme.text}`}>{severity} Risk</Text>
@@ -216,12 +219,12 @@ export default function ResultScreen() {
                 <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
 
-            <BingwaAvatar size={48} borderWidth={2} borderColor="rgba(255,255,255,0.3)" />
+            <BingwaAvatar size={48} borderWidth={2} />
           </MotiView>
         </View>
 
         {/* Vault Style Body */}
-        <View className="flex-1 -mt-12 bg-[#FFF9F5] dark:bg-darkBackground rounded-t-[50px] px-8 pt-12 pb-32 shadow-2xl">
+        <View className="flex-1 -mt-12 bg-[#FFF9F5] rounded-t-[50px] px-8 pt-12 pb-32 shadow-2xl">
             
             {/* Title & Badge */}
             <View className="mb-10">
@@ -231,7 +234,7 @@ export default function ResultScreen() {
                     </View>
                     <Text className="text-orange-400 font-poppins-black text-[10px] uppercase tracking-[4px]">Diagnosis Secured</Text>
                 </View>
-                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-4xl leading-tight">{disease}</Text>
+                <Text className="text-textPrimary font-poppins-black text-4xl leading-tight">{disease}</Text>
                 <View className="h-1.5 w-20 bg-orange-400 rounded-full mt-6" />
             </View>
 
@@ -239,13 +242,13 @@ export default function ResultScreen() {
             <MotiView 
                 from={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white dark:bg-darkSurface p-6 rounded-[40px] border border-orange-100 dark:border-white/5 shadow-sm mb-8"
+                className="bg-white p-6 rounded-[40px] border border-orange-100 shadow-sm mb-8"
             >
                 <View className="flex-row items-center mb-4">
                     <Ionicons name="book-outline" size={20} color={ORANGE} className="mr-3" />
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-sm">Condition Analysis</Text>
+                    <Text className="text-textPrimary font-poppins-bold text-sm">Condition Analysis</Text>
                 </View>
-                <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-sm leading-relaxed opacity-70">
+                <Text className="text-textSecondary font-poppins-regular text-sm leading-relaxed opacity-70">
                     {description}
                 </Text>
             </MotiView>
@@ -253,16 +256,16 @@ export default function ResultScreen() {
             {/* Strategy Hub */}
             <View className="mb-6">
                 <View className="flex-row justify-between items-center mb-6 px-2">
-                    <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xl">Strategy Hub</Text>
+                    <Text className="text-textPrimary font-poppins-black text-xl">Strategy Hub</Text>
                     <Ionicons name="shield-checkmark" size={20} color={ORANGE} />
                 </View>
                 
-                <View className="flex-row bg-orange-50/50 dark:bg-darkSurface/50 rounded-[24px] p-1.5 mb-6 border border-orange-100/50">
+                <View className="flex-row bg-orange-50/50 rounded-[24px] p-1.5 mb-6 border border-orange-100/50">
                     {(['organic', 'chemical', 'prevention'] as const).map((tab) => (
                         <TouchableOpacity 
                             key={tab}
                             onPress={() => setActiveTab(tab)}
-                            className={`flex-1 py-4 rounded-[20px] items-center justify-center ${activeTab === tab ? 'bg-white dark:bg-accent shadow-lg shadow-orange-900/5' : ''}`}
+                            className={`flex-1 py-4 rounded-[20px] items-center justify-center ${activeTab === tab ? 'bg-white shadow-lg shadow-orange-900/5' : ''}`}
                         >
                             <Text className={`font-poppins-bold text-[10px] uppercase tracking-wide ${activeTab === tab ? 'text-orange-500' : 'text-textSecondary opacity-40'}`}>
                                 {tab}
@@ -271,7 +274,7 @@ export default function ResultScreen() {
                     ))}
                 </View>
 
-                <View className="bg-white dark:bg-darkSurface p-8 rounded-[48px] border border-orange-100 dark:border-white/5 shadow-xl min-h-[300px]">
+                <View className="bg-white p-8 rounded-[48px] border border-orange-100 shadow-xl min-h-[300px]">
                   <AnimatePresence>
                       <MotiView
                           key={activeTab}
@@ -282,7 +285,7 @@ export default function ResultScreen() {
                           className="flex-1"
                       >
                           <View className="flex-row justify-between items-center mb-8">
-                              <View className="bg-orange-50 dark:bg-orange-900/10 px-5 py-2 rounded-full border border-orange-100">
+                              <View className="bg-orange-50 px-5 py-2 rounded-full border border-orange-100">
                                   <Text className="text-orange-500 font-poppins-bold text-[10px] uppercase tracking-widest">{activeTab} Plan</Text>
                               </View>
                               <View className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/40">
@@ -294,13 +297,13 @@ export default function ResultScreen() {
                               </View>
                           </View>
                           
-                          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-regular text-base leading-[26px] mb-8">
+                          <Text className="text-textPrimary font-poppins-regular text-base leading-[26px] mb-8">
                               {currentContent}
                           </Text>
 
-                          <View className="flex-row items-center bg-[#FFF9F5] dark:bg-white/5 p-5 rounded-3xl border border-orange-50 mt-auto">
+                          <View className="flex-row items-center bg-[#FFF9F5] p-5 rounded-3xl border border-orange-50 mt-auto">
                               <Ionicons name="information-circle" size={20} color={ORANGE} />
-                              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-[11px] ml-3 flex-1 leading-tight">
+                              <Text className="text-textSecondary font-poppins-medium text-[11px] ml-3 flex-1 leading-tight">
                                   This recommendation is synthesized by Bingwa AI for educational purposes.
                               </Text>
                           </View>
@@ -328,7 +331,7 @@ export default function ResultScreen() {
                 <MotiView 
                     from={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="relative overflow-hidden rounded-[40px] border border-orange-200 dark:border-orange-500/20 shadow-2xl shadow-orange-200/50"
+                    className="relative overflow-hidden rounded-[40px] border border-orange-200 shadow-2xl shadow-orange-200/50"
                 >
                     <LinearGradient
                         colors={['#FFF1E6', '#FFFFFF']}
@@ -360,8 +363,8 @@ export default function ResultScreen() {
                                 <Text className="text-orange-600 font-poppins-black text-[10px] uppercase tracking-[3px]">Bingwa Intelligence</Text>
                                 <View className="ml-2 w-1.5 h-1.5 rounded-full bg-green-400" />
                             </View>
-                            <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl mb-1">Expert Guidance</Text>
-                            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-xs opacity-60 leading-relaxed">
+                            <Text className="text-textPrimary font-poppins-black text-2xl mb-1">Expert Guidance</Text>
+                            <Text className="text-textSecondary font-poppins-regular text-xs opacity-60 leading-relaxed">
                                 Need deeper insights? Chat with our AI expert for a step-by-step recovery plan.
                             </Text>
                         </View>
