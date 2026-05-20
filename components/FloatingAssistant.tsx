@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { MotiView, AnimatePresence } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -239,7 +240,13 @@ export const FloatingAssistant: React.FC<FloatingAssistantProps> = ({ currentDis
                 {/* Image Thumbnail Awareness */}
                 {imageContext && (
                   <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 bg-gray-50 dark:bg-white/5 p-3 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 flex-row items-center">
-                    <Image source={{ uri: imageContext.uri }} className="w-14 h-14 rounded-xl mr-3" />
+                    <Image 
+                      source={{ uri: imageContext.uri }} 
+                      style={{ width: 56, height: 56 }}
+                      className="rounded-xl mr-3" 
+                      cachePolicy="disk"
+                      transition={200}
+                    />
                     <View className="flex-1">
                       <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-bold text-[10px] uppercase opacity-60">Scanning this leaf...</Text>
                       <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-xs">{imageContext.crop} - {imageContext.disease}</Text>

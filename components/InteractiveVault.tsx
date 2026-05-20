@@ -144,7 +144,7 @@ const VaultCard = ({ scan, index, total, isExpanded, isAutoSelected, isElevated,
 
             <Image 
                 source={{ uri: scan.image_url || 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=600&auto=format&fit=crop' }} 
-                className="w-full h-32 rounded-[32px] mt-10 mb-4 border-2 border-white/10" 
+                style={{ width: '100%', height: 128, borderRadius: 32, marginTop: 40, marginBottom: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)' }} 
                 contentFit="cover" 
                 cachePolicy="disk"
                 transition={300}
@@ -173,7 +173,7 @@ export const InteractiveVault = ({ scans, onSelect }: { scans: Scan[], onSelect:
   const [isExpanded, setIsExpanded] = useState(false);
   const [autoIndex, setAutoIndex] = useState(0);
   const [elevatedIndex, setElevatedIndex] = useState<number | null>(null);
-  const idleTimer = useRef<NodeJS.Timeout | null>(null);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { width: windowWidth } = useWindowDimensions();
 
   // Responsive calculations

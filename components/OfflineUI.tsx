@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, Platform, Dimensions } from 'react-native';
+import { View, Text, Platform, Dimensions, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, MotiText } from 'moti';
+import { MotiView } from 'moti';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -24,108 +23,92 @@ export const OfflineMessage = ({ onRetry }: OfflineMessageProps) => {
   };
 
   return (
-    <View className="flex-1 bg-[#0B141A]">
-      <StatusBar style="light" />
-      <LinearGradient
-        colors={['#128C7E', 'rgba(11, 20, 26, 0.8)', '#0B141A']}
-        className="flex-1"
-        locations={[0, 0.4, 0.8]}
+    <View className="flex-1 bg-white dark:bg-darkBackground">
+      <StatusBar style={Platform.OS === 'ios' ? 'dark' : 'auto'} />
+      <View 
+        className="flex-1 px-10 items-center justify-center"
+        style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
       >
-        <View 
-          className="flex-1 px-8 items-center justify-center"
-          style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+        <MotiView
+          from={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', delay: 200 }}
+          className="mb-10"
         >
-          <MotiView
-            from={{ opacity: 0, scale: 0.5, rotate: '0deg' }}
-            animate={{ opacity: 1, scale: 1, rotate: '0deg' }}
-            transition={{ type: 'spring', delay: 200 }}
-            className="mb-12"
-          >
-            <View className="bg-[#25D366]/20 w-32 h-32 rounded-[40px] items-center justify-center border border-[#25D366]/30 shadow-2xl shadow-[#25D366]/50">
-              <Ionicons name="wifi-outline" size={64} color="#25D366" />
-              <MotiView
-                from={{ opacity: 1, scale: 1 }}
-                animate={{ opacity: 0, scale: 1.5 }}
-                transition={{ loop: true, duration: 2000, type: 'timing' }}
-                className="absolute w-full h-full rounded-[40px] border border-[#25D366]/40"
-              />
-            </View>
-          </MotiView>
+          <View className="bg-orange-50 dark:bg-orange-900/10 w-28 h-28 rounded-[40px] items-center justify-center border border-orange-100 dark:border-orange-900/20">
+            <Ionicons name="cloud-offline" size={48} color="#F4A261" />
+          </View>
+        </MotiView>
+        
+        <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'spring', delay: 400 }}
+          className="items-center"
+        >
+          <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl text-center leading-tight mb-4">
+            Connection<Text className="text-orange-500"> Paused</Text>
+          </Text>
           
-          <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'spring', delay: 400 }}
-            className="items-center"
-          >
-            <Text className="text-white font-poppins-black text-4xl text-center leading-tight mb-4">
-              Lost In The<Text className="text-[#25D366]"> Field?</Text>
-            </Text>
-            
-            <Text className="text-white/60 font-poppins-regular text-lg text-center leading-relaxed mb-12 max-w-[90%]">
-              We can't reach our servers. Please check your internet connection and let's get back to farming.
-            </Text>
-          </MotiView>
+          <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-regular text-base text-center leading-6 mb-12 opacity-70">
+            You're currently offline. Check your internet connection to access live AI insights and sync your latest scans.
+          </Text>
+        </MotiView>
 
-          <MotiView
-            from={{ opacity: 0, translateY: 30 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'spring', delay: 600 }}
-            className="w-full"
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'spring', delay: 600 }}
+          className="w-full"
+        >
+          <TouchableOpacity
+            onPress={handlePress}
+            activeOpacity={0.8}
+            className="h-16 rounded-[24px] bg-accent items-center justify-center shadow-lg shadow-accent/20"
           >
-            <Pressable
-              onPress={handlePress}
-              className="h-16 rounded-[24px] items-center justify-center shadow-2xl shadow-[#25D366]/40 overflow-hidden"
-            >
-              <LinearGradient
-                colors={['#25D366', '#128C7E']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="absolute inset-0"
-              />
-              <View className="flex-row items-center">
-                <Ionicons name="refresh-outline" size={24} color="white" />
-                <Text className="text-white font-poppins-black text-lg ml-3 uppercase tracking-widest">
-                  Retry Connection
-                </Text>
-              </View>
-            </Pressable>
-            
-            <MotiText
-              from={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              transition={{ delay: 1000 }}
-              className="text-white font-poppins-bold text-center mt-8 text-[10px] uppercase tracking-[4px]"
-            >
-              BingwaShambani • Kenya
-            </MotiText>
-          </MotiView>
-        </View>
-      </LinearGradient>
+            <View className="flex-row items-center">
+              <Ionicons name="refresh" size={20} color="white" />
+              <Text className="text-white font-poppins-black text-sm ml-3 uppercase tracking-widest">
+                Check Again
+              </Text>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={handlePress}
+            className="mt-6 py-2"
+          >
+            <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-center text-[10px] uppercase tracking-[3px] opacity-40">
+              Offline Mode Active
+            </Text>
+          </TouchableOpacity>
+        </MotiView>
+      </View>
     </View>
   );
 };
 
 export const OfflineBanner = () => {
+  const insets = useSafeAreaInsets();
+  
   return (
     <MotiView 
-      from={{ translateY: -100 }}
-      animate={{ translateY: 0 }}
-      className="bg-[#1C2C35] px-6 py-2 shadow-2xl z-50 border-b border-white/5"
-      style={{ paddingTop: Platform.OS === 'ios' ? 50 : 15 }}
+      from={{ translateY: -100, opacity: 0 }}
+      animate={{ translateY: 0, opacity: 1 }}
+      className="bg-orange-50 dark:bg-[#2C1E12] px-6 py-2 shadow-sm z-50 border-b border-orange-100 dark:border-orange-900/20"
+      style={{ paddingTop: Math.max(insets.top, 12), paddingBottom: 8 }}
     >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center">
-          <MotiView
-            animate={{ opacity: [1, 0.4, 1] }}
-            transition={{ loop: true, duration: 2000 }}
-            className="w-2 h-2 rounded-full bg-orange-500 mr-3"
-          />
-          <Text className="text-white/90 text-[10px] font-poppins-bold uppercase tracking-[2px]">
-            Offline Mode • Using Vault Cache
-          </Text>
-        </View>
-        <Ionicons name="cloud-offline-outline" size={14} color="rgba(255,255,255,0.4)" />
+      <View className="flex-row items-center justify-center">
+        <MotiView
+          animate={{ opacity: [1, 0.5, 1] }}
+          transition={{ loop: true, duration: 3000, type: 'timing' }}
+          className="mr-2"
+        >
+          <Ionicons name="wifi-outline" size={14} color="#F59E0B" />
+        </MotiView>
+        <Text className="text-orange-800 dark:text-orange-300 text-[10px] font-poppins-bold uppercase tracking-[1px]">
+          Working Offline • All features are still active
+        </Text>
       </View>
     </MotiView>
   );

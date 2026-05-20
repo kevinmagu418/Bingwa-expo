@@ -81,7 +81,7 @@ export default function DiseaseInfoScreen() {
           {disease.image_url ? (
             <Image 
               source={{ uri: disease.image_url }} 
-              className="w-full h-full" 
+              style={{ width: '100%', height: '100%' }} 
               contentFit="cover" 
               cachePolicy="disk"
               transition={300}

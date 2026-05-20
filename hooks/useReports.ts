@@ -18,7 +18,6 @@ export const useReports = () => {
   const { data: reports, isLoading, error, refetch } = useQuery<Report[]>({
     queryKey: ['reports'],
     queryFn: async () => {
-      try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return [];
 
@@ -29,21 +28,13 @@ export const useReports = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
-            console.warn("Reports table might not exist yet:", error.message);
-            // Fallback to local storage if table doesn't exist
-            const cached = await AsyncStorage.getItem(REPORTS_CACHE_KEY);
-            return cached ? JSON.parse(cached) : [];
+            console.error("Error fetching reports:", error.message);
+            throw error;
         }
 
-        const results = data || [];
-        await AsyncStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(results));
-        return results;
-      } catch (err) {
-        const cached = await AsyncStorage.getItem(REPORTS_CACHE_KEY);
-        return cached ? JSON.parse(cached) : [];
-      }
+        return data || [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30, // 30 seconds
   });
 
   const saveReport = useMutation({
@@ -61,23 +52,14 @@ export const useReports = () => {
         .single();
 
       if (error) {
-          // If Supabase fails, save to local storage as fallback
-          const cached = await AsyncStorage.getItem(REPORTS_CACHE_KEY);
-          const reports = cached ? JSON.parse(cached) : [];
-          const newReport = {
-              id: Math.random().toString(36).substring(7),
-              user_id: user.id,
-              data: reportData,
-              created_at: new Date().toISOString()
-          };
-          await AsyncStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify([newReport, ...reports]));
-          return newReport;
+          console.error("Error saving report:", error.message);
+          throw error;
       }
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['reports'] });
     },
   });
 

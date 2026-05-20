@@ -3,12 +3,12 @@ import {
   View,
   Text,
   Pressable,
-  Image,
   useWindowDimensions,
   FlatList,
   Platform,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View as MotiView, AnimatePresence } from "moti";
@@ -346,7 +346,13 @@ export default function HowItWorksScreen() {
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 3000, loop: true }}
           >
-             <Image source={require("../../assets/bingwalogo.png")} style={{ width: 90, height: 28 }} resizeMode="contain" />
+             <Image 
+                source={require("../../assets/bingwalogo.png")} 
+                style={{ width: 90, height: 28 }}
+                contentFit="contain" 
+                cachePolicy="disk"
+                transition={300}
+             />
           </MotiView>
           <Pressable 
             onPress={() => router.push("/permissions")} 

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, Image, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions, useColorScheme } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
@@ -313,7 +314,13 @@ export default function AIAssistantScreen() {
                   animate={{ opacity: 1, translateY: 0 }} 
                   className="mb-8 bg-black/5 dark:bg-white/5 p-4 rounded-3xl border border-black/5 dark:border-white/10 flex-row items-center"
                 >
-                  <Image source={{ uri: imageUri as string }} className="w-12 h-12 rounded-xl mr-4" />
+                  <Image 
+                    source={{ uri: imageUri as string }} 
+                    style={{ width: 48, height: 48 }}
+                    className="rounded-xl mr-4" 
+                    cachePolicy="disk"
+                    transition={300}
+                  />
                   <View className="flex-1">
                     <Text className="text-accent font-poppins-black text-[9px] uppercase tracking-widest mb-0.5">
                       {language === 'en' ? 'Studying' : 'Kusoma'}

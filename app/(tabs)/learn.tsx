@@ -104,7 +104,7 @@ const CommunityWisdomCard = memo(({ entry, index, onMaster }: { entry: typeof CO
                 >
                     {/* Visual Header with Gradient Overlay */}
                     <View className="h-56 w-full relative">
-                        <Image source={entry.image} className="w-full h-full" contentFit="cover" />
+                        <Image source={entry.image} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                         <LinearGradient 
                             colors={['transparent', 'rgba(0,0,0,0.7)']} 
                             className="absolute inset-0"

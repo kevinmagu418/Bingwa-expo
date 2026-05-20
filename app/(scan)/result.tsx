@@ -176,7 +176,7 @@ export default function ResultScreen() {
         <View className="h-[45vh] w-full relative">
           <Image 
             source={{ uri: imageUri as string || scanResult.image_url }} 
-            className="w-full h-full" 
+            style={{ width: '100%', height: '100%' }} 
             contentFit="cover" 
             cachePolicy="disk"
             transition={300}

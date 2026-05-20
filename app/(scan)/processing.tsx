@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MotiView, MotiText } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,8 +90,11 @@ export default function ProcessingScreen() {
         <View className="w-32 h-32 bg-white dark:bg-darkSurface rounded-full items-center justify-center shadow-2xl shadow-accent/20 border-4 border-white dark:border-white/5 relative overflow-hidden">
              <Image 
                 source={{ uri: imageUri as string }} 
-                className="w-full h-full opacity-50" 
-                resizeMode="cover" 
+                style={{ width: '100%', height: '100%' }}
+                className="opacity-50" 
+                contentFit="cover" 
+                cachePolicy="disk"
+                transition={200}
             />
             <View className="absolute inset-0 items-center justify-center bg-accent/20 backdrop-blur-sm">
                 <Ionicons name="hourglass-outline" size={40} color="#25D366" />

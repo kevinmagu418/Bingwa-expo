@@ -19,7 +19,7 @@ const THEME_STORAGE_KEY = 'bingwa_user_theme';
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const deviceColorScheme = useDeviceColorScheme();
   const { setColorScheme } = useNativeWindColorScheme();
-  const [theme, setThemeState] = useState<ThemeMode>('system');
+  const [theme, setThemeState] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     const loadTheme = async () => {

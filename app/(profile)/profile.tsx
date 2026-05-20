@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -138,7 +139,12 @@ export default function ProfileScreen() {
                 {uploading ? (
                   <ActivityIndicator color="#25D366" />
                 ) : profile?.avatar_url ? (
-                  <Image source={{ uri: profile.avatar_url }} className="w-full h-full" />
+                  <Image 
+                    source={{ uri: profile.avatar_url }} 
+                    style={{ width: '100%', height: '100%' }}
+                    cachePolicy="disk"
+                    transition={200}
+                  />
                 ) : (
                   <Ionicons name="person" size={50} color="#25D366" />
                 )}

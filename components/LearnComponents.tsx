@@ -30,8 +30,8 @@ export const FeaturedGuideCard = ({ item }: { item: any }) => (
     className="mr-5 w-72 h-44 rounded-[32px] overflow-hidden shadow-xl shadow-black/10"
   >
     <Image 
-      source={{ uri: item.image }} 
-      className="w-full h-full" 
+      source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
+      style={{ width: '100%', height: '100%' }} 
       contentFit="cover" 
       cachePolicy="disk"
       transition={300}
@@ -61,7 +61,7 @@ export const DiseaseCard = ({ item, onPress }: { item: any, onPress?: () => void
       >
         <Image 
           source={{ uri: item.image }} 
-          className="w-20 h-20 rounded-2xl mr-4" 
+          style={{ width: 80, height: 80, borderRadius: 16, marginRight: 16 }} 
           contentFit="cover"
           cachePolicy="disk"
           transition={200}

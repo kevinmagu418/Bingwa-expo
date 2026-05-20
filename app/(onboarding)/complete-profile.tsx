@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useFeedback } from '../../context/FeedbackContext';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -147,7 +148,12 @@ export default function CompleteProfileScreen() {
             <TouchableOpacity onPress={pickImage} className="relative">
                 <View className="w-32 h-32 rounded-full bg-gray-100 border-4 border-white shadow-xl items-center justify-center overflow-hidden">
                     {avatarUri ? (
-                        <Image source={{ uri: avatarUri }} className="w-full h-full" />
+                        <Image 
+                          source={{ uri: avatarUri }} 
+                          style={{ width: '100%', height: '100%' }}
+                          cachePolicy="disk"
+                          transition={200}
+                        />
                     ) : (
                         <Ionicons name="person" size={48} color="#CCCCCC" />
                     )}

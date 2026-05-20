@@ -7,8 +7,8 @@ import {
   Linking, 
   Platform, 
   useWindowDimensions, 
-  Image 
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
@@ -195,7 +195,9 @@ export default function PermissionsScreen() {
           <Image 
             source={require("../../assets/bingwalogo.png")} 
             style={{ width: 80, height: 24, opacity: 0.3 }} 
-            resizeMode="contain" 
+            contentFit="contain" 
+            cachePolicy="disk"
+            transition={300}
           />
         </MotiView>
 

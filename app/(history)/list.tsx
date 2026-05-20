@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -80,7 +81,13 @@ export default function HistoryListScreen() {
                     className="bg-white dark:bg-darkSurface p-4 rounded-[28px] border border-black/5 dark:border-white/5 shadow-sm mb-4 flex-row items-center active:scale-[0.98]"
                   >
                     <View className="w-16 h-16 rounded-2xl overflow-hidden border border-black/5">
-                      <Image source={{ uri: scan.image_url }} className="w-full h-full" resizeMode="cover" />
+                      <Image 
+                        source={{ uri: scan.image_url }} 
+                        style={{ width: '100%', height: '100%' }} 
+                        contentFit="cover" 
+                        cachePolicy="disk"
+                        transition={200}
+                      />
                     </View>
                     
                     <View className="flex-1 ml-4">

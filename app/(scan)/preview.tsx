@@ -67,10 +67,12 @@ export default function PreviewScreen() {
     <View className="flex-1 bg-black">
       <Image 
         source={{ uri: imageUri as string }} 
-        className="absolute inset-0 w-full h-full opacity-60" 
+        style={{ width: '100%', height: '100%', position: 'absolute' }}
+        className="opacity-60" 
         contentFit="cover" 
         blurRadius={10}
         cachePolicy="disk"
+        transition={300}
       />
       
       <SafeAreaView className="flex-1 justify-between">
@@ -83,9 +85,10 @@ export default function PreviewScreen() {
             >
                 <Image 
                     source={{ uri: imageUri as string }} 
-                    className="w-full h-full" 
+                    style={{ width: '100%', height: '100%' }} 
                     contentFit="cover" 
                     cachePolicy="disk"
+                    transition={300}
                 />
                 
                 {/* Crop Badge */}
