@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { HistoryCard, HistoryEmptyState } from '../../components/HistoryComponents';
+import { HistoryCard, HistoryEmptyState, ReceiptifyTeaser } from '../../components/HistoryComponents';
 import { useScans } from '../../hooks/useScans';
 import { useProfile } from '../../hooks/useProfile';
 import { ReceiptPreview } from '../../components/ReceiptPreview';
@@ -23,7 +23,7 @@ export default function HistoryTab() {
   const [showReceipt, setShowReceipt] = useState(false);
 
   const { scans, loading, refreshScans } = useScans();
-  const { refreshProfile } = useProfile();
+  const { profile, refreshProfile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -58,16 +58,26 @@ export default function HistoryTab() {
 
   const selectedScansData = scans
     .filter(s => selectedIds.includes(s.id))
-    .map(s => ({
-      id: s.id,
-      crop: s.diseases?.crop || 'Crop',
-      result: s.diseases?.name || 'Diagnosis',
-      severity: s.severity || 'low',
-      date: new Date(s.created_at).toLocaleDateString(),
-      organic_advice: s.recommendations?.organic_advice || 'No advice',
-      chemical_advice: s.recommendations?.chemical_advice || 'No advice',
-      prevention: s.recommendations?.prevention || 'No prevention'
-    }));
+    .map(s => {
+      // Helper to format remedies which might be arrays or objects
+      const formatRemedy = (remedy: any) => {
+        if (!remedy) return null;
+        if (Array.isArray(remedy)) return remedy.join(', ');
+        if (typeof remedy === 'object') return JSON.stringify(remedy);
+        return String(remedy);
+      };
+
+      return {
+        id: s.id,
+        crop: s.diseases?.crop || 'Crop',
+        result: s.diseases?.name || 'Diagnosis',
+        severity: s.severity || 'low',
+        date: new Date(s.created_at).toLocaleDateString(),
+        organic_advice: s.recommendations?.organic_advice || formatRemedy(s.diseases?.organic_remedies) || 'No organic advice available',
+        chemical_advice: s.recommendations?.chemical_advice || formatRemedy(s.diseases?.chemical_remedies) || 'No chemical advice available',
+        prevention: s.recommendations?.prevention || formatRemedy(s.diseases?.prevention_tips) || 'No prevention tips available'
+      };
+    });
 
   return (
     <SafeAreaView className="flex-1 bg-[#FFF9F5] dark:bg-darkBackground" edges={['top']}>
@@ -109,6 +119,10 @@ export default function HistoryTab() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F4A261" />}
       >
         <View className="pb-32">
+            {!isSelectionMode && filteredData.length > 0 && (
+                <ReceiptifyTeaser onPress={() => setIsSelectionMode(true)} />
+            )}
+
             {loading ? (
                 <>
                     <HistoryCardSkeleton />
@@ -172,6 +186,7 @@ export default function HistoryTab() {
         visible={showReceipt} 
         onClose={() => setShowReceipt(false)} 
         selectedScans={selectedScansData as any} 
+        profile={profile}
       />
     </SafeAreaView>
   );

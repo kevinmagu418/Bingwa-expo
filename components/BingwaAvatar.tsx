@@ -35,7 +35,7 @@ export const BingwaAvatar: React.FC<BingwaAvatarProps> = ({
     }
   };
 
-  const borderRadius = size * 0.4; // Thematic rounded square look
+  const borderRadius = size / 2; // Fully circular avatar
 
   return (
     <TouchableOpacity 

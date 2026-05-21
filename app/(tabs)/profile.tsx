@@ -73,6 +73,7 @@ export default function ProfileTab() {
   };
 
   const stats = computeStats();
+
   const chartConfig = {
     backgroundGradientFrom: isDark ? '#121B22' : '#FFFFFF',
     backgroundGradientTo: isDark ? '#121B22' : '#FFFFFF',
@@ -90,101 +91,123 @@ export default function ProfileTab() {
     <SafeAreaView className="flex-1 bg-white dark:bg-darkBackground" edges={['top']} pointerEvents="box-none">
       <ScrollView className="flex-1" pointerEvents="auto" showsVerticalScrollIndicator={false}>
         
-        <View className="items-center pt-10 pb-12 px-8">
-          {/* Main Profile Header */}
+        <View className="px-8 pt-4 pb-2">
+          {/* Unified Profile Identity Block - Premium Circular Style */}
           <MotiView 
-            from={{ opacity: 0, scale: 0.8 }} 
+            from={{ opacity: 0, scale: 0.95 }} 
             animate={{ opacity: 1, scale: 1 }} 
-            className="relative items-center mb-8"
+            className="w-full mb-8 rounded-[40px] bg-white dark:bg-darkSurface border border-black/[0.03] dark:border-white/[0.05] shadow-sm overflow-hidden"
           >
-            <View className="relative">
-               <BingwaAvatar size={120} borderWidth={4} />
-               <TouchableOpacity 
-                 onPress={() => router.push('/(profile)/profile')}
-                 className="absolute bottom-0 right-0 w-12 h-12 bg-accent rounded-3xl items-center justify-center border-4 border-white dark:border-darkBackground shadow-xl active:scale-90"
-               >
-                 <Ionicons name="camera" size={20} color="white" />
-               </TouchableOpacity>
-            </View>
-            
-            <View className="items-center mt-6">
-              <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-3xl tracking-tight">
-                {profile?.full_name?.split(' ')[0] || 'Farmer'} 
-                <Text className="text-accent"> {profile?.full_name?.split(' ')[1] || 'Bingwa'}</Text>
-              </Text>
-              <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-xs opacity-50 mt-1">
-                {profile?.email || 'farmer@bingwa.com'}
-              </Text>
+            <LinearGradient
+              colors={['rgba(244, 162, 97, 0.1)', 'transparent']}
+              className="absolute inset-0"
+              start={{ x: 1, y: 0 }}
+              end={{ x: 0, y: 1 }}
+            />
+
+            <View className="items-center py-8">
+              {/* Avatar Unit - Circular with Brand Ring */}
+              <View className="relative">
+                <View 
+                  className="p-1.5 rounded-full border-4 border-orange-500/30"
+                >
+                  <BingwaAvatar size={90} borderWidth={0} />
+                </View>
+                <TouchableOpacity 
+                   onPress={() => router.push('/(profile)/profile')}
+                   className="absolute -bottom-1 -right-1 w-9 h-9 bg-accent rounded-full items-center justify-center border-4 border-white dark:border-darkSurface shadow-lg active:scale-90"
+                >
+                   <Ionicons name="camera" size={16} color="white" />
+                </TouchableOpacity>
+              </View>
+              
+              {/* Identity Group */}
+              <View className="items-center mt-5 px-6">
+                <Text className="text-textPrimary dark:text-darkTextPrimary font-poppins-black text-2xl tracking-tight text-center" numberOfLines={1}>
+                  {profile?.full_name || 'Bingwa Farmer'}
+                </Text>
+                
+                <View className="flex-row items-center mt-2">
+                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-bold text-[9px] uppercase tracking-widest opacity-60">
+                      ID: BNG-{(profile?.id || '000').slice(0, 5).toUpperCase()}
+                   </Text>
+                   <View className="w-1 h-1 rounded-full bg-accent mx-3 opacity-30" />
+                   <Text className="text-textSecondary dark:text-darkTextSecondary font-poppins-medium text-[10px] opacity-40" numberOfLines={1}>
+                      {profile?.email || 'farmer@bingwa.com'}
+                   </Text>
+                </View>
+              </View>
+
+              {/* Verified Badge / Account Status */}
+              <View className="mt-6 flex-row items-center bg-accent/10 px-4 py-1.5 rounded-full border border-accent/10">
+                 <Ionicons name="checkmark-circle" size={12} color="#F4A261" />
+                 <Text className="text-accent font-poppins-black text-[8px] uppercase tracking-[2px] ml-2">Verified Farmer</Text>
+              </View>
             </View>
           </MotiView>
 
-          {/* Farm Intelligence Card - Forced Dark Theme Persistence */}
-          <View className="w-full mb-8" style={{ backgroundColor: '#121B22', borderRadius: 48, overflow: 'hidden' }}>
+          {/* Farm Intelligence Card - Refined to match AI Performance Card (48px radius, p-8) */}
+          <View className="w-full mb-8" style={{ backgroundColor: '#121B22', borderRadius: 48, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' }}>
             <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'timing', duration: 400 }}
             >
               <LinearGradient
-                colors={['rgba(244, 162, 97, 0.2)', 'transparent']}
+                colors={['rgba(244, 162, 97, 0.15)', 'transparent']}
                 className="absolute inset-0"
-                start={{ x: 1, y: 0 }}
-                end={{ x: 0, y: 1 }}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               />
               
               <View className="p-8">
                 <View className="flex-row items-center justify-between mb-8">
                   <View>
-                    <Text style={{ color: '#F4A261', fontFamily: 'Poppins_900Black', fontSize: 10, letterSpacing: 4, textTransform: 'uppercase' }}>Farm Intelligence</Text>
-                    <Text style={{ color: '#FFFFFF', fontFamily: 'Poppins_900Black', fontSize: 20, marginTop: 4 }}>Status Overview</Text>
+                    <Text style={{ color: '#F4A261', fontFamily: 'Poppins_900Black', fontSize: 9, letterSpacing: 4, textTransform: 'uppercase' }}>Farm Intelligence</Text>
+                    <Text style={{ color: '#FFFFFF', fontFamily: 'Poppins_900Black', fontSize: 20, marginTop: 4 }}>Dashboard</Text>
                   </View>
-                  <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.2)', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(249, 115, 22, 0.2)' }}>
-                    <Text style={{ color: '#F4A261', fontFamily: 'Poppins_900Black', fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' }}>Premium Log</Text>
+                  <View style={{ backgroundColor: 'rgba(244, 162, 97, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(244, 162, 97, 0.1)' }}>
+                    <Text style={{ color: '#F4A261', fontFamily: 'Poppins_900Black', fontSize: 8, letterSpacing: 2, textTransform: 'uppercase' }}>Active</Text>
                   </View>
                 </View>
 
-                {/* Creative Acreage Display */}
-                <View className="flex-row items-center justify-between mb-8">
-                  <View className="flex-1 flex-row items-center">
-                    <View style={{ width: 80, height: 80, backgroundColor: '#F4A261', borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
-                       <Ionicons name="map" size={32} color="white" />
+                {/* Structured Stat Grid */}
+                <View className="flex-row flex-wrap -mx-2 mb-2">
+                  {[
+                    { label: 'Total Acres', value: profile?.farm_size?.split(' ')[0] || '0', icon: 'map', color: '#F4A261' },
+                    { label: 'Varieties', value: profile?.primary_crops?.length || 0, icon: 'leaf', color: '#25D366' },
+                    { label: 'Operation Scale', value: profile?.farm_size || 'N/A', icon: 'bar-chart', color: '#3A86FF' },
+                    { label: 'Location', value: profile?.county || profile?.location || 'Kenya', icon: 'location', color: '#FFBE0B' }
+                  ].map((stat, i) => (
+                    <View key={i} className="w-1/2 p-2">
+                      <View className="bg-white/5 border border-white/10 rounded-[24px] p-5 h-28 justify-center">
+                        <View className="flex-row items-center mb-2">
+                          <Ionicons name={stat.icon as any} size={14} color={stat.color} />
+                          <Text className="text-white/40 font-poppins-bold text-[7px] uppercase tracking-widest ml-2" numberOfLines={1}>{stat.label}</Text>
+                        </View>
+                        <Text 
+                          style={{ color: '#FFFFFF', fontFamily: 'Poppins_900Black', fontSize: stat.value.toString().length > 10 ? 12 : 18 }} 
+                          numberOfLines={1}
+                        >
+                          {stat.value}
+                        </Text>
+                      </View>
                     </View>
-                    <View className="ml-5">
-                      <Text style={{ color: '#FFFFFF', fontFamily: 'Poppins_900Black', fontSize: 36, lineHeight: 36 }}>{profile?.farm_size?.split(' ')[0] || '0'}</Text>
-                      <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'Poppins_700Bold', fontSize: 10, letterSpacing: 2, marginTop: 8 }}>Total Acres</Text>
-                    </View>
+                  ))}
+                </View>
+
+                {/* Refined Crop Tags Section */}
+                <View className="mt-4 pt-6 border-t border-white/5">
+                  <Text className="text-white/40 font-poppins-bold text-[8px] uppercase tracking-widest mb-4">Cultivated Crops</Text>
+                  <View className="flex-row flex-wrap">
+                    {profile?.primary_crops?.map((crop, idx) => (
+                      <View key={idx} className="bg-white/10 border border-white/10 px-4 py-2 rounded-2xl mr-2 mb-2">
+                        <Text className="text-white font-poppins-bold text-[9px] uppercase tracking-wider">{crop}</Text>
+                      </View>
+                    )) || (
+                      <Text className="text-white/20 font-poppins-medium text-[10px] italic">No crops registered</Text>
+                    )}
                   </View>
-                  
-                  <View style={{ width: 1, height: 48, backgroundColor: 'rgba(255, 255, 255, 0.2)', marginHorizontal: 16 }} />
-
-                  <View className="flex-1 items-end">
-                    <Text style={{ color: '#F4A261', fontFamily: 'Poppins_900Black', fontSize: 36, lineHeight: 36 }}>{profile?.primary_crops?.length || 0}</Text>
-                    <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'Poppins_700Bold', fontSize: 10, letterSpacing: 2, marginTop: 8 }}>Varieties</Text>
-                  </View>
-                </View>
-
-                {/* Scale of Operation */}
-                <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 16, padding: 16, marginBottom: 24 }}>
-                   <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'Poppins_700Bold', fontSize: 8, letterSpacing: 3, marginBottom: 4 }}>SCALE OF OPERATION</Text>
-                   <Text style={{ color: '#FFFFFF', fontFamily: 'Poppins_700Bold', fontSize: 14 }}>{profile?.farm_size || 'Not Specified'}</Text>
-                </View>
-
-                {/* Crop Tags */}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 24 }}>
-                  {profile?.primary_crops?.map((crop, idx) => (
-                    <View key={idx} style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginRight: 8, marginBottom: 8 }}>
-                      <Text style={{ color: '#FFFFFF', fontFamily: 'Poppins_700Bold', fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>{crop}</Text>
-                    </View>
-                  )) || (
-                    <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontFamily: 'Poppins_500Medium', fontSize: 12, fontStyle: 'italic' }}>No crops registered yet.</Text>
-                  )}
-                </View>
-
-                {/* Location */}
-                <View style={{ marginTop: 8, paddingTop: 24, borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.1)' }}>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'Poppins_700Bold', fontSize: 8, letterSpacing: 3, marginBottom: 4 }}>PRIMARY LOCATION</Text>
-                  <Text style={{ color: '#FFFFFF', fontFamily: 'Poppins_700Bold', fontSize: 14 }}>
-                    {profile?.location ? `${profile.location}, ${profile.county || ''}` : 'Location Not Set'}
-                  </Text>
                 </View>
               </View>
             </MotiView>
