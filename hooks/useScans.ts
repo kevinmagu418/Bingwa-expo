@@ -23,11 +23,16 @@ export interface Scan {
 
 const SCANS_CACHE_KEY = 'bingwa_scans_cache';
 // Increment this whenever the query shape changes so stale caches are auto-cleared.
-const CACHE_VERSION = 'v3'; // bumped: added chemical_remedies, organic_remedies, recommendations
+const CACHE_VERSION = 'v4'; // bumped: force clear for user
 const CACHE_VERSION_KEY = 'bingwa_scans_cache_version';
 
 export const useScans = (limit?: number) => {
   const queryClient = useQueryClient();
+
+  const clearCache = async () => {
+    await AsyncStorage.removeItem(SCANS_CACHE_KEY);
+    queryClient.invalidateQueries({ queryKey: ['scans'] });
+  };
 
   // 1. Initial hydration from AsyncStorage
   useEffect(() => {
@@ -85,9 +90,22 @@ export const useScans = (limit?: number) => {
         if (error) throw error;
 
         const results = data || [];
-        // 2. Save fresh data to cache (only if not limited for main list)
+        
+        // 2. Save fresh data to cache
+        // If we have a full list (no limit), overwrite the main cache
         if (!limit) {
           await AsyncStorage.setItem(SCANS_CACHE_KEY, JSON.stringify(results));
+        } else if (results.length > 0) {
+          // If we have a limited list, we can at least update the "top" of our cache
+          const cached = await AsyncStorage.getItem(SCANS_CACHE_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            // Replace the first N items with the fresh results
+            const updated = [...results, ...parsed.filter((p: any) => !results.find((r: any) => r.id === p.id))];
+            await AsyncStorage.setItem(SCANS_CACHE_KEY, JSON.stringify(updated.slice(0, 50))); // Keep a reasonable amount
+          } else {
+             await AsyncStorage.setItem(SCANS_CACHE_KEY, JSON.stringify(results));
+          }
         }
         
         return results;

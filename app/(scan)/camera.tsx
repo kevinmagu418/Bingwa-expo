@@ -8,9 +8,9 @@ import { MotiView } from 'moti';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { useFeedback } from '../../context/FeedbackContext';
+import { ALL_CROPS } from '../../utils/crops';
 
 const { width } = Dimensions.get('window');
-const CROPS = ["Maize", "Tomatoes", "Potatoes", "Beans", "Coffee", "Tea", "Other"];
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCapturing, setIsCapturing] = useState(false);
-  const [selectedCrop, setSelectedCrop] = useState("Maize");
+  const [selectedCrop, setSelectedCrop] = useState(ALL_CROPS[0].label);
 
   const toggleFlash = () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -169,17 +169,18 @@ export default function CameraScreen() {
                 contentContainerStyle={{ paddingHorizontal: 24 }}
                 className="flex-row"
               >
-                {CROPS.map((crop) => (
+                {ALL_CROPS.map((crop) => (
                   <TouchableOpacity
-                    key={crop}
+                    key={crop.id}
                     onPress={() => {
                       if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedCrop(crop);
+                      setSelectedCrop(crop.label);
                     }}
-                    className={`mr-3 px-5 py-2.5 rounded-full border ${selectedCrop === crop ? 'bg-accent border-accent' : 'bg-black/40 border-white/20'}`}
+                    className={`mr-3 px-5 py-2.5 rounded-full border flex-row items-center ${selectedCrop === crop.label ? 'bg-accent border-accent' : 'bg-black/40 border-white/20'}`}
                   >
-                    <Text className={`text-xs font-poppins-bold ${selectedCrop === crop ? 'text-white' : 'text-white/60'}`}>
-                      {crop}
+                    <Text className="mr-2 text-sm">{crop.emoji}</Text>
+                    <Text className={`text-xs font-poppins-bold ${selectedCrop === crop.label ? 'text-white' : 'text-white/60'}`}>
+                      {crop.label}
                     </Text>
                   </TouchableOpacity>
                 ))}

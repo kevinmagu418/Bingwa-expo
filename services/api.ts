@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../lib/supabase';
 import { Platform } from 'react-native';
+import { normalizeCropForApi } from '../utils/crops';
 
 export interface ScanResult {
   success: boolean;
@@ -71,12 +72,13 @@ const uploadImageToSupabase = async (imageUri: string) => {
 export const processImageScan = async (imageUri: string, selectedCrop: string = 'Maize'): Promise<ScanResult> => {
   try {
     const { publicUrl, fileName } = await uploadImageToSupabase(imageUri);
+    const normalizedCrop = normalizeCropForApi(selectedCrop);
 
     const { data, error } = await supabase.functions.invoke("process-scan", {
       body: {
         imageUrl: publicUrl,
         storagePath: fileName,
-        crop: selectedCrop
+        crop: normalizedCrop
       }
     });
 

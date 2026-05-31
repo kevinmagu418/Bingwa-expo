@@ -136,7 +136,6 @@ export default function ScanDashboard() {
                       ...item,
                       disease: item.diseases?.name || 'Processing...',
                       date: new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-                      image: item.image_url ? { uri: item.image_url } : require('../../assets/farmer.jpg'),
                       confidence: Math.round((item.confidence_score || 0) * 100)
                     }} 
                     index={index} 

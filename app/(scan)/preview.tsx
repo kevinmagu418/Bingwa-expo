@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useProfile } from '../../hooks/useProfile';
 import { BingwaLoader } from '../../components/Loader';
 import { useFeedback } from '../../context/FeedbackContext';
+import { getCropLabel } from '../../utils/crops';
 
 import * as Haptics from 'expo-haptics';
 
@@ -93,7 +94,9 @@ export default function PreviewScreen() {
                 
                 {/* Crop Badge */}
                 <View className="absolute top-4 left-4 bg-accent px-4 py-1.5 rounded-full shadow-lg">
-                    <Text className="text-white font-poppins-bold text-[10px] uppercase tracking-widest">{cropType}</Text>
+                    <Text className="text-white font-poppins-bold text-[10px] uppercase tracking-widest">
+                        {getCropLabel(cropType as string)}
+                    </Text>
                 </View>
 
                 {isValidating && (

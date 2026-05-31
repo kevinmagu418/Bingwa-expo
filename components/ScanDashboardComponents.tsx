@@ -95,6 +95,11 @@ export const RecentScanItem = ({ item, index }: { item: any, index: number }) =>
   };
 
   const theme = getSeverityTheme(item.severity);
+  
+  // Robust image source logic
+  const imageSource = (item.image_url && typeof item.image_url === 'string' && item.image_url.startsWith('http')) 
+    ? { uri: item.image_url } 
+    : require('../assets/farmer.jpg');
 
   return (
     <MotiView
@@ -108,7 +113,7 @@ export const RecentScanItem = ({ item, index }: { item: any, index: number }) =>
         <View style={{ height: 4, backgroundColor: theme.color }} className="w-full absolute top-0 z-10" />
 
         <Image 
-          source={item.image} 
+          source={imageSource} 
           style={{ width: '100%', height: 150 }} 
           contentFit="cover"
           transition={300}
