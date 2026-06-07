@@ -19,7 +19,7 @@ export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCapturing, setIsCapturing] = useState(false);
-  const [selectedCrop, setSelectedCrop] = useState(ALL_CROPS[0].label);
+  const [selectedCrop, setSelectedCrop] = useState(ALL_CROPS[0].id);
 
   const toggleFlash = () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -174,12 +174,12 @@ export default function CameraScreen() {
                     key={crop.id}
                     onPress={() => {
                       if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedCrop(crop.label);
+                      setSelectedCrop(crop.id);
                     }}
-                    className={`mr-3 px-5 py-2.5 rounded-full border flex-row items-center ${selectedCrop === crop.label ? 'bg-accent border-accent' : 'bg-black/40 border-white/20'}`}
+                    className={`mr-3 px-5 py-2.5 rounded-full border flex-row items-center ${selectedCrop === crop.id ? 'bg-accent border-accent' : 'bg-black/40 border-white/20'}`}
                   >
                     <Text className="mr-2 text-sm">{crop.emoji}</Text>
-                    <Text className={`text-xs font-poppins-bold ${selectedCrop === crop.label ? 'text-white' : 'text-white/60'}`}>
+                    <Text className={`text-xs font-poppins-bold ${selectedCrop === crop.id ? 'text-white' : 'text-white/60'}`}>
                       {crop.label}
                     </Text>
                   </TouchableOpacity>
